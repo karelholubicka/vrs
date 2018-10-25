@@ -1,0 +1,35 @@
+Controller ...0 0 -1,8 1
+do ModelView
+globalscale
+
+GetLocalTransform unity
+recursive 80 45 100 // 10,20,-150 - kreslí mesh
+
+
+-29 atd - lamp - no meshes
+
+
+
+
+PushWorld(ref Matrix4 world) - ukládá se modelview
+        {
+            GL.PushMatrix();
+            GL.MultMatrix(ref world);
+
+separate perpective
+
+model
+ -- model matrix
+world
+ -- view matrix
+camera
+ -- projection
+homogen
+
+
+lm::mat4 MVPmatrix = projection * view * model; 
+
+
+http://www.opengl-tutorial.org/beginners-tutorials/tutorial-3-matrices/
+
+https://learnopengl.com/Lighting/Multiple-lights

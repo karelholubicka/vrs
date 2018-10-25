@@ -1,0 +1,352 @@
+off  shader composite
+
+show fps/info overlay. switch info hned on/off (render prázdný text)
+
+sample hodnoty plátna pro klíè??
+spustit ve studiu - zkontrolovat chromakey shader
+jak vypadá Janssen nové studio v renderu
+
+
+
+
+Original idea was to use VR controllers as cameracontrollers,
+for each of two VR controllers use two windows as foreground+background renderpair,
+and send them via 4 NDI streams capable of alpha channel
+to vMix videomixer and mix them with live camera image.
+
+I managed this to work,
+but NDI timing problems ruined this scenario.
+Both NDI and vMix did not gave me enough control over timing,
+so final image was not reliably time-stable.
+
+Next solution was to handle mixing internally,
+but this required BlackmagicDesign IN+OUT
++ shaders on GPU to perform color keying.
+Developing shaders showed, that
+on my AMD hardware (and Intel too)
+compatibility mode simply did not work with core commands.
+This lead to using of more contexts, one compatible and one core
+and developing separate GL4.5 features.
+
+
+- Matrix are somehow transposed.
+Yes, all of them.
+As A*B = BTransposed*ATransposed,
+you probably transposed one on the beginning,
+an all rest of the code as 
+1/ matrixes transposed
+2/ multiplying order of matrixes switched
+
+
+
+Saving / loading opened models list
+VR interface+models
+BMD in/out
+NDI in/out
+Fifth window (originally full screen) as scene overview.
+
+
+mìøení rozdílu cam 1a 2 - úprava zpoždìní scanu pøi pøestøihu(!!), 
+sync druhá kamera - poèítání frame kamery#1, k tomu kdy dorazil frame2, v rendereru kontrola stejného èísla+operace, co když ne, 
+
+støih do druhé kamery buttonem ovladaèe
+
+
+zpoždìní nastavit až s klikem, ne jen držením nad
+
+nastavení FOV pro kameru+screen adekvátnì-testovací studio vs reál pøedmìt(?)
+
+
+Textury v Blenderu musí mít UV, tj až po Unwrappingu - jinak UV nemají
+
+destroy všech kontextù
+
+??assimp411-compile - vymìnit dllky?
+
+load output sizes z inputu BMD?? scalable? input jiný než output???
+
+
+NDI/BMD výstupy cam1,cam2, static pro 3cam, rezerva?? nebo bez NDI?
+scalable 2 cam/1cam out / In podle poètu výstupù/strojù..???
+
+
+SUMMARY..??
+----
+monitory odkuk všichni, kameraman?? není-li støižen??, speaker,
+SYNC poøešit 100%, 
+seèíst lidi - kamery, støih, pøepínání studia, èteèka
+objevování textù ve studiu
+
+
+
+
+zoom nx 100
+00 = fov 77
+15 = 60
+23 = 52
+z5
+zoom 39 = 39
+
+záznam trackingu ve formátu pro fusion!!+tlaèítko record(=add), jméno v settings record = nereaguje na vstup z kláv/myši
+upravit scény - svìtlo apod + auto switch /100 pro scény s light >100
+alfa kolem konce textury polasu = hrany všechny
+
+http://www.zenvideo.co.uk/ndi.htm
+
+
+øešit svìtlo  100% nebo 1.0
+øešit targa/png textura - jiná pozice loaderu
+update blender all
+
+OBS studio škytá na NDI výstupu, na vstupech se to dá nìkdy uchytat...
+vMix škytá na všech NDI vstupech, a má nedefin zpoždìní na kameøe
+Když bude nejhùø, natoèit 3 kamery extra a 4x vstup multirecordem, lépe - IsoRecorderNEMá ALPHA!!
+
+?? NDI výstup popøedí+pozadí pro statickou 3. kameru a generování její pozice
+
+
+
+isVRmodel flag dorozchodit (scene má vždy umìlé svìtlo a nemá šipky svìtla)
+nastavování - potvrdit reset scény
+bìhem sledování otoèení - kamera zelená??
+
+zvážit kopírování view pro všechny view
+GLlegacy/modern
+Dodìlat ?? selekci všech nodù, jejichž parent a oni jsou animovaní
+render do HMD??
+open3Mod zmìnit na VRStudio
+
+
+zasekávání èasu pøi inspektoru textur - dìlá to WIN+24MB textura, je potøeba pøepnout zpìt na Animation
+stream IN = dynamic texture zpomaluje, pro SD rozlišení je celkem OK
+kontrola prostoru blikaèkou proti lesklým vìcem
+hlavní monitor musí být AMD!!!
+
+
+
+
+http://roxlu.com/2014/048/fast-pixel-transfers-with-pixel-buffer-objects
+https://www.khronos.org/opengl/wiki/Pixel_Buffer_Object
+
+Blending:
+https://andersriggelsen.dk/glblendfunc.php
+
+
+korekce:
+Matrix4 difference = MainWindow.offsetMatrix * _view;
+Matrix4 diffTrans = Matrix4.CreateTranslation(-difference.M41, -difference.M42, -difference.M43);
+Matrix4 diffAngl = difference * diffTrans;
+MainWindow.fixposMatrix[contIndex] = diffAngl;
+PAK FIXPOS*VIEW VŽDY KOUKÁ VE Z SMÌRU x I PO ZMÌNÌ POLOHY CONTROLERU
+
+ 
+ComputeDistortion - UV pro kanály L/R
+GetTrackedDeviceClass - co je to zaè
+GetDeviceToAbsoluteTrackingPose - hlavní pozice
+GetRawZeroPoseToStandingAbsoluteTrackingPose ????
+IsTrackedDeviceConnected - INDEX
+GetControllerState - KNOFLÍKY
+
+GetTrackedDeviceIndexForControllerRole - L/R závislé na reál pozici
+GetControllerRoleForTrackedDeviceIndex
+GetButtonIdNameFromEnum ?? char z èísla
+TriggerHapticPulse
+GetTrackedDeviceActivityLevel() - že chrápe;
+
+GetSortedTrackedDeviceIndicesOfClass
+GetType???
+ApplyTransform???
+GetXTrackedDeviceProperty....jaké jsou ty property?!!!
+
+                        
+
+
+/** Each entry in this enum represents a property that can be retrieved about a
+* tracked device. Many fields are only valid for one ETrackedDeviceClass. */
+enum ETrackedDeviceProperty
+{
+	Prop_Invalid								= 0,
+
+	// general properties that apply to all device classes
+	Prop_TrackingSystemName_String				= 1000,
+	Prop_ModelNumber_String						= 1001,
+	Prop_SerialNumber_String					= 1002,
+	Prop_RenderModelName_String					= 1003,
+	Prop_WillDriftInYaw_Bool					= 1004,
+	Prop_ManufacturerName_String				= 1005,
+	Prop_TrackingFirmwareVersion_String			= 1006,
+	Prop_HardwareRevision_String				= 1007,
+	Prop_AllWirelessDongleDescriptions_String	= 1008,
+	Prop_ConnectedWirelessDongle_String			= 1009,
+	Prop_DeviceIsWireless_Bool					= 1010,
+	Prop_DeviceIsCharging_Bool					= 1011,
+	Prop_DeviceBatteryPercentage_Float			= 1012, // 0 is empty, 1 is full
+	Prop_StatusDisplayTransform_Matrix34		= 1013,
+	Prop_Firmware_UpdateAvailable_Bool			= 1014,
+	Prop_Firmware_ManualUpdate_Bool				= 1015,
+	Prop_Firmware_ManualUpdateURL_String		= 1016,
+	Prop_HardwareRevision_Uint64				= 1017,
+	Prop_FirmwareVersion_Uint64					= 1018,
+	Prop_FPGAVersion_Uint64						= 1019,
+	Prop_VRCVersion_Uint64						= 1020,
+	Prop_RadioVersion_Uint64					= 1021,
+	Prop_DongleVersion_Uint64					= 1022,
+	Prop_BlockServerShutdown_Bool				= 1023,
+	Prop_CanUnifyCoordinateSystemWithHmd_Bool	= 1024,
+	Prop_ContainsProximitySensor_Bool			= 1025,
+	Prop_DeviceProvidesBatteryStatus_Bool		= 1026,
+	Prop_DeviceCanPowerOff_Bool					= 1027,
+	Prop_Firmware_ProgrammingTarget_String		= 1028,
+	Prop_DeviceClass_Int32						= 1029,
+	Prop_HasCamera_Bool							= 1030,
+	Prop_DriverVersion_String                   = 1031,
+	Prop_Firmware_ForceUpdateRequired_Bool      = 1032,
+	Prop_ViveSystemButtonFixRequired_Bool		= 1033,
+	Prop_ParentDriver_Uint64					= 1034,
+	Prop_ResourceRoot_String					= 1035,
+	Prop_RegisteredDeviceType_String			= 1036,
+	Prop_InputProfilePath_String				= 1037, // input profile to use for this device in the input system. Will default to tracking system name if this isn't provided
+	Prop_NeverTracked_Bool						= 1038, // Used for devices that will never have a valid pose by design
+	Prop_NumCameras_Int32						= 1039,
+	Prop_CameraFrameLayout_Int32				= 1040, // EVRTrackedCameraFrameLayout value
+
+	// Properties that are unique to TrackedDeviceClass_HMD
+	Prop_ReportsTimeSinceVSync_Bool				= 2000,
+	Prop_SecondsFromVsyncToPhotons_Float		= 2001,
+	Prop_DisplayFrequency_Float					= 2002,
+	Prop_UserIpdMeters_Float					= 2003,
+	Prop_CurrentUniverseId_Uint64				= 2004, 
+	Prop_PreviousUniverseId_Uint64				= 2005, 
+	Prop_DisplayFirmwareVersion_Uint64			= 2006,
+	Prop_IsOnDesktop_Bool						= 2007,
+	Prop_DisplayMCType_Int32					= 2008,
+	Prop_DisplayMCOffset_Float					= 2009,
+	Prop_DisplayMCScale_Float					= 2010,
+	Prop_EdidVendorID_Int32						= 2011,
+	Prop_DisplayMCImageLeft_String              = 2012,
+	Prop_DisplayMCImageRight_String             = 2013,
+	Prop_DisplayGCBlackClamp_Float				= 2014,
+	Prop_EdidProductID_Int32					= 2015,
+	Prop_CameraToHeadTransform_Matrix34			= 2016,
+	Prop_DisplayGCType_Int32					= 2017,
+	Prop_DisplayGCOffset_Float					= 2018,
+	Prop_DisplayGCScale_Float					= 2019,
+	Prop_DisplayGCPrescale_Float				= 2020,
+	Prop_DisplayGCImage_String					= 2021,
+	Prop_LensCenterLeftU_Float					= 2022,
+	Prop_LensCenterLeftV_Float					= 2023,
+	Prop_LensCenterRightU_Float					= 2024,
+	Prop_LensCenterRightV_Float					= 2025,
+	Prop_UserHeadToEyeDepthMeters_Float			= 2026,
+	Prop_CameraFirmwareVersion_Uint64			= 2027,
+	Prop_CameraFirmwareDescription_String		= 2028,
+	Prop_DisplayFPGAVersion_Uint64				= 2029,
+	Prop_DisplayBootloaderVersion_Uint64		= 2030,
+	Prop_DisplayHardwareVersion_Uint64			= 2031,
+	Prop_AudioFirmwareVersion_Uint64			= 2032,
+	Prop_CameraCompatibilityMode_Int32			= 2033,
+	Prop_ScreenshotHorizontalFieldOfViewDegrees_Float = 2034,
+	Prop_ScreenshotVerticalFieldOfViewDegrees_Float = 2035,
+	Prop_DisplaySuppressed_Bool					= 2036,
+	Prop_DisplayAllowNightMode_Bool				= 2037,
+	Prop_DisplayMCImageWidth_Int32				= 2038,
+	Prop_DisplayMCImageHeight_Int32				= 2039,
+	Prop_DisplayMCImageNumChannels_Int32		= 2040,
+	Prop_DisplayMCImageData_Binary				= 2041,
+	Prop_SecondsFromPhotonsToVblank_Float		= 2042,
+	Prop_DriverDirectModeSendsVsyncEvents_Bool	= 2043,
+	Prop_DisplayDebugMode_Bool					= 2044,
+	Prop_GraphicsAdapterLuid_Uint64				= 2045,
+	Prop_DriverProvidedChaperonePath_String		= 2048,
+	Prop_ExpectedTrackingReferenceCount_Int32	= 2049, // expected number of sensors or basestations to reserve UI space for
+	Prop_ExpectedControllerCount_Int32			= 2050, // expected number of tracked controllers to reserve UI space for
+	Prop_NamedIconPathControllerLeftDeviceOff_String	= 2051, // placeholder icon for "left" controller if not yet detected/loaded
+	Prop_NamedIconPathControllerRightDeviceOff_String	= 2052, // placeholder icon for "right" controller if not yet detected/loaded
+	Prop_NamedIconPathTrackingReferenceDeviceOff_String	= 2053, // placeholder icon for sensor/base if not yet detected/loaded
+	Prop_DoNotApplyPrediction_Bool				= 2054,
+	Prop_CameraToHeadTransforms_Matrix34_Array	= 2055,
+	Prop_DistortionMeshResolution_Int32			= 2056, // custom resolution of compositor calls to IVRSystem::ComputeDistortion
+	Prop_DriverIsDrawingControllers_Bool		= 2057,
+	Prop_DriverRequestsApplicationPause_Bool	= 2058,
+	Prop_DriverRequestsReducedRendering_Bool	= 2059,
+	Prop_MinimumIpdStepMeters_Float				= 2060,
+	Prop_AudioBridgeFirmwareVersion_Uint64		= 2061,
+	Prop_ImageBridgeFirmwareVersion_Uint64		= 2062,
+
+	// Properties that are unique to TrackedDeviceClass_Controller
+	Prop_AttachedDeviceId_String				= 3000,
+	Prop_SupportedButtons_Uint64				= 3001,
+	Prop_Axis0Type_Int32						= 3002, // Return value is of type EVRControllerAxisType
+	Prop_Axis1Type_Int32						= 3003, // Return value is of type EVRControllerAxisType
+	Prop_Axis2Type_Int32						= 3004, // Return value is of type EVRControllerAxisType
+	Prop_Axis3Type_Int32						= 3005, // Return value is of type EVRControllerAxisType
+	Prop_Axis4Type_Int32						= 3006, // Return value is of type EVRControllerAxisType
+	Prop_ControllerRoleHint_Int32				= 3007, // Return value is of type ETrackedControllerRole
+
+	// Properties that are unique to TrackedDeviceClass_TrackingReference
+	Prop_FieldOfViewLeftDegrees_Float			= 4000,
+	Prop_FieldOfViewRightDegrees_Float			= 4001,
+	Prop_FieldOfViewTopDegrees_Float			= 4002,
+	Prop_FieldOfViewBottomDegrees_Float			= 4003,
+	Prop_TrackingRangeMinimumMeters_Float		= 4004,
+	Prop_TrackingRangeMaximumMeters_Float		= 4005,
+	Prop_ModeLabel_String						= 4006,
+
+	// Properties that are used for user interface like icons names
+	Prop_IconPathName_String						= 5000, // DEPRECATED. Value not referenced. Now expected to be part of icon path properties.
+	Prop_NamedIconPathDeviceOff_String				= 5001, // {driver}/icons/icon_filename - PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
+	Prop_NamedIconPathDeviceSearching_String		= 5002, // {driver}/icons/icon_filename - PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
+	Prop_NamedIconPathDeviceSearchingAlert_String	= 5003, // {driver}/icons/icon_filename - PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
+	Prop_NamedIconPathDeviceReady_String			= 5004, // {driver}/icons/icon_filename - PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
+	Prop_NamedIconPathDeviceReadyAlert_String		= 5005, // {driver}/icons/icon_filename - PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
+	Prop_NamedIconPathDeviceNotReady_String			= 5006, // {driver}/icons/icon_filename - PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
+	Prop_NamedIconPathDeviceStandby_String			= 5007, // {driver}/icons/icon_filename - PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
+	Prop_NamedIconPathDeviceAlertLow_String			= 5008, // {driver}/icons/icon_filename - PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
+
+	// Properties that are used by helpers, but are opaque to applications
+	Prop_DisplayHiddenArea_Binary_Start				= 5100,
+	Prop_DisplayHiddenArea_Binary_End				= 5150,
+	Prop_ParentContainer							= 5151,
+
+	// Properties that are unique to drivers
+	Prop_UserConfigPath_String					= 6000,
+	Prop_InstallPath_String						= 6001,
+	Prop_HasDisplayComponent_Bool				= 6002,
+	Prop_HasControllerComponent_Bool			= 6003,
+	Prop_HasCameraComponent_Bool				= 6004,
+	Prop_HasDriverDirectModeComponent_Bool		= 6005,
+	Prop_HasVirtualDisplayComponent_Bool		= 6006,
+
+	// Properties that are set internally based on other information provided by drivers
+	Prop_ControllerType_String					= 7000,
+	Prop_LegacyInputProfile_String				= 7001,
+
+	// Vendors are free to expose private debug data in this reserved region
+	Prop_VendorSpecific_Reserved_Start			= 10000,
+	Prop_VendorSpecific_Reserved_End			= 10999,
+	
+	Prop_TrackedDeviceProperty_Max				= 1000000,
+};
+
+/** No string property will ever be longer than this length */
+static const uint32_t k_unMaxPropertyStringSize = 32 * 1024;
+
+/** Used to return errors that occur when reading properties. */
+enum ETrackedPropertyError
+{
+	TrackedProp_Success						= 0,
+	TrackedProp_WrongDataType				= 1,
+	TrackedProp_WrongDeviceClass			= 2,
+	TrackedProp_BufferTooSmall				= 3,
+	TrackedProp_UnknownProperty				= 4, // Driver has not set the property (and may not ever).
+	TrackedProp_InvalidDevice				= 5,
+	TrackedProp_CouldNotContactServer		= 6,
+	TrackedProp_ValueNotProvidedByDevice	= 7,
+	TrackedProp_StringExceedsMaximumLength	= 8,
+	TrackedProp_NotYetAvailable				= 9, // The property value isn't known yet, but is expected soon. Call again later.
+	TrackedProp_PermissionDenied			= 10,
+	TrackedProp_InvalidOperation			= 11,
+	TrackedProp_CannotWriteToWildcards		= 12,
+};
+
+

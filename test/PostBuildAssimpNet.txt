@@ -1,0 +1,1 @@
+"$(SolutionDir)libs\assimp-net\AssimpNet.Interop.Generator\bin\$(Configuration)\AssimpNet.Interop.Generator.exe" "$(TargetDir)$(TargetFileName)" "$(ProjectDir)AssimpKey.snk"

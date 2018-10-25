@@ -1,0 +1,9 @@
+# git ignore file
+_Resharper*
+obj/
+bin/
+*.suo
+*.user
+*.pyc
+releases/
+*.pdb

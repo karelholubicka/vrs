@@ -1,0 +1,307 @@
+
+http://www.codinglabs.net/article_world_view_projection_matrix.aspx
+
+https://www.andre-gaschler.com/rotationconverter/
+http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToAngle/
+
+https://www.learnopencv.com/rotation-matrix-to-euler-angles/
+
+
+// Calculates rotation matrix to euler angles
+// The result is the same as MATLAB except the order
+// of the euler angles ( x and z are swapped ).
+Vec3f rotationMatrixToEulerAngles(Mat &R)
+{
+ 
+    assert(isRotationMatrix(R));
+     
+    float sy = sqrt(R.at<double>(0,0) * R.at<double>(0,0) +  R.at<double>(1,0) * R.at<double>(1,0) );
+ 
+    bool singular = sy < 1e-6; // If
+ 
+    float x, y, z;
+    if (!singular)
+    {
+        x = atan2(R.at<double>(2,1) , R.at<double>(2,2));
+        y = atan2(-R.at<double>(2,0), sy);
+        z = atan2(R.at<double>(1,0), R.at<double>(0,0));
+    }
+    else
+    {
+        x = atan2(-R.at<double>(1,2), R.at<double>(1,1));
+        y = atan2(-R.at<double>(2,0), sy);
+        z = 0;
+    }
+    return Vec3f(x, y, z);
+     
+     
+     
+}
+
+
+https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+
+static void toEulerAngle(const Quaterniond& q, double& roll, double& pitch, double& yaw)
+{
+	// roll (x-axis rotation)
+	double sinr = +2.0 * (q.w() * q.x() + q.y() * q.z());
+	double cosr = +1.0 - 2.0 * (q.x() * q.x() + q.y() * q.y());
+	roll = atan2(sinr, cosr);
+
+	// pitch (y-axis rotation)
+	double sinp = +2.0 * (q.w() * q.y() - q.z() * q.x());
+	if (fabs(sinp) >= 1)
+		pitch = copysign(M_PI / 2, sinp); // use 90 degrees if out of range
+	else
+		pitch = asin(sinp);
+--
+	// yaw (z-axis rotation)
+	double siny = +2.0 * (q.w() * q.z() + q.x() * q.y());
+	double cosy = +1.0 - 2.0 * (q.y() * q.y() + q.z() * q.z());  
+	yaw = atan2(siny, cosy);
+}
+
+
+Matice do Euler XYZ dá opaèné úhly jako Transponovaná do ZYX (do opaèného úhelpoøadí)
+
+
+
+Pøepoèet VALVE zobrazení:
+
+//            transMatrix = Matrix4.Invert(tkMatrix);
+//            transMatrix = transMatrix * tkMatrix;//zkouška inverze, výsledek je Identity
+
+            //vyndat inverzní translaci
+            transMatrix = Matrix4.CreateTranslation(-tkMatrix.M41, -tkMatrix.M42, -tkMatrix.M43);
+            //odeèíst translaci
+            orientMatrix = tkMatrix * transMatrix;
+            //zjistit úhly
+            _rotation = FromRotMatToEulerInt(orientMatrix, "ZXY");
+            _pitchAngle = _rotation.X;
+            _rollAngle = _rotation.Z;
+            _headingAngle = _rotation.Y;
+            // složit rotace ve správném poøadí
+            cameraMatrix = Matrix4.Identity;
+            cameraMatrix = Matrix4.CreateRotationZ(_rollAngle) * cameraMatrix;
+            cameraMatrix = Matrix4.CreateRotationX(_pitchAngle) * cameraMatrix; 
+            cameraMatrix = Matrix4.CreateRotationY(_headingAngle) *cameraMatrix;
+            _view = Matrix4.Identity;
+            _view = cameraMatrix * _view;
+//což dá ovšem totéž jako            _view = orientMatrix * _view;
+//            _view.Transpose();
+            _view = transMatrix * _view;
+
+
+
+
+
+
+        public static Vector3 FromRotMatToEulerInt(Matrix4 e, string order)
+        {
+            Vector3 angles = new Vector3(0, 0, 0);
+            // a = e[0] , f = e[4], g = e[8], h = e[1], k = e[5], l = e[9], m = e[2], n = e[6], o = e[10];
+            float a = e.M11;
+            float f = e.M12;
+            float g = e.M13;
+            float h = e.M21;
+            float k = e.M22;
+            float l = e.M23;
+            float m = e.M31;
+            float n = e.M32;
+            float o = e.M33; //ex e
+            switch (order)
+            {
+                case "XYZ":
+                    angles.Y = (float)Math.Asin(g);// -Math.Asin(g);
+                    if (Math.Abs(angles.Y) * 0x10000 / Tau > (float)0x4000 - 0.5) //Podmínku upravit? mùže být..    .99999>Math.abs(g)
+                    {
+                        angles.Z = 0;
+                        angles.X = (float)Math.Atan2(n, k); //(-n, k);
+                    }
+                    else
+                    {
+                        angles.Z = (float)Math.Atan2(f, a); //Atan2(-f,a);
+                        angles.X = (float)Math.Atan2(l, o); //Atan2(-l,o);
+                    }
+                    break;
+                case "YXZ":
+                    angles.X = (float)Math.Asin(-l);
+                    if (Math.Abs(angles.X) * 0x10000 / Tau > (float)0x4000 - 0.5) 
+                    {
+                        angles.Z = 0;
+                        angles.Y = (float)Math.Atan2(-m, a); 
+                    }
+                    else
+                    {
+                        angles.Z = (float)Math.Atan2(h, k); 
+                        angles.Y = (float)Math.Atan2(g, o);
+                    }
+                    break;
+                case "ZXY":
+                    angles.X = (float)Math.Asin(n);
+                    if (Math.Abs(angles.X) * 0x10000 / Tau > (float)0x4000 - 0.5)
+                    {
+                        angles.Y = 0;
+                        angles.Z = (float)Math.Atan2(h, a);
+                    }
+                    else
+                    {
+                        angles.Z = (float)Math.Atan2(-f, k);
+                        angles.Y = (float)Math.Atan2(-m, o);
+                    }
+                    break;
+                case "ZYX":
+                    angles.Y = (float)Math.Asin(m);
+                    if (Math.Abs(angles.Y) * 0x10000 / Tau > (float)0x4000 - 0.5)
+                    {
+                        angles.Z = 0;
+                        angles.X = (float)Math.Atan2(-f, k); 
+                    }
+                    else
+                    {
+                        angles.Z = (float)Math.Atan2(h, a); 
+                        angles.X = (float)Math.Atan2(n, o); 
+                    }
+                    break;
+                case "YZX":
+                    angles.Z = (float)Math.Asin(h);
+                    if (Math.Abs(angles.Z) * 0x10000 / Tau > (float)0x4000 - 0.5)
+                    {
+                        angles.X = 0;
+                        angles.Y = (float)Math.Atan2(g, o);
+                    }
+                    else
+                    {
+                        angles.Y = (float)Math.Atan2(-m, a);
+                        angles.X = (float)Math.Atan2(-l, k);
+                    }
+                    break;
+                case "XZY":
+                    angles.Z = (float)Math.Asin(f);
+                    if (Math.Abs(angles.Z) * 0x10000 / Tau > (float)0x4000 - 0.5)
+                    {
+                        angles.Y = 0;
+                        angles.X = (float)Math.Atan2(-l, o);
+                    }
+                    else
+                    {
+                        angles.Y = (float)Math.Atan2(g, a);
+                        angles.X = (float)Math.Atan2(n, k);
+                    }
+                    break;
+                default:
+//                    Console.WriteLine("Error Mode / used XYZ implicitly");
+                    break;
+            }
+
+            return angles;
+        }
+
+
+
+public static void RotationMatrix(ref Matrix4 matrix, out Quaternion result)
+        {
+            float sqrt;
+            float half;
+            float scale = matrix.M11 + matrix.M22 + matrix.M33;
+            result = new Quaternion();
+
+            if (scale > 0.0f)
+            {
+                sqrt = (float)Math.Sqrt(scale + 1.0f);
+                result.W = sqrt * 0.5f;
+                sqrt = 0.5f / sqrt;
+
+                result.X = (matrix.M23 - matrix.M32) * sqrt;
+                result.Y = (matrix.M31 - matrix.M13) * sqrt;
+                result.Z = (matrix.M12 - matrix.M21) * sqrt;
+            }
+            else if ((matrix.M11 >= matrix.M22) && (matrix.M11 >= matrix.M33))
+            {
+                sqrt = (float)Math.Sqrt(1.0f + matrix.M11 - matrix.M22 - matrix.M33);
+                half = 0.5f / sqrt;
+
+                result.X = 0.5f * sqrt;
+                result.Y = (matrix.M12 + matrix.M21) * half;
+                result.Z = (matrix.M13 + matrix.M31) * half;
+                result.W = (matrix.M23 - matrix.M32) * half;
+            }
+            else if (matrix.M22 > matrix.M33)
+            {
+                sqrt = (float)Math.Sqrt(1.0f + matrix.M22 - matrix.M11 - matrix.M33);
+                half = 0.5f / sqrt;
+
+                result.X = (matrix.M21 + matrix.M12) * half;
+                result.Y = 0.5f * sqrt;
+                result.Z = (matrix.M32 + matrix.M23) * half;
+                result.W = (matrix.M31 - matrix.M13) * half;
+            }
+            else
+            {
+                sqrt = (float)Math.Sqrt(1.0f + matrix.M33 - matrix.M11 - matrix.M22);
+                half = 0.5f / sqrt;
+
+                result.X = (matrix.M31 + matrix.M13) * half;
+                result.Y = (matrix.M32 + matrix.M23) * half;
+                result.Z = 0.5f * sqrt;
+                result.W = (matrix.M12 - matrix.M21) * half;
+            }
+        }
+
+        public static bool Decompose(Matrix4 matrix, out Vector3 scale, out Quaternion rotation, out Vector3 translation)
+        {
+            //Get the translation.
+            translation.X = matrix.M41;
+            translation.Y = matrix.M42;
+            translation.Z = matrix.M43;
+
+            //Scaling is the length of the rows.
+            scale.X = (float)Math.Sqrt((matrix.M11 * matrix.M11) + (matrix.M12 * matrix.M12) + (matrix.M13 * matrix.M13));
+            scale.Y = (float)Math.Sqrt((matrix.M21 * matrix.M21) + (matrix.M22 * matrix.M22) + (matrix.M23 * matrix.M23));
+            scale.Z = (float)Math.Sqrt((matrix.M31 * matrix.M31) + (matrix.M32 * matrix.M32) + (matrix.M33 * matrix.M33));
+
+            //If any of the scaling factors are zero, than the rotation matrix can not exist.
+            if (scale.X == 0.0f ||
+                scale.Y == 0.0f ||
+                scale.Z == 0.0f)
+            {
+                rotation = Quaternion.Identity;
+                return false;
+            }
+
+            //The rotation is the left over matrix after dividing out the scaling.
+            Matrix4 rotationmatrix = new Matrix4();
+            rotationmatrix.M11 = matrix.M11 / scale.X;
+            rotationmatrix.M12 = matrix.M12 / scale.X;
+            rotationmatrix.M13 = matrix.M13 / scale.X;
+
+            rotationmatrix.M21 = matrix.M21 / scale.Y;
+            rotationmatrix.M22 = matrix.M22 / scale.Y;
+            rotationmatrix.M23 = matrix.M23 / scale.Y;
+
+            rotationmatrix.M31 = matrix.M31 / scale.Z;
+            rotationmatrix.M32 = matrix.M32 / scale.Z;
+            rotationmatrix.M33 = matrix.M33 / scale.Z;
+
+            rotationmatrix.M44 = 1f;
+            RotationMatrix(ref rotationmatrix, out rotation); //RotationMatrix je OK, Quaternion se pak stejnì zahazuje
+            return true;
+        }
+
+        public const float Tau = 2.0f * (float)Math.PI;
+        public const float Deg2Rad = (float)(Tau / 360.0f);
+        public const float Rad2Deg = (float)(360.0f / Tau);
+
+
+        public static void DecomposeSRTMatrix2(Matrix4 matrix, out Vector3 scale, out Vector3 rotation, out Vector3 translation)
+        {
+            Quaternion quat;
+            Decompose(matrix, out scale, out quat, out translation);
+            matrix.Row0 = new Vector4(Vector3.Divide(matrix.Row0.Xyz, scale.X), 0);
+            matrix.Row1 = new Vector4(Vector3.Divide(matrix.Row1.Xyz, scale.Y), 0);
+            matrix.Row2 = new Vector4(Vector3.Divide(matrix.Row2.Xyz, scale.Z), 0);
+            matrix.Row3 = new Vector4(0, 0, 0, 1);
+            rotation = FromRotMatToEulerZYXInt(matrix); //FromRotMatToEulerZYXInt("XYZ")
+        }
+
+
