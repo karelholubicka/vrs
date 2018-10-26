@@ -12,14 +12,14 @@ uniform sampler2D iMask;          // input channel Mask
 uniform sampler2D iYUYVtex;            // input channel Camera YUYV macropixel texture passed as RGBA format
 uniform sampler2D iYUYVtex2;            // input channel second Camera YUYV macropixel texture passed as RGBA format
 uniform sampler2D iForeground;          // input channel Foreground
-uniform vec2      iTextureResolution;    // RGBA texture resolution (in pixels)
-uniform vec2      iViewportSize;         // image resolution (output width in pixels)
-uniform vec2      iViewportStart;         // left bottom in pixels)
+uniform ivec2     iViewportSize;         // image resolution (output width in pixels)
+uniform ivec2     iViewportStart;         // left bottom in pixels)
 uniform vec3      iBackgroundColorHSV;      //keying color
 uniform vec3      iWeightsKeying;          //keying distance
 uniform float     iTresholdKeying;         // treshold for keying
 uniform float     iPowerCanceling;         // treshold for keying
 uniform bool      iWellDone;     //canceling process
+uniform int       iMatteBlur;     //size of blur pixels
 uniform int       iMode;     //canceling process 0:normal composition 1: camera+key (no fgd+mask) 2:camera+cancel color (no fgd+mask) 3: camera natural
 
 vec4 rec709YCbCr2rgba(float Y, float Cb, float Cr, float a) 
@@ -102,13 +102,74 @@ vec4 bilinear(vec4 W, vec4 X, vec4 Y, vec4 Z, vec2 weight)
 void textureGatherYUV(sampler2D YUYVsampler, vec2 tc, out vec4 W, out vec4 X, out vec4 Y, out vec4 Z) 
 {
     ivec2 tx = ivec2(tc);
-	ivec2 iYUYVTextureResolution = textureSize(YUYVsampler, 0);
 	ivec2 tmin = ivec2(0,0);
-	ivec2 tmax = iYUYVTextureResolution - ivec2(1,1);
+	ivec2 tmax = textureSize(YUYVsampler, 0) - ivec2(1,1);
 	W = texelFetch(YUYVsampler, clamp(tx + ivec2(0,0), tmin, tmax), 0); 
 	X = texelFetch(YUYVsampler, clamp(tx + ivec2(0,1), tmin, tmax), 0);
 	Y = texelFetch(YUYVsampler, clamp(tx + ivec2(1,1), tmin, tmax), 0);
 	Z = texelFetch(YUYVsampler, clamp(tx + ivec2(1,0), tmin, tmax), 0); 
+}
+
+vec4 iPixelGatherYUV(sampler2D YUYVsampler, ivec2 ti) //ti - 0-RGBA size, sample is clamped to tex size
+{
+	ivec2 tx = ivec2(ti.x/2, textureSize(YUYVsampler, 0).y - ti.y);
+	float off = fract(float(ti.x)/2);
+	ivec2 tmin = ivec2(0,0);
+	ivec2 tmax = textureSize(YUYVsampler, 0) - ivec2(1,1);
+	vec4 macro   = texelFetch(YUYVsampler, clamp(tx,              tmin, tmax), 0); 
+	vec4 macro_r = texelFetch(YUYVsampler, clamp(tx + ivec2(1,0), tmin, tmax), 0); 
+	vec4 pixel;
+	if (off > 0.25) { 			// right half of macropixel
+		pixel    = rec709YCbCr2rgba(macro.a, (macro.b + macro_r.b)/2, (macro.r+macro_r.r)/2, 1.0) ; 
+	} else { 					// left half & center of macropixel
+		pixel = rec709YCbCr2rgba(macro.g, macro.b, macro.r, 1.0); 
+	}
+	return pixel;
+}
+
+vec4 blurredPixel(sampler2D YUYVsampler, ivec2 ti)
+{	
+//now is kind of weighting, todo blur update
+    float blurSigma = 0.0f;    // The sigma value for the gaussian function: higher value means more blur
+							// A good value for 9x9 is around 3 to 5
+							// A good value for 7x7 is around 2.5 to 4
+							// A good value for 5x5 is around 2 to 3.5
+							// ... play around with this based on what you need
+    // Constant for a 9x9 kernel (4.0), use 3.0 for 7x7, 2.0 for 5x5
+    int numBlurPixelsPerSideX = iMatteBlur;
+    int numBlurPixelsPerSideY = iMatteBlur;
+    const float pi = 3.1415926535f;
+	vec2 blurMultiplyVec   = vec2(1.0f, 1.0f);
+	vec3 incrementalGaussian;
+	incrementalGaussian.x = 1.0f / (sqrt(2.0f * pi) * blurSigma);
+	incrementalGaussian.y = exp(-0.5f / (blurSigma * blurSigma));
+	incrementalGaussian.z = incrementalGaussian.y * incrementalGaussian.y;
+			
+	//vec4 avgValue = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+	//float coefficientSum = 0.0f;
+	
+	// Take the central sample first...
+	//avgValue +=  iPixelGatherYUV(YUYVsampler, ti) * incrementalGaussian.x;
+	//coefficientSum += incrementalGaussian.x;
+	//incrementalGaussian.xy *= incrementalGaussian.yz;
+
+	vec4 avgValue = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+	avgValue +=  iPixelGatherYUV(YUYVsampler, ti);
+	float coefficientSum = 1.0f;
+	for (int i = 1; i <= numBlurPixelsPerSideX; i = i + 1 ) 
+	{ 
+    	for (int j = 1; j <= numBlurPixelsPerSideY; j = j + 1 ) 
+     	{ 
+        	float weight = 2/distance(ivec2(i,j),ivec2(0,0));
+	 	    avgValue += weight * iPixelGatherYUV(YUYVsampler, ti + ivec2(-i,-j));
+		    avgValue += weight * iPixelGatherYUV(YUYVsampler, ti + ivec2(i,-j));
+			avgValue += weight * iPixelGatherYUV(YUYVsampler, ti + ivec2(-i,j));
+			avgValue += weight * iPixelGatherYUV(YUYVsampler, ti + ivec2(i,j));
+			coefficientSum += 4 * weight;
+		}
+	}
+	vec4 result = avgValue / coefficientSum;
+	return result;
 }
 
 vec3 rgb2hsv(vec3 rgb)
@@ -155,26 +216,31 @@ vec3 changeSaturation(vec3 color, float saturation)
 
 void main(void)
 {
-	vec2 scale = iViewportSize / iTextureResolution;
+    ivec2 iTextureResolution = textureSize(iForeground, 0); //RGBA texture resolution (in pixels)
+	vec2 scale = vec2(iViewportSize) / vec2(iTextureResolution);
 	vec2 uv = gl_FragCoord.xy / iTextureResolution.xy;
-	//scale, straight, values 0 - iTextureResolution
+	bool notScaled = false;
+	if ((iTextureResolution.x == iViewportSize.x)&&(iTextureResolution.y == iViewportSize.y)) notScaled = true;
+
+	//texPos: scale involved, straight, values 0 - iTextureResolution
 	ivec2 texPos  = ivec2((gl_FragCoord.x - 0.5-iViewportStart.x)/scale.x, (gl_FragCoord.y - 0.5-iViewportStart.y)/scale.y); //texture input, halfpixels
-	//noscale, upside down
+	//texPos2: noscale, upside down
     ivec2 texPos2 = ivec2((gl_FragCoord.x - 0.5),  iTextureResolution.y-1-(gl_FragCoord.y - 0.5));
 
-    vec2 tc = vec2((gl_FragCoord.x - 0.5)-iViewportStart.x,              iViewportStart.y+iViewportSize.y-(gl_FragCoord.y - 0.5)); 
-    tc.x=tc.x/2;
+    vec2 tc = vec2((gl_FragCoord.x - 0.5)-iViewportStart.x, iViewportStart.y+iViewportSize.y-(gl_FragCoord.y - 0.5)); 
+    tc.x = tc.x/2; //UYVY vs RGBA texture size
 	tc = tc/scale;
-	float alpha = 1; 
 
-//	if (tx.y<iViewportSize.y) alpha = 0.0;
+	float alpha = 1; 
+	if ((gl_FragCoord.x - 0.5 < iViewportStart.x)|| (gl_FragCoord.y - 0.5  < iViewportStart.y)) alpha = 0.0;
+	if ((gl_FragCoord.x - 0.5 > iViewportSize.x + iViewportStart.x)|| (gl_FragCoord.y - 0.5  > iViewportSize.y + iViewportStart.y)) alpha = 0.0;
+	float viewportAlpha = alpha;
 
 	vec4 macro, macro_u, macro_r, macro_ur;
 	vec4 pixel, pixel_r, pixel_u, pixel_ur; 
 
 	textureGatherYUV(iYUYVtex, tc, macro, macro_u, macro_ur, macro_r);
 	vec2 off = fract(tc); 
-	//off = vec2(0,0); 
 
 	if (off.x > 0.5) { 			// right half of macropixel
 		pixel    = rec709YCbCr2rgba(macro.a, (macro.b + macro_r.b)/2, (macro.r+macro_r.r)/2, alpha) ; 
@@ -189,11 +255,7 @@ void main(void)
 	}
 	vec4 camera = bilinear(pixel, pixel_u, pixel_ur, pixel_r, off);
 	//since weighting somehow does not work properly (rounding errors?pixel centers?)
-	if ((iTextureResolution.x == iViewportSize.x)&&(iTextureResolution.y == iViewportSize.y)) camera = pixel;
-
-//	if (texPos.y < 150)  camera =  macro;
-//	if (texPos.y < 100)  camera =  pixel;
-//	if (texPos.y < 50)  camera =  pixel_r;
+	if (notScaled) camera = pixel;
 
 	textureGatherYUV(iYUYVtex2, tc, macro, macro_u, macro_ur, macro_r);
 	if (off.x > 0.5) { 			// right half of macropixel
@@ -208,19 +270,23 @@ void main(void)
 		pixel_ur = rec709YCbCr2rgba(macro_u.a, (macro_u.b+macro_ur.b)/2, (macro_u.r+macro_ur.r)/2, alpha); 
 	}
 	vec4 camera2 = bilinear(pixel, pixel_u, pixel_ur, pixel_r, off);
+	if (notScaled) camera2 = pixel;
+
 	vec3 color = camera.rgb;
 	vec4 mask = texelFetch(iMask, texPos, 0);
+
 	vec4 foreground = texelFetch(iForeground, texPos, 0);
-    //	mask = vec4(0.0,0.0,0.0,1.0);
+    //  mask = vec4(0.0,0.0,0.0,1.0);
 
 	fragColor = vec4(0.0,0.0,0.0,0.0);
-	//color = changeSaturation(color, 0.5);
     fragColor = vec4(color,alpha);
+
 	if (iMode == 3) return;
 
 	if (iMode < 2)
 	{
-      float incrustation = chromaKey(color);
+      float incrustation;
+	  if  (notScaled) {incrustation = chromaKey(blurredPixel(iYUYVtex, texPos).rgb);}else{incrustation = chromaKey(color);}
       fragColor = vec4(color, (1-incrustation)); //colorKey
 	}
 
@@ -237,7 +303,6 @@ void main(void)
 	  fragColor = mix(fragColor, cancelledColor, iPowerCanceling);//cancel color
 	}
 
-
     if (iMode == 0) 
 	{
         fragColor = vec4(fragColor.rgb * fragColor.a*mask.a, fragColor.a*mask.a); // masking + alpha multiply
@@ -250,9 +315,10 @@ void main(void)
 	{
         vec4 black = vec4(0.0,0.0,0.0,1.0);
 	    fragColor = mix(black,fragColor, fragColor.a);//key over black
-		fragColor = vec4(fragColor.rgb,1.0);
+		fragColor = vec4(fragColor.rgb,viewportAlpha);
 	}
 
+	//if (texPos.y < 400)  fragColor = blurredPixel(iYUYVtex, texPos);
 
    // fragColor = texelFetch(iForeground, texPos2, 0); test foreground bitmap over
 	//fragColor = vec4(gl_FragCoord.x/1000, gl_FragCoord.y/1000, 0, 1);

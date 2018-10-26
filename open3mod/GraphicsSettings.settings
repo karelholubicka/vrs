@@ -26,15 +26,6 @@
     <Setting Name="OutputBrightness" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">50</Value>
     </Setting>
-    <Setting Name="KeyingColorH" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">111</Value>
-    </Setting>
-    <Setting Name="KeyingColorS" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">47</Value>
-    </Setting>
-    <Setting Name="KeyingColorV" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">58</Value>
-    </Setting>
     <Setting Name="KeyingSoftness" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">50</Value>
     </Setting>
@@ -49,6 +40,18 @@
     </Setting>
     <Setting Name="KeyingTreshold" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">50</Value>
+    </Setting>
+    <Setting Name="KeyingColorH" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">116</Value>
+    </Setting>
+    <Setting Name="KeyingColorS" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">54</Value>
+    </Setting>
+    <Setting Name="KeyingColorV" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">50</Value>
+    </Setting>
+    <Setting Name="KeyingMatteBlur" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">0</Value>
     </Setting>
   </Settings>
 </SettingsFile>

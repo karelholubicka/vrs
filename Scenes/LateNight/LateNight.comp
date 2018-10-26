@@ -1,0 +1,600 @@
+Composition {
+	CurrentTime = 0,
+	RenderRange = { 0, 0 },
+	GlobalRange = { 0, 600 },
+	CurrentID = 42,
+	PlaybackUpdateMode = 0,
+	Version = "Fusion 9.0.2 build 15",
+	SavedOutputs = 0,
+	HeldTools = 0,
+	DisabledTools = 0,
+	LockedTools = 0,
+	AudioOffset = 0,
+	Resumable = true,
+	OutputClips = {
+		"comp:LateNightPodstava.tga",
+		"comp:LateNightBkgd.tga",
+		"comp:LateNightNohaStolu.tga"
+	},
+	Tools = {
+		Loader2 = Loader {
+			Clips = {
+				Clip {
+					ID = "Clip1",
+					Filename = "comp:\\LateNightNews\\foreground.crop.png",
+					FormatID = "PNGFormat",
+					StartFrame = -1,
+					LengthSetManually = true,
+					TrimIn = 0,
+					TrimOut = 0,
+					ExtendFirst = 0,
+					ExtendLast = 0,
+					Loop = 0,
+					AspectMode = 0,
+					Depth = 0,
+					TimeCode = 0,
+					GlobalStart = 0,
+					GlobalEnd = 0
+				}
+			},
+			Inputs = {
+				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
+			},
+			ViewInfo = OperatorInfo { Pos = { 175, 171 } },
+		},
+		Loader1 = Loader {
+			Clips = {
+				Clip {
+					ID = "Clip1",
+					Filename = "comp:\\LateNightNews\\background.png",
+					FormatID = "PNGFormat",
+					StartFrame = -1,
+					LengthSetManually = true,
+					TrimIn = 0,
+					TrimOut = 0,
+					ExtendFirst = 0,
+					ExtendLast = 0,
+					Loop = 0,
+					AspectMode = 0,
+					Depth = 0,
+					TimeCode = 0,
+					GlobalStart = 0,
+					GlobalEnd = 0
+				}
+			},
+			Inputs = {
+				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
+			},
+			ViewInfo = OperatorInfo { Pos = { 264, 49 } },
+		},
+		Dent1 = Dent {
+			Inputs = {
+				Type = Input { Value = 2, },
+				Center = Input { Value = { 0.490063782636033, 0.669638952286475 }, },
+				Size = Input { Value = 0.786, },
+				Strength = Input { Value = 0.151, },
+				Input = Input {
+					SourceOp = "Loader1",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 484, 53 } },
+		},
+		Crop1_1 = Crop {
+			Inputs = {
+				XOffset = Input { Value = 386, },
+				YOffset = Input { Value = 790, },
+				XSize = Input { Value = 2026, },
+				YSize = Input { Value = 608, },
+				Input = Input {
+					SourceOp = "Dent1",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 594, 62 } },
+		},
+		Merge1 = Merge {
+			Inputs = {
+				Background = Input {
+					SourceOp = "Background1",
+					Source = "Output",
+				},
+				Foreground = Input {
+					SourceOp = "Crop1_1",
+					Source = "Output",
+				},
+				Center = Input { Value = { 0.510257996270797, 0.215952047230717 }, },
+				PerformDepthMerge = Input { Value = 0, },
+			},
+			ViewInfo = OperatorInfo { Pos = { 822, 103 } },
+		},
+		Saver1_2_1 = Saver {
+			CtrlWZoom = false,
+			Inputs = {
+				ProcessWhenBlendIs00 = Input { Value = 0, },
+				Clip = Input {
+					Value = Clip {
+						Filename = "comp:LateNightPodstava.tga",
+						FormatID = "TargaFormat",
+						Length = 0,
+						Saving = true,
+						TrimIn = 0,
+						ExtendFirst = 0,
+						ExtendLast = 0,
+						Loop = 1,
+						AspectMode = 0,
+						Depth = 0,
+						TimeCode = 0,
+						GlobalStart = -2000000000,
+						GlobalEnd = 0
+					},
+				},
+				OutputFormat = Input { Value = FuID { "TargaFormat" }, },
+				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
+				Input = Input {
+					SourceOp = "Crop3",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 1182, -38 } },
+		},
+		Crop3 = Crop {
+			Inputs = {
+				XOffset = Input { Value = 1470, },
+				YOffset = Input { Value = 382, },
+				XSize = Input { Value = 91, },
+				YSize = Input { Value = 52, },
+				Input = Input {
+					SourceOp = "Loader1",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 487, -31 } },
+		},
+		Transform1 = Transform {
+			Inputs = {
+				FlipHoriz = Input { Value = 1, },
+				Input = Input {
+					SourceOp = "Loader2",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 297, 169 } },
+		},
+		Background2 = Background {
+			Inputs = {
+				GlobalOut = Input { Value = 600, },
+				Width = Input { Value = 1920, },
+				Height = Input { Value = 1080, },
+				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
+			},
+			ViewInfo = OperatorInfo { Pos = { 784, 34 } },
+		},
+		Background1 = Background {
+			Inputs = {
+				GlobalOut = Input { Value = 600, },
+				Width = Input { Value = 1920, },
+				Height = Input { Value = 1920, },
+				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
+				TopLeftRed = Input { Value = 0.854902029037476, },
+			},
+			ViewInfo = OperatorInfo { Pos = { 712, 103 } },
+		},
+		Merge2 = Merge {
+			Inputs = {
+				Background = Input {
+					SourceOp = "Merge1",
+					Source = "Output",
+				},
+				Foreground = Input {
+					SourceOp = "Background2",
+					Source = "Output",
+				},
+				PerformDepthMerge = Input { Value = 0, },
+				EffectMask = Input {
+					SourceOp = "Rectangle1",
+					Source = "Mask",
+				}
+			},
+			ViewInfo = OperatorInfo { Pos = { 932, 103 } },
+		},
+		Saver1_2 = Saver {
+			Inputs = {
+				ProcessWhenBlendIs00 = Input { Value = 0, },
+				Clip = Input {
+					Value = Clip {
+						Filename = "comp:LateNightBkgd.tga",
+						FormatID = "TargaFormat",
+						Length = 0,
+						Saving = true,
+						TrimIn = 0,
+						ExtendFirst = 0,
+						ExtendLast = 0,
+						Loop = 1,
+						AspectMode = 0,
+						Depth = 0,
+						TimeCode = 0,
+						GlobalStart = -2000000000,
+						GlobalEnd = 0
+					},
+				},
+				OutputFormat = Input { Value = FuID { "TargaFormat" }, },
+				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
+				Input = Input {
+					SourceOp = "Crop2",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 1204, 96 } },
+		},
+		Crop2 = Crop {
+			Inputs = {
+				XSize = Input { Value = 1920, },
+				YSize = Input { Value = 1500, },
+				Input = Input {
+					SourceOp = "Merge2",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 1042, 103 } },
+		},
+		Dissolve1 = Dissolve {
+			Transitions = {
+				[0] = "DFTWipe"
+			},
+			Inputs = {
+				Operation = Input { Value = FuID { "DFTWipe" }, },
+				Mix = Input { Value = 0.517, },
+				Background = Input {
+					SourceOp = "Transform1",
+					Source = "Output",
+				},
+				Foreground = Input {
+					SourceOp = "Loader2",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 376, 203 } },
+		},
+		Transform1_1 = Transform {
+			Inputs = {
+				FlipVert = Input { Value = 1, },
+				Center = Input { Value = { 0.5, 0.960317460317459 }, },
+				Input = Input {
+					SourceOp = "Dissolve1",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 465, 174 } },
+		},
+		Dissolve1_1 = Dissolve {
+			Transitions = {
+				[0] = "DFTWipe"
+			},
+			Inputs = {
+				Operation = Input { Value = FuID { "DFTWipe" }, },
+				Mix = Input { Value = 0.278, },
+				Background = Input {
+					SourceOp = "Dissolve1",
+					Source = "Output",
+				},
+				Foreground = Input {
+					SourceOp = "Transform1_1",
+					Source = "Output",
+				},
+				["DFTWipe.WipeStyle"] = Input { Value = 1, },
+				["DFTWipe.Softness"] = Input { Value = 0.141, },
+			},
+			ViewInfo = OperatorInfo { Pos = { 589, 205 } },
+		},
+		Rectangle1 = RectangleMask {
+			Inputs = {
+				MaskWidth = Input { Value = 1920, },
+				MaskHeight = Input { Value = 1080, },
+				PixelAspect = Input { Value = { 1, 1 }, },
+				ClippingMode = Input { Value = FuID { "None" }, },
+				Width = Input { Value = 1, },
+				Height = Input { Value = 0.01, },
+			},
+			ViewInfo = OperatorInfo { Pos = { 932, 70 } },
+		},
+		Saver1 = Saver {
+			Inputs = {
+				ProcessWhenBlendIs00 = Input { Value = 0, },
+				Clip = Input {
+					Value = Clip {
+						Filename = "comp:LateNightNohaStolu.tga",
+						FormatID = "TargaFormat",
+						Length = 0,
+						Saving = true,
+						TrimIn = 0,
+						ExtendFirst = 0,
+						ExtendLast = 0,
+						Loop = 1,
+						AspectMode = 0,
+						Depth = 0,
+						TimeCode = 0,
+						GlobalStart = -2000000000,
+						GlobalEnd = 0
+					},
+				},
+				OutputFormat = Input { Value = FuID { "TargaFormat" }, },
+				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
+				Input = Input {
+					SourceOp = "Crop1",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 1184, 188 } },
+		},
+		Crop1 = Crop {
+			Inputs = {
+				XOffset = Input { Value = 74, },
+				YOffset = Input { Value = 324, },
+				XSize = Input { Value = 971, },
+				YSize = Input { Value = 271, },
+				Input = Input {
+					SourceOp = "Dissolve1_1",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 700, 205 } },
+		}
+	},
+	Views = {
+		{
+			FrameTypeID = "ChildFrame",
+			Mode = 3,
+			LayoutPreset = 0,
+			Left = 0,
+			Top = 27,
+			Width = 1920,
+			Height = 1048,
+			Views = ordered() {
+				Main = MultiView {
+					Active = "Flow",
+					ViewList = ordered() {
+						Flow = "FlowView",
+						Console = "ConsoleView",
+						Timeline = "TimelineView",
+						Spline = "SplineEditorView",
+						Info = "InfoView",
+						Chat = "ChatView"
+					},
+					Flow = FlowView {
+						Flags = {
+							AutoHideNavigator = true,
+							AutoSnap = true,
+							RemoveRouters = true
+						},
+						NavigatorSize = { 200, 140 },
+						Direction = "Horizontal",
+						PipeStyle = "Direct",
+						Scale = 1,
+						Offset = { 10, 115 }
+					},
+					Timeline = TimelineView {
+						TreeControlState = {
+						},
+						DisplayMode = "All Tools",
+						ShowCurrentTimeTools = false,
+						Filter = "Show All",
+						ShowSelectedTools = false,
+						ShowAnimatedToolsOnly = false,
+						ShowEditBoxes = false,
+						KeyFrameView = {
+							Position = { Left = 150, Bottom = 343 },
+							ScaleX = 1.28654970760234,
+							OffsetX = -29.5906432748538,
+							OffsetY = 0,
+							AutoScaling = "scroll",
+							AutoSnapTo = "frame",
+							AutoSnapToGuidelines = false,
+							GuidelinesGrabEnabled = true,
+							GuidelinesSnapTo = "frame"
+						},
+						Spreadsheet = { LeftPos = 150, Visible = false }
+					},
+					Spline = SplineEditorView {
+						LeftPos = 256,
+						ScaleX = 0.2,
+						ScaleY = 0.00338983050847458,
+						OffsetX = -3.8,
+						OffsetY = 0,
+						AutoScaling = "scroll",
+						AutoSnapTo = "frame",
+						AutoSnapToGuidelines = false,
+						GuidelinesSnapTo = "frame",
+						ShowKeyMarkers = false,
+						IndependentHandles = false,
+						ShowNonSplineModifiers = false,
+						GuidelinesGrabEnabled = true,
+						ShowOneToolOnly = false,
+						ShowSelectedTools = false,
+						ShowAllInputs = false,
+						Filter = "Show All"
+					},
+				},
+				Controls = MultiView {
+					Active = "Tools",
+					ViewList = ordered() {
+						Tools = "ControlView",
+						Modifiers = "ModifierView"
+					},
+				},
+				Left = "PreviewContainer",
+				Right = "PreviewContainer",
+				Transport = "TransportView",
+				Time = "TimeView"
+			},
+			Layout = {
+				Columns = 2,
+				RatioX = 1,
+				RatioY = 1,
+				{
+					Rows = 3,
+					RatioX = 0.820365535248042,
+					RatioY = 0.00956022944550669,
+					{
+						Columns = 2,
+						RatioX = 1,
+						RatioY = 0.560576923076923,
+						{ ID = "Left", RatioX = 0.397321428571429, RatioY = 0.0102915951972556, Pop = true },
+						{ ID = "Right", RatioX = 0.602678571428571, Pop = true },
+						Pop = true
+					},
+					{ ID = "Main", RatioY = 0.383653846153846, Pop = true },
+					{ ID = "Time", SnapY = 56, Flat = true }
+				},
+				{
+					Rows = 2,
+					PixelX = 342,
+					{ ID = "Controls", RatioX = 1, RatioY = 1 },
+					{ ID = "Transport", FixedY = -2 }
+				}
+			}
+		}
+	},
+	Prefs = {
+		Comp = {
+			AutoSave = {
+				Delay = 180,
+			},
+			Memory = {
+				Render = {
+					SimultaneousBranching = true
+				},
+				Interactive = {
+					SimultaneousBranching = true,
+				}
+			},
+			NumberStyles = {
+				Color = 1,
+			},
+			Views = {
+				Right = {
+					Viewer = {
+					},
+					SideB = {
+						PrevCtrlInactiveColor = 4278255360,
+						PickW = 1,
+						PickH = 1,
+						PrevCtrlActiveColor = 4278190335,
+						Viewer = {
+							EnableLUTs = false,
+							LUTPlugin = "FusionViewLUT",
+							NearZ = 0,
+							FitMarginX = 0,
+							FitMarginType = 0,
+							FarZ = -1000,
+							FitMarginY = 0
+						}
+					},
+				},
+				Left = {
+					SideB = {
+						PrevCtrlInactiveColor = 4278255360,
+						PickW = 1,
+						PickH = 1,
+						PrevCtrlActiveColor = 4278190335,
+						Viewer = {
+							EnableLUTs = false,
+							LUTPlugin = "FusionViewLUT",
+							NearZ = 0,
+							FitMarginX = 0,
+							FitMarginType = 0,
+							FarZ = -1000,
+							FitMarginY = 0
+						}
+					},
+				},
+				View1 = {
+					PrevCtrlInactiveColor = 0,
+					PickW = 1,
+					PrevCtrlActiveColor = 0,
+					PickH = 1,
+					SideB = {
+						PrevCtrlInactiveColor = 4278255360,
+						PickW = 1,
+						PickH = 1,
+						PrevCtrlActiveColor = 4278190335,
+						Viewer = {
+							EnableLUTs = false,
+							LUTPlugin = "FusionViewLUT",
+							NearZ = 0,
+							FitMarginX = 0,
+							FitMarginType = 0,
+							FarZ = -1000,
+							FitMarginY = 0
+						}
+					},
+					AlwaysOnTop = true,
+					FullScreen = false
+				},
+			},
+			Preview = {
+				Scale = false,
+			},
+			FrameFormat = {
+				Rate = 25,
+				GuideRatio = 1.77777777777778,
+				TimeCodeType = 1,
+			},
+			LastFile = "E:\\vr-software\\Scenes\\TableShadow",
+			Unsorted = {
+				GlobalEnd = 600,
+				RenderSettings = {
+					Configs = {
+						Preview = {
+							StepRender = false,
+							PriorityClasses = "local",
+							CustomAspect = true,
+							StepSize = 5,
+							SizeType = 1,
+							CustomHeight = 160,
+							ShowSlaves = false,
+							CustomWidth = 200,
+							MotionBlur = true,
+							UpdateMode = "Some",
+							UseNetwork = false,
+							Quality = false
+						},
+						Final = {
+							StepRender = false,
+							PriorityClasses = "local",
+							CustomAspect = true,
+							StepSize = 5,
+							SizeType = 1,
+							CustomHeight = 160,
+							ShowSlaves = false,
+							CustomWidth = 200,
+							MotionBlur = true,
+							UpdateMode = "Some",
+							UseNetwork = false,
+							Quality = true
+						}
+					},
+					PreviewConfig = "Preview",
+					CurrentConfig = "Final"
+				}
+			},
+			AVI = {
+				Saver = {
+					Handler = 1397178700,
+				}
+			},
+			Tweaks = {
+				OpenCL = {
+					Enable = 0,
+					Caching = 0
+				}
+			},
+			Paths = {
+			},
+			QuickTime = {
+			},
+		}
+	}
+}
+
+ 

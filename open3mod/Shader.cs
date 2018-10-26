@@ -197,6 +197,18 @@ namespace open3mod
             GL.Uniform3(GetVariableLocation(name), v);
         }
 
+        public void SetInt2(string name, int i0, int i1)
+        {
+            BindIfNecessary();
+            GL.Uniform2(GetVariableLocation(name), i0, i1);
+        }
+
+        public void SetInt(string name, int i)
+        {
+            BindIfNecessary();
+            GL.Uniform1(GetVariableLocation(name), i);
+        }
+
         public void SetFloat(string name, float v)
         {
             BindIfNecessary();

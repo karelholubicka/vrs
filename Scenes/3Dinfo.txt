@@ -1,0 +1,3 @@
+Model vytvoøit v Blenderu 2.79
+Export jako FBX s 0,01 mìøítkem a Anim a NIT OFF,
+Y up a -Z forward
