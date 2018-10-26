@@ -47,7 +47,7 @@ namespace open3mod
     {
         public bool showTimeTrack = false;
         public string timeTracking = "";
-        public bool renderIO = false;
+        public bool renderIO = true;
 
         private readonly MainWindow _mainWindow;
         private readonly TextOverlay _textOverlay;
@@ -616,7 +616,7 @@ namespace open3mod
                 // _camera2Controller = ui.ActiveViews[(int)ui.ActiveViewIndex].ActiveCameraControllerForView();
                 _cameraController[activeCamera].SetScenePartMode(ScenePartMode.GreenScreen);
                 renderControl.SetRenderTarget((RenderControl.RenderTarget)((int)(RenderControl.RenderTarget.VideoCompat) + (int)GraphicsSettings.Default.RenderingBackend));
-                DrawVideoViewport(_cameraController[activeCamera], activeTab, Tab.ViewIndex.Index3);
+                DrawVideoViewport(_cameraController[activeCamera], activeTab);
                 renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoSSCompat);
                     //  renderControl.SetRenderTarget((RenderControl.RenderTarget)((int)(RenderControl.RenderTarget.VideoSSCompat) + (int)GraphicsSettings.Default.RenderingBackend));
 
@@ -624,19 +624,19 @@ namespace open3mod
                     GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, _canvasTexture, 0);
                     renderControl.CopyVideoFramebuffers(1, 2);//from MS to SS
                   //  renderControl.BindBuffers((4 + (int)GraphicsSettings.Default.RenderingBackend), 2);
-                    renderControl.BindBuffers();
+                    renderControl.ReBindBuffer(2);
 
                     //render frgd to FBO #2, move to SS#3 and move to texture
                     _cameraController[activeCamera].SetScenePartMode(ScenePartMode.Foreground);
                     renderControl.SetRenderTarget((RenderControl.RenderTarget)((int)(RenderControl.RenderTarget.VideoCompat) + (int)GraphicsSettings.Default.RenderingBackend));
-                    DrawVideoViewport(_cameraController[activeCamera], activeTab, Tab.ViewIndex.Index1);
+                    DrawVideoViewport(_cameraController[activeCamera], activeTab);
                     renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoSSCompat);
                     GL.BindTexture(TextureTarget.Texture2D, _foregroundTexture);
                     GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, _foregroundTexture, 0);
                     renderControl.CopyVideoFramebuffers(1, 2);//from MS to SS
                                                               //Bitmap testBmp = renderControl.ReadTextureTest();
-                                                              // testBmp.Dispose();
-                    renderControl.BindBuffers();
+                    renderControl.ReBindBuffer(2);
+                    // testBmp.Dispose();
                     timeTrack("14 - FGFin");
 
                     /*                  Bitmap compare = (Bitmap)Image.FromFile("e:\\vr-software\\REC\\10bit.bmp");
@@ -655,7 +655,7 @@ namespace open3mod
                     //render bkgd to #2
                     _cameraController[activeCamera].SetScenePartMode(ScenePartMode.Background);
                 renderControl.SetRenderTarget((RenderControl.RenderTarget)((int)(RenderControl.RenderTarget.VideoCompat) + (int)GraphicsSettings.Default.RenderingBackend));
-                DrawVideoViewport(_cameraController[activeCamera], activeTab, Tab.ViewIndex.Index2);
+                DrawVideoViewport(_cameraController[activeCamera], activeTab);
                 RenderControl.GLError("BgStart");
                 renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoSSCompat);
                 renderControl.CopyVideoFramebuffers(1, 2);//from MS to SS
@@ -738,9 +738,12 @@ namespace open3mod
                 GL.UseProgram(0);
                 RenderControl.GLError("BFRead");
 
-                renderControl.SetRenderTarget((RenderControl.RenderTarget)((int)(RenderControl.RenderTarget.VideoSSCompat) + (int)GraphicsSettings.Default.RenderingBackend));
+                    //and immediatelly start transfer to CPU memory / buffer
+
+
+                    renderControl.SetRenderTarget((RenderControl.RenderTarget)((int)(RenderControl.RenderTarget.VideoSSCompat) + (int)GraphicsSettings.Default.RenderingBackend));
                 GL.BindBuffer(BufferTarget.PixelPackBuffer, pixelPackBuffer[2 * 0 + 1 - shift]);
-                GL.ReadPixels(0, 0, NDISender.videoSizeX, NDISender.videoSizeY, OpenTK.Graphics.OpenGL.PixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)0);
+                    GL.ReadPixels(0, 0, NDISender.videoSizeX, NDISender.videoSizeY, OpenTK.Graphics.OpenGL.PixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)0);
                 GL.BindBuffer(BufferTarget.PixelPackBuffer, 0);
 
                 if (CoreSettings.CoreSettings.Default.SendNDI)
@@ -756,7 +759,7 @@ namespace open3mod
                 GL.BindTexture(TextureTarget.Texture2D, _compositeTexture);
                 GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, _compositeTexture, 0);
                 renderControl.CopyVideoFramebuffers(1, 2);
-                renderControl.BindBuffers();
+                renderControl.ReBindBuffer(2);
 
                 timeTrack("16 - Composite reread");
 
@@ -1346,6 +1349,7 @@ namespace open3mod
             {
                 //                renderControl.SetRenderTarget(RenderControl.RenderTarget.ScreenCompat);//returning from extra draw job may cause problem
                 GL.Viewport((int)(xs * w), (int)(ys * h), vw, vh);
+                RenderControl.GLError("RND0");
                 if ((view.GetScenePartMode() > ScenePartMode.All)&& renderIO)
                 {
                     renderControl.SetRenderTarget(RenderControl.RenderTarget.ScreenCore);
@@ -1354,7 +1358,7 @@ namespace open3mod
                     GL.BindTexture(TextureTarget.Texture2D, _cameraTexture[activeCamera]);
                     GL.ActiveTexture(TextureUnit.Texture3);
                     GL.BindTexture(TextureTarget.Texture2D, _foregroundTexture);
-
+                    RenderControl.GLError("RND1");
                     switch (view.GetScenePartMode())
                     {
                         case ScenePartMode.Camera: md = 3; break;
@@ -1365,6 +1369,7 @@ namespace open3mod
                             GL.BindTexture(TextureTarget.Texture2D, _compositeTexture);break;
                         default: break;
                     }
+                    RenderControl.GLError("RND2");
                     GL.Viewport((int)(xs * w), (int)(ys * h), vw, vh);
                     int _programChromakey = _shaderChromakey.Program;
                     GL.UseProgram(_programChromakey);
@@ -1443,16 +1448,18 @@ namespace open3mod
                     GL.Disable(EnableCap.Blend);
                     GL.DepthMask(true);
                     GL.UseProgram(0);
-                    RenderControl.GLError("BFRead");
+                    RenderControl.GLError("Rnd3");
 
                     return;
                 }
+                RenderControl.GLError("RND4");
                 DrawViewportColorsPre(active);
                 var aspectRatio = (float)vw / vh;
                 if (activeTab.ActiveScene != null)
                 {
                     DrawScene(activeTab.ActiveScene, aspectRatio, view, 0);//contains Video/Screen/Core/Compat switch and back
                 }
+                RenderControl.GLError("RND5");
                 if ((OpenVRInterface.EVRerror == EVRInitError.None) && (MainWindow.UiState.ShowVRModels))
                 {
                     var modelView = new Matrix4();
@@ -1507,66 +1514,55 @@ namespace open3mod
         /// <param name="view">Active cam controller for this viewport</param>
         /// <param name="activeTab">Scene to be drawn</param>
         /// <param name="active"></param>
-        private void DrawVideoViewport(ICameraController view, Tab activeTab, Tab.ViewIndex index)
+        private void DrawVideoViewport(ICameraController view, Tab activeTab)
         {
-            //return;
-            int bufIndex = (int)index;
-            if (bufIndex < NDISender.NDIchannels)
+            GL.DepthMask(true);
+            GL.Viewport(0, 0, NDISender.videoSizeX, NDISender.videoSizeY);
+            GL.ClearColor(BackgroundColor);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            var aspectRatio = (float)NDISender.videoSizeX / NDISender.videoSizeY;
+            if (activeTab.ActiveScene != null)
             {
-                GL.DepthMask(true);
-                GL.Viewport(0, 0, NDISender.videoSizeX, NDISender.videoSizeY);
-                GL.ClearColor(BackgroundColor);
-                GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-                var aspectRatio = (float)NDISender.videoSizeX/NDISender.videoSizeY;
-                if (activeTab.ActiveScene != null)
-                {
-                    DrawScene(activeTab.ActiveScene, aspectRatio, view, 1);
-                }
-             //   return;
+                DrawScene(activeTab.ActiveScene, aspectRatio, view, 1);
+            }
+            //   return;
 
-                if ((OpenVRInterface.EVRerror == EVRInitError.None) && (MainWindow.UiState.ShowVRModels))
+            if ((OpenVRInterface.EVRerror == EVRInitError.None) && (MainWindow.UiState.ShowVRModels))
+            {
+                var modelView = new Matrix4();
+                var modelPosition = new Matrix4();
+                for (uint i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; i++)
                 {
-                    var modelView = new Matrix4();
-                    var modelPosition = new Matrix4();
-                    for (uint i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; i++)
+                    modelPosition = OpenVRInterface.trackedPositions[i];
+                    modelView = modelPosition * view.GetViewNoOffset();
+                    _tracker.SetView(modelView);
+                    switch (OpenVR.System.GetTrackedDeviceClass(i))
+                    //  switch ((ETrackedDeviceClass)i) //just for testing when VR not available
                     {
-                        modelPosition = OpenVRInterface.trackedPositions[i];
-                        modelView = modelPosition * view.GetViewNoOffset();
-                        _tracker.SetView(modelView);
-                        switch (OpenVR.System.GetTrackedDeviceClass(i))
-                        //  switch ((ETrackedDeviceClass)i) //just for testing when VR not available
-                        {
-                            case ETrackedDeviceClass.HMD:
-                                if ((view.GetCameraMode() != CameraMode.HMD) && (_hmd != null)) DrawScene(_hmd, aspectRatio, _tracker, 0, true); //Do not draw when you see it in front of view
-                                break;
-                            case ETrackedDeviceClass.Controller:
-                                if ((OpenVRInterface.displayOrder[1] == i) && (view.GetCameraMode() == CameraMode.Cont1)) break;//Do not draw when you see it in front of view
-                                if ((OpenVRInterface.displayOrder[2] == i) && (view.GetCameraMode() == CameraMode.Cont2)) break;//Do not draw when you see it in front of view
-                                if (_controller != null) DrawScene(_controller, aspectRatio, _tracker, 0, true);
-                                modelPosition = OpenVRInterface.trackerToCamera[i] * OpenVRInterface.trackedPositions[i];
-                                modelView = modelPosition * view.GetViewNoOffset();
-                                _tracker.SetView(modelView);
-                                if (_camera != null) DrawScene(_camera, aspectRatio, _tracker, 0, true);
-                                break;
-                            case ETrackedDeviceClass.GenericTracker:
-                                if (_lighthouse != null) DrawScene(_lighthouse, aspectRatio, _tracker, 0, true);
-                                break;
-                            case ETrackedDeviceClass.TrackingReference:
-                                if (_lighthouse != null) DrawScene(_lighthouse, aspectRatio, _tracker, 0, true);
-                                break;
-                            default:
-                                //Debug.Assert(false);
-                                break;
-                        }
+                        case ETrackedDeviceClass.HMD:
+                            if ((view.GetCameraMode() != CameraMode.HMD) && (_hmd != null)) DrawScene(_hmd, aspectRatio, _tracker, 0, true); //Do not draw when you see it in front of view
+                            break;
+                        case ETrackedDeviceClass.Controller:
+                            if ((OpenVRInterface.displayOrder[1] == i) && (view.GetCameraMode() == CameraMode.Cont1)) break;//Do not draw when you see it in front of view
+                            if ((OpenVRInterface.displayOrder[2] == i) && (view.GetCameraMode() == CameraMode.Cont2)) break;//Do not draw when you see it in front of view
+                            if (_controller != null) DrawScene(_controller, aspectRatio, _tracker, 0, true);
+                            modelPosition = OpenVRInterface.trackerToCamera[i] * OpenVRInterface.trackedPositions[i];
+                            modelView = modelPosition * view.GetViewNoOffset();
+                            _tracker.SetView(modelView);
+                            if (_camera != null) DrawScene(_camera, aspectRatio, _tracker, 0, true);
+                            break;
+                        case ETrackedDeviceClass.GenericTracker:
+                            if (_lighthouse != null) DrawScene(_lighthouse, aspectRatio, _tracker, 0, true);
+                            break;
+                        case ETrackedDeviceClass.TrackingReference:
+                            if (_lighthouse != null) DrawScene(_lighthouse, aspectRatio, _tracker, 0, true);
+                            break;
+                        default:
+                            //Debug.Assert(false);
+                            break;
                     }
 
                 }
-
-                //and immediatelly start transfer to CPU memory / buffer
-                GL.BindBuffer(BufferTarget.PixelPackBuffer, pixelPackBuffer[2 * bufIndex + 1 - shift]);
-                GL.ReadPixels(0, 0, NDISender.videoSizeX, NDISender.videoSizeY, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, (IntPtr)0); // GPU do bufferu, jede OK
-                GL.BindBuffer(BufferTarget.PixelPackBuffer, 0);
-                //renderControl.SetRenderTarget(RenderControl.RenderTarget.ScreenCompat);
             }
         }
 
@@ -1672,7 +1668,8 @@ namespace open3mod
             }
             Debug.Assert(scene != null);
             GL.Viewport(CurrentViewport[0], CurrentViewport[1], CurrentViewport[2], CurrentViewport[3]);
-            scene.Render(MainWindow.UiState, view, this, toVideo, VRModel);
+            if (GraphicsSettings.Default.RenderingBackend == 0) toVideo = 0;//for GL2 we cannot use toVideoFlag, too slow then
+            scene.Render(MainWindow.UiState, view, this, toVideo , VRModel);
             GL.UseProgram(0);
             if (toVideo == 0)
             {

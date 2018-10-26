@@ -508,11 +508,11 @@ namespace open3mod
             }
             if (state.UseSceneLights && !VRModel)
             {
-                flags |= RenderFlags.UseSceneLights;
+               flags |= RenderFlags.UseSceneLights;
             }
             if (!state.UseSceneLights && !VRModel && toVideo == 0)
             {
-                flags |= RenderFlags.ShowLightDirection;
+               flags |= RenderFlags.ShowLightDirection;
             }
 
             flags |= RenderFlags.ShowGhosts;

@@ -168,9 +168,9 @@
             this.autoStartCheckBox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "AutoStart", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.autoStartCheckBox.Location = new System.Drawing.Point(21, 303);
             this.autoStartCheckBox.Name = "autoStartCheckBox";
-            this.autoStartCheckBox.Size = new System.Drawing.Size(157, 17);
+            this.autoStartCheckBox.Size = new System.Drawing.Size(207, 17);
             this.autoStartCheckBox.TabIndex = 7;
-            this.autoStartCheckBox.Text = "Autostart IN+OUT+Genlock";
+            this.autoStartCheckBox.Text = "Autostart IN + OUT + Input Sync Lock";
             this.autoStartCheckBox.UseVisualStyleBackColor = true;
             this.autoStartCheckBox.CheckedChanged += new System.EventHandler(this.autoStartCheckBox_CheckedChanged);
             // 
@@ -182,9 +182,9 @@
             this.genlockCheckBox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "Genlock", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.genlockCheckBox.Location = new System.Drawing.Point(21, 264);
             this.genlockCheckBox.Name = "genlockCheckBox";
-            this.genlockCheckBox.Size = new System.Drawing.Size(105, 17);
+            this.genlockCheckBox.Size = new System.Drawing.Size(116, 17);
             this.genlockCheckBox.TabIndex = 6;
-            this.genlockCheckBox.Text = "Genlock to Input";
+            this.genlockCheckBox.Text = "Lock to Input Sync";
             this.genlockCheckBox.UseVisualStyleBackColor = true;
             // 
             // KeepTimingCheckBox

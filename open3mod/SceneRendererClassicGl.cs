@@ -244,7 +244,7 @@ namespace open3mod
                     break;
                 default: break;//at other modes we do not render anything
             }
-
+            if (flags.HasFlag(RenderFlags.ShowNormals)) { ErrorCode err = GL.GetError(); } //catch some error from normals rendering
             GL.PopMatrix();
             // always switch back to FILL
             Owner.MaterialMapper.EndScene(renderer);
