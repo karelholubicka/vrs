@@ -276,7 +276,7 @@ void main(void)
 	vec4 mask = texelFetch(iMask, texPos, 0);
 
 	vec4 foreground = texelFetch(iForeground, texPos, 0);
-    //  mask = vec4(0.0,0.0,0.0,1.0);
+    mask = vec4(0.0,0.0,0.0,1.0); //mask switched off
 
 	fragColor = vec4(0.0,0.0,0.0,0.0);
     fragColor = vec4(color,alpha);
@@ -307,11 +307,11 @@ void main(void)
 	{
         fragColor = vec4(fragColor.rgb * fragColor.a*mask.a, fragColor.a*mask.a); // masking + alpha multiply
      	vec4 foregroundOpaque = vec4(foreground.rgb, 1.0);
-	    fragColor = mix(fragColor, foregroundOpaque, foreground.a);//foreground add
+	    fragColor = mix(fragColor, foregroundOpaque, foreground.a);    //foreground add
         if (fragColor.a != 0.0f) fragColor = vec4(fragColor.rgb / fragColor.a, sqrt(fragColor.a));//divide alpha
 	}
 
-    if (iMode == 1) 
+    if (iMode == 1) //force key over black
 	{
         vec4 black = vec4(0.0,0.0,0.0,1.0);
 	    fragColor = mix(black,fragColor, fragColor.a);//key over black
@@ -325,8 +325,7 @@ void main(void)
     //fragColor = vs_color;
     //fragColor = texelFetch(iYUYVtex, texPos, 0); //direct YUYV camera source
 	//fragColor = vec4(color, 1.0);
-//    if (texPos.x < 800)  fragColor = camera2;
-//    if (texPos.x > 900)  fragColor = camera;
+    //   if (texPos.x > 960)  fragColor = camera;
 
 
 	}

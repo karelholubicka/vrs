@@ -611,38 +611,27 @@ namespace open3mod
                     timeTrack("10 - Tex3Fin");
                 }
                 if (renderIO)
-                { 
-                // render canvas to #2 and texture (no lighting??) 
-                // _camera2Controller = ui.ActiveViews[(int)ui.ActiveViewIndex].ActiveCameraControllerForView();
-                _cameraController[activeCamera].SetScenePartMode(ScenePartMode.GreenScreen);
-                renderControl.SetRenderTarget((RenderControl.RenderTarget)((int)(RenderControl.RenderTarget.VideoCompat) + (int)GraphicsSettings.Default.RenderingBackend));
+                {
                     GL.Viewport(0, 0, NDISender.videoSizeX, NDISender.videoSizeY);
-
-                    DrawVideoViewport(_cameraController[activeCamera], activeTab);
-                renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoSSCompat);
-                    //  renderControl.SetRenderTarget((RenderControl.RenderTarget)((int)(RenderControl.RenderTarget.VideoSSCompat) + (int)GraphicsSettings.Default.RenderingBackend));
-
+                    //render canvas to FBO #2, move to SS#3 and move to texture
+                    renderingController.SetScenePartMode(ScenePartMode.GreenScreen);
+                    DrawVideoViewport(renderingController, activeTab);
+                    renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoSSCompat);
                     GL.BindTexture(TextureTarget.Texture2D, _canvasTexture);
                     GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, _canvasTexture, 0);
                     renderControl.CopyVideoFramebuffers(1, 2);//from MS to SS
-                  //  renderControl.BindBuffers((4 + (int)GraphicsSettings.Default.RenderingBackend), 2);
                     renderControl.ReBindBuffer(2);
 
                     //render frgd to FBO #2, move to SS#3 and move to texture
-                    _cameraController[activeCamera].SetScenePartMode(ScenePartMode.Foreground);
-                    renderControl.SetRenderTarget((RenderControl.RenderTarget)((int)(RenderControl.RenderTarget.VideoCompat) + (int)GraphicsSettings.Default.RenderingBackend));
-                    GL.Viewport(0, 0, NDISender.videoSizeX, NDISender.videoSizeY);
-                    DrawVideoViewport(_cameraController[activeCamera], activeTab);
-                    GL.Viewport(0, 0, NDISender.videoSizeX, NDISender.videoSizeY);
-                    DrawVRModels(_cameraController[activeCamera], (float)NDISender.videoSizeX / NDISender.videoSizeY, 1);
-
+                    renderingController.SetScenePartMode(ScenePartMode.Foreground);
+                    DrawVideoViewport(renderingController, activeTab);
                     renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoSSCompat);
                     GL.BindTexture(TextureTarget.Texture2D, _foregroundTexture);
                     GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, _foregroundTexture, 0);
                     renderControl.CopyVideoFramebuffers(1, 2);//from MS to SS
-                                                              //Bitmap testBmp = renderControl.ReadTextureTest();
+                   // Bitmap testBmp = renderControl.ReadVideoTextureTest();
+                   // testBmp.Dispose();
                     renderControl.ReBindBuffer(2);
-                    // testBmp.Dispose();
                     timeTrack("14 - FGFin");
 
                     /*                  Bitmap compare = (Bitmap)Image.FromFile("e:\\vr-software\\REC\\10bit.bmp");
@@ -659,99 +648,43 @@ namespace open3mod
 
                         */
                     //render bkgd to #2
-                    _cameraController[activeCamera].SetScenePartMode(ScenePartMode.Background);
-                renderControl.SetRenderTarget((RenderControl.RenderTarget)((int)(RenderControl.RenderTarget.VideoCompat) + (int)GraphicsSettings.Default.RenderingBackend));
-                DrawVideoViewport(_cameraController[activeCamera], activeTab);
-                RenderControl.GLError("BgStart");
-                renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoSSCompat);
-                renderControl.CopyVideoFramebuffers(1, 2);//from MS to SS
-                renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoSSCore);
+                    RenderControl.GLError("BgStart");
+                    renderingController.SetScenePartMode(ScenePartMode.Background);
+                    renderControl.SetRenderTarget((RenderControl.RenderTarget)((int)(RenderControl.RenderTarget.VideoCompat) + (int)GraphicsSettings.Default.RenderingBackend));
+                    DrawVideoViewport(renderingController, activeTab);
+                    renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoSSCompat);
+                    renderControl.CopyVideoFramebuffers(1, 2);//from MS to SS
+                    timeTrack("15 - BGFin");
 
-                    RenderControl.GLError("SwitchToCore1");
-                // and chromakey+fgd over
-                timeTrack("15 - BGFin");
-
-                int _programChromakey = _shaderChromakey.Program;
-                GL.UseProgram(_programChromakey);
+                    // and chromakey+fgd over
+                    renderingController.SetScenePartMode(ScenePartMode.Composite);
+                    renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoSSCore);
                     GL.Viewport(0, 0, NDISender.videoSizeX, NDISender.videoSizeY);
-                    Matrix4 identity = Matrix4.Identity;
-                GL.UniformMatrix4(20, false, ref identity);
-                GL.UniformMatrix4(21, false, ref identity);
-                    //keying live + tato textura - z ní alfa
-
-                    Vector3 bgc = new Vector3(((float)GraphicsSettings.Default.KeyingColorH) / 360, ((float)GraphicsSettings.Default.KeyingColorS) / 100, ((float)GraphicsSettings.Default.KeyingColorV / 100)); //90,150,80 - 165,105,175
-                Vector3 wk = new Vector3(8.0f, 2.0f, (float)GraphicsSettings.Default.KeyingVSensitivity / 50);
-                float tk = 1.5f * ((100 - (float)GraphicsSettings.Default.KeyingSoftness) / 50);
-                float sensit = ((float)GraphicsSettings.Default.KeyingTreshold) / 25 + tk;
-                    wk = wk * sensit;
-                    int blur = GraphicsSettings.Default.KeyingMatteBlur / 10;
-                    int md = 0; //normal composition
-
-                    float pc = ((float)GraphicsSettings.Default.CancelColorPower) / 100;
-                GL.ActiveTexture(TextureUnit.Texture0);
-                GL.BindTexture(TextureTarget.Texture2D, _canvasTexture);
-                GL.ActiveTexture(TextureUnit.Texture1);
-                GL.BindTexture(TextureTarget.Texture2D, _cameraTexture[activeCamera]);
-                GL.ActiveTexture(TextureUnit.Texture2);
-                GL.BindTexture(TextureTarget.Texture2D, _cameraTexture[3 - activeCamera]);
-                GL.ActiveTexture(TextureUnit.Texture3);
-                GL.BindTexture(TextureTarget.Texture2D, _foregroundTexture);
-                    _shaderChromakey.SetInt("iMask", 0);
-                    _shaderChromakey.SetInt("iYUYVtex", 1);
-                    _shaderChromakey.SetInt("iYUYVtex2", 2);
-                    _shaderChromakey.SetInt("iForeground", 3);
-                    _shaderChromakey.SetInt2("iViewportSize", NDISender.videoSizeX, NDISender.videoSizeY);
-                    _shaderChromakey.SetInt2("iViewportStart", 0, 0);
-                    _shaderChromakey.SetVec3("iBackgroundColorHSV", bgc);
-
-                    _shaderChromakey.SetVec3("iWeightsKeying", wk);
-                    _shaderChromakey.SetFloat("iTresholdKeying", tk);
-                    _shaderChromakey.SetFloat("iPowerCanceling", pc);
-                    _shaderChromakey.SetInt("iMode", md);
-                    _shaderChromakey.SetInt("iMatteBlur", blur);
-                    if (GraphicsSettings.Default.CancelColorRange)
-                        _shaderChromakey.SetInt("iWellDone", 1);
-                    else
-                        _shaderChromakey.SetInt("iWellDone", 0);
-                    //GL.VertexAttrib1(2, (float)_time);
-                    GL.Enable(EnableCap.Blend);
-                GL.BlendFuncSeparate(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha, BlendingFactorSrc.SrcAlpha, BlendingFactorDest.One);
-                GL.DepthMask(false);
-                GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
-                foreach (var renderObject in _renderObjects)
-                {
-                    renderObject.Bind();
-                    renderObject.Render();
-                }
-                GL.Disable(EnableCap.Blend);
-                GL.DepthMask(true);
-                GL.UseProgram(0);
-                RenderControl.GLError("BFRead");
+                    DrawChromakey(renderingController, false);
+                    RenderControl.GLError(" 16 - ColorKeyed+FG");
 
                     //and immediatelly start transfer to CPU memory / buffer
-
-
                     renderControl.SetRenderTarget((RenderControl.RenderTarget)((int)(RenderControl.RenderTarget.VideoSSCompat) + (int)GraphicsSettings.Default.RenderingBackend));
-                GL.BindBuffer(BufferTarget.PixelPackBuffer, pixelPackBuffer[2 * 0 + 1 - shift]);
+                    GL.BindBuffer(BufferTarget.PixelPackBuffer, pixelPackBuffer[2 * 0 + 1 - shift]);
                     GL.ReadPixels(0, 0, NDISender.videoSizeX, NDISender.videoSizeY, OpenTK.Graphics.OpenGL.PixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)0);
-                GL.BindBuffer(BufferTarget.PixelPackBuffer, 0);
+                    GL.BindBuffer(BufferTarget.PixelPackBuffer, 0);
 
-                if (CoreSettings.CoreSettings.Default.SendNDI)
-                {
-                    GL.BindBuffer(BufferTarget.PixelPackBuffer, pixelPackBuffer[2 * 1 + 1 - shift]);
-                    GL.ReadPixels(0, 0, NDISender.videoSizeX, NDISender.videoSizeY, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, (IntPtr)0);
-                    GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
-                }
+                    if (CoreSettings.CoreSettings.Default.SendNDI)
+                    {
+                        GL.BindBuffer(BufferTarget.PixelPackBuffer, pixelPackBuffer[2 * 1 + 1 - shift]);
+                        GL.ReadPixels(0, 0, NDISender.videoSizeX, NDISender.videoSizeY, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, (IntPtr)0);
+                        GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
+                    }
 
                     renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoSSCore);
                     renderControl.CopyVideoFramebuffers(2, 1);
-                renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoSSCore);
-                GL.BindTexture(TextureTarget.Texture2D, _compositeTexture);
-                GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, _compositeTexture, 0);
-                renderControl.CopyVideoFramebuffers(1, 2);
-                renderControl.ReBindBuffer(2);
+                    renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoSSCore);
+                    GL.BindTexture(TextureTarget.Texture2D, _compositeTexture);
+                    GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, _compositeTexture, 0);
+                    renderControl.CopyVideoFramebuffers(1, 2);
+                    renderControl.ReBindBuffer(2);
 
-                timeTrack("16 - Composite reread");
+                    timeTrack("16 - Composite reread");
 
                     // Bitmap testBmp = renderControl.ReadVideoTextureTest();
                     // testBmp.Dispose();
@@ -1050,8 +983,10 @@ namespace open3mod
             {
                 _hudDirty = true;
             }
+            if (ui.ActiveCameraControllerForView(_hoverViewIndex).GetScenePartMode() > ScenePartMode.All) return; //Camera/Keying/Composite mode - fixed controller
 
-            bool hudViewIsActive = _hoverViewIndex == ui.ActiveViewIndex;
+
+                bool hudViewIsActive = _hoverViewIndex == ui.ActiveViewIndex;
             if (hudViewIsActive != _hudViewWasActive)
             {
                 _hudDirty = true;
@@ -1337,105 +1272,111 @@ namespace open3mod
             var vh = (int)((ye - ys) * h);
             if ((vw != 0) && (vh != 0)) //do not bother with "invisible" viewports
             {
-                //                renderControl.SetRenderTarget(RenderControl.RenderTarget.ScreenCompat);//returning from extra draw job may cause problem
+                //renderControl.SetRenderTarget(RenderControl.RenderTarget.ScreenCompat);//returning from extra draw job may cause problem
                 GL.Viewport((int)(xs * w), (int)(ys * h), vw, vh);
-                RenderControl.GLError("RND0");
                 if ((view.GetScenePartMode() > ScenePartMode.All)&& renderIO)
                 {
                     renderControl.SetRenderTarget(RenderControl.RenderTarget.ScreenCore);
-                    int md = 0;
-                    GL.ActiveTexture(TextureUnit.Texture1);
-                    GL.BindTexture(TextureTarget.Texture2D, _cameraTexture[activeCamera]);
-                    GL.ActiveTexture(TextureUnit.Texture3);
-                    GL.BindTexture(TextureTarget.Texture2D, _foregroundTexture);
-                    RenderControl.GLError("RND1");
-                    switch (view.GetScenePartMode())
-                    {
-                        case ScenePartMode.Camera: md = 3; break;
-                        case ScenePartMode.CameraCancelColor: md = 2; break;
-                        case ScenePartMode.Keying: md = 1; break; //render red first?
-                        case ScenePartMode.Composite: md = 0;//and replace foreground with composite
-                            GL.ActiveTexture(TextureUnit.Texture3);
-                            GL.BindTexture(TextureTarget.Texture2D, _compositeTexture);break;
-                        default: break;
-                    }
-                    RenderControl.GLError("RND2");
-                    GL.Viewport((int)(xs * w), (int)(ys * h), vw, vh);
-                    int _programChromakey = _shaderChromakey.Program;
-                    GL.UseProgram(_programChromakey);
-                    Matrix4 identity = Matrix4.Identity;
-                    GL.UniformMatrix4(20, false, ref identity);
-                    GL.UniformMatrix4(21, false, ref identity);
-                    //keying live + tato textura - z ní alfa
-
-                    var cs = new Size(vw, vh);
-                        if ((float)cs.Width / cs.Height > (float)16 / 9)
-                        {
-                            cs.Width = (int)((float)cs.Height * 16 / 9);
-                        }
-                        else
-                        {
-                            cs.Height = (int)((float)cs.Width * 9 / 16);
-                        }
-                    int dw = (vw - cs.Width) / 2 + (int)(xs * w);
-                    int dh = (vh - cs.Height) / 2 +  (int)(ys * h); 
-                    Vector3 bgc = new Vector3(((float)GraphicsSettings.Default.KeyingColorH) / 360, ((float)GraphicsSettings.Default.KeyingColorS) / 100, ((float)GraphicsSettings.Default.KeyingColorV / 100)); //90,150,80 - 165,105,175
-                    Vector3 wk = new Vector3(8.0f, 2.0f, (float)GraphicsSettings.Default.KeyingVSensitivity / 50);
-                    float tk = 1.5f * ((100 - (float)GraphicsSettings.Default.KeyingSoftness) / 50);
-                    float sensit = ((float)GraphicsSettings.Default.KeyingTreshold) / 25 + tk;
-                    wk = wk * sensit;
-                    int blur = GraphicsSettings.Default.KeyingMatteBlur / 10;
-
-                    float pc = ((float)GraphicsSettings.Default.CancelColorPower) / 100;
-                    GL.ActiveTexture(TextureUnit.Texture0);
-                    GL.BindTexture(TextureTarget.Texture2D, _canvasTexture);
-                    GL.ActiveTexture(TextureUnit.Texture2);
-                    GL.BindTexture(TextureTarget.Texture2D, _cameraTexture[3 - activeCamera]);
-
-                    _shaderChromakey.SetInt("iMask", 0);
-                    _shaderChromakey.SetInt("iYUYVtex", 1);
-                    _shaderChromakey.SetInt("iYUYVtex2", 2);
-                    _shaderChromakey.SetInt("iForeground", 3);
-                    _shaderChromakey.SetInt2("iViewportSize", cs.Width, cs.Height);
-                    _shaderChromakey.SetInt2("iViewportStart", dw, dh);
-                    _shaderChromakey.SetVec3("iBackgroundColorHSV", bgc);
-                    _shaderChromakey.SetVec3("iWeightsKeying", wk);
-                    _shaderChromakey.SetFloat("iTresholdKeying", tk);
-                    _shaderChromakey.SetFloat("iPowerCanceling", pc);
-                    _shaderChromakey.SetInt("iMode", md);
-                    _shaderChromakey.SetInt("iMatteBlur", blur);
-                    if (GraphicsSettings.Default.CancelColorRange)
-                        _shaderChromakey.SetInt("iWellDone", 1);
-                    else
-                        _shaderChromakey.SetInt("iWellDone", 0);
-
-                    //GL.VertexAttrib1(2, (float)_time);
-                    GL.Enable(EnableCap.Blend);
-                    GL.BlendFuncSeparate(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha, BlendingFactorSrc.SrcAlpha, BlendingFactorDest.One);
-                    GL.DepthMask(false);
-                    GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
-                    foreach (var renderObject in _renderObjects)
-                    {
-                        renderObject.Bind();
-                        renderObject.Render();
-                    }
-                    GL.Disable(EnableCap.Blend);
-                    GL.DepthMask(true);
-                    GL.UseProgram(0);
-                    RenderControl.GLError("Rnd3");
-
-                    return;
+                    DrawChromakey(view, true);
+                    if ((OpenVRInterface.EVRerror == EVRInitError.None) && (MainWindow.UiState.ShowVRModels)) DrawVRModels(_cameraController[activeCamera]);
                 }
-                RenderControl.GLError("RND4");
-                DrawViewportColorsPre(active);
-                var aspectRatio = (float)vw / vh;
-                if (activeTab.ActiveScene != null)
+                else
                 {
-                    DrawScene(activeTab.ActiveScene, aspectRatio, view, 0);//contains Video/Screen/Core/Compat switch and back
+                    DrawViewportColorsPre(active);
+                    if (activeTab.ActiveScene != null)
+                    {
+                        DrawScene(activeTab.ActiveScene, view, 0);//contains Video/Screen/Core/Compat switch and back
+                    }
+                    if ((OpenVRInterface.EVRerror == EVRInitError.None) && (MainWindow.UiState.ShowVRModels)) DrawVRModels(view);
                 }
-                RenderControl.GLError("RND5");
-                if ((OpenVRInterface.EVRerror == EVRInitError.None) && (MainWindow.UiState.ShowVRModels)) DrawVRModels(view, aspectRatio, 0);
+                RenderControl.GLError("ViewportEnd");
             }
+        }
+
+        public void DrawChromakey(ICameraController view, bool useCompositeTexture)
+        {
+            //we expect viewport size, view part+mode & video/screen context already being set
+            int md = 0;
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, _canvasTexture);
+            GL.ActiveTexture(TextureUnit.Texture1);
+            GL.BindTexture(TextureTarget.Texture2D, _cameraTexture[activeCamera]);
+            GL.ActiveTexture(TextureUnit.Texture2);
+            GL.BindTexture(TextureTarget.Texture2D, _cameraTexture[3 - activeCamera]);
+            GL.ActiveTexture(TextureUnit.Texture3);
+            GL.BindTexture(TextureTarget.Texture2D, _foregroundTexture);
+            switch (view.GetScenePartMode())
+            {
+                case ScenePartMode.Camera: md = 3; break;
+                case ScenePartMode.CameraCancelColor: md = 2; break;
+                case ScenePartMode.Keying: md = 1; break; 
+                case ScenePartMode.Composite:
+                    md = 0;
+                    if (useCompositeTexture)
+                    { //replace foreground with composite - overlays full viewport
+                      GL.ActiveTexture(TextureUnit.Texture3);
+                      GL.BindTexture(TextureTarget.Texture2D, _compositeTexture);
+                    }
+                    break;
+                default: break;
+            }
+            int _programChromakey = _shaderChromakey.Program;
+            GL.UseProgram(_programChromakey);
+            Matrix4 identity = Matrix4.Identity;
+            GL.UniformMatrix4(20, false, ref identity);
+            GL.UniformMatrix4(21, false, ref identity);
+
+            int[] CurrentViewport = new int[4];
+            GL.GetInteger(GetPName.Viewport, CurrentViewport);
+            var cs = new Size(CurrentViewport[2], CurrentViewport[3]);
+            if ((float)cs.Width / cs.Height > (float)16 / 9)
+            {
+                cs.Width = (int)((float)cs.Height * 16 / 9);
+            }
+            else
+            {
+                cs.Height = (int)((float)cs.Width * 9 / 16);
+            }
+            int dw = (CurrentViewport[2] - cs.Width) / 2 + CurrentViewport[0];
+            int dh = (CurrentViewport[3] - cs.Height) / 2 + CurrentViewport[1];
+            Vector3 bgc = new Vector3(((float)GraphicsSettings.Default.KeyingColorH) / 360, ((float)GraphicsSettings.Default.KeyingColorS) / 100, ((float)GraphicsSettings.Default.KeyingColorV / 100)); //90,150,80 - 165,105,175
+            Vector3 wk = new Vector3(8.0f, 2.0f, (float)GraphicsSettings.Default.KeyingVSensitivity / 50);
+            float tk = (100 - (float)GraphicsSettings.Default.KeyingSoftness) / 50;
+            float sensit = ((float)GraphicsSettings.Default.KeyingTreshold) / 50 + tk/3;
+            wk = wk * sensit;
+            int blur = GraphicsSettings.Default.KeyingMatteBlur / 20;
+            float pc = ((float)GraphicsSettings.Default.CancelColorPower) / 100;
+
+            _shaderChromakey.SetInt("iMask", 0);
+            _shaderChromakey.SetInt("iYUYVtex", 1);
+            _shaderChromakey.SetInt("iYUYVtex2", 2);
+            _shaderChromakey.SetInt("iForeground", 3);
+            _shaderChromakey.SetInt2("iViewportSize", cs.Width, cs.Height);
+            _shaderChromakey.SetInt2("iViewportStart", dw, dh);
+            _shaderChromakey.SetVec3("iBackgroundColorHSV", bgc);
+            _shaderChromakey.SetVec3("iWeightsKeying", wk);
+            _shaderChromakey.SetFloat("iTresholdKeying", tk);
+            _shaderChromakey.SetFloat("iPowerCanceling", pc);
+            _shaderChromakey.SetInt("iMode", md);
+            _shaderChromakey.SetInt("iMatteBlur", blur);
+            if (GraphicsSettings.Default.CancelColorRange)
+                _shaderChromakey.SetInt("iWellDone", 1);
+            else
+                _shaderChromakey.SetInt("iWellDone", 0);
+
+            //GL.VertexAttrib1(2, (float)_time);
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFuncSeparate(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha, BlendingFactorSrc.SrcAlpha, BlendingFactorDest.One);
+            GL.DepthMask(false);
+            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
+            foreach (var renderObject in _renderObjects)
+            {
+                renderObject.Bind();
+                renderObject.Render();
+            }
+            GL.Disable(EnableCap.Blend);
+            GL.DepthMask(true);
+            GL.UseProgram(0);
         }
 
         public void RecreateRenderingBackend()
@@ -1454,48 +1395,61 @@ namespace open3mod
         /// <param name="active"></param>
         private void DrawVideoViewport(ICameraController view, Tab activeTab)
         {
+            int sw = (int)GraphicsSettings.Default.RenderingBackend + 2;//we must select proper context to set and clean it
+            switch (sw)
+            {
+                case 2:
+                    renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoCompat);
+                    break;
+                case 3:
+                    renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoCore);
+                    break;
+            }
             GL.DepthMask(true);
             GL.Viewport(0, 0, NDISender.videoSizeX, NDISender.videoSizeY);
             GL.ClearColor(BackgroundColor);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            var aspectRatio = (float)NDISender.videoSizeX / NDISender.videoSizeY;
             if (activeTab.ActiveScene != null)
             {
-                DrawScene(activeTab.ActiveScene, aspectRatio, view, 1);
+                DrawScene(activeTab.ActiveScene, view, 1);
             }
         }
 
-        private void DrawVRModels(ICameraController view, float aspectRatio, int toVideo)
+        private void DrawVRModels(ICameraController view)
         {
             {
                 if (_tracker == null) return;
+                if  (OpenVR.System == null) return;
                 var modelView = new Matrix4();
                 var modelPosition = new Matrix4();
+                int toVideo = 0;
                 for (uint i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; i++)
                 {
+
                     modelPosition = OpenVRInterface.trackedPositions[i];
                     modelView = modelPosition * view.GetViewNoOffset();
                     _tracker.SetView(modelView);
+                    _tracker.SetParam(view.GetFOV(), ScenePartMode.All, CameraMode.HMD);
                     switch (OpenVR.System.GetTrackedDeviceClass(i))
                     //  switch ((ETrackedDeviceClass)i) //just for testing when VR not available
                     {
                         case ETrackedDeviceClass.HMD:
-                            if ((view.GetCameraMode() != CameraMode.HMD) && (_hmd != null)) DrawScene(_hmd, aspectRatio, _tracker, toVideo, true); //Do not draw when you see it in front of view
+                            if ((view.GetCameraMode() != CameraMode.HMD) && (_hmd != null)) DrawScene(_hmd, _tracker, toVideo, true); //Do not draw when you see it in front of view
                             break;
                         case ETrackedDeviceClass.Controller:
                             if ((OpenVRInterface.displayOrder[1] == i) && (view.GetCameraMode() == CameraMode.Cont1)) break;//Do not draw when you see it in front of view
                             if ((OpenVRInterface.displayOrder[2] == i) && (view.GetCameraMode() == CameraMode.Cont2)) break;//Do not draw when you see it in front of view
-                            if (_controller != null) DrawScene(_controller, aspectRatio, _tracker, toVideo, true);
+                            if (_controller != null) DrawScene(_controller, _tracker, toVideo, true);
                             modelPosition = OpenVRInterface.trackerToCamera[i] * OpenVRInterface.trackedPositions[i];
                             modelView = modelPosition * view.GetViewNoOffset();
                             _tracker.SetView(modelView);
-                            if (_camera != null) DrawScene(_camera, aspectRatio, _tracker, toVideo, true);
+                            if (_camera != null) DrawScene(_camera, _tracker, toVideo, true);
                             break;
                         case ETrackedDeviceClass.GenericTracker:
-                            if (_lighthouse != null) DrawScene(_lighthouse, aspectRatio, _tracker, toVideo, true);
+                            if (_lighthouse != null) DrawScene(_lighthouse, _tracker, toVideo, true);
                             break;
                         case ETrackedDeviceClass.TrackingReference:
-                            if (_lighthouse != null) DrawScene(_lighthouse, aspectRatio, _tracker, toVideo, true);
+                            if (_lighthouse != null) DrawScene(_lighthouse, _tracker, toVideo, true);
                             break;
                         default:
                             //Debug.Assert(false);
@@ -1532,7 +1486,6 @@ namespace open3mod
             GL.LoadIdentity();
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
-
             // paint the active viewport in a slightly different shade of gray,
             // overwriting the initial background color.
             GL.Color4(ActiveViewColor);
@@ -1576,47 +1529,28 @@ namespace open3mod
         }
 
 
-        private void DrawScene(Scene scene, float aspectRatio, ICameraController view, int toVideo = 0, bool VRModel = false)
+        private void DrawScene(Scene scene, ICameraController view, int toVideo = 0, bool VRModel = false)
         {
-//depth mask??
             int sw = (int)GraphicsSettings.Default.RenderingBackend + 2 * (int)toVideo;
-            // set a proper perspective matrix for rendering
-            Matrix4 perspective = Matrix4.CreatePerspectiveFieldOfView(view.GetFOV(), aspectRatio, zNear, zFar);
-            int[] CurrentViewport = new int[4];
-            GL.GetInteger(GetPName.Viewport, CurrentViewport);
-
             switch (sw)
             {
                 case 0:
                     renderControl.SetRenderTarget(RenderControl.RenderTarget.ScreenCompat);
-                    GL.MatrixMode(MatrixMode.Projection);
-                    GL.LoadMatrix(ref perspective);
                     break;
                 case 1:
                     renderControl.SetRenderTarget(RenderControl.RenderTarget.ScreenCore);
                     break;
                 case 2:
                     renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoCompat);
-                    GL.MatrixMode(MatrixMode.Projection);
-                    GL.LoadMatrix(ref perspective);
                     break;
                 case 3:
                     renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoCore);
                     break;
             }
             Debug.Assert(scene != null);
-            GL.Viewport(CurrentViewport[0], CurrentViewport[1], CurrentViewport[2], CurrentViewport[3]);//We copy viewport to the context we switched to..
             if (GraphicsSettings.Default.RenderingBackend == 0) toVideo = 0;//for GL2 we cannot use toVideoFlag, too slow then
-            scene.Render(MainWindow.UiState, view, this, toVideo , VRModel);
+            scene.Render(MainWindow.UiState, view, this, toVideo, VRModel);
             GL.UseProgram(0);
-            if (toVideo == 0)
-            {
-                renderControl.SetRenderTarget(RenderControl.RenderTarget.ScreenCompat);
-            }
-            else
-            {
-                renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoCompat);
-            }
         }
 
 

@@ -16,12 +16,14 @@ namespace open3mod
         public static EVRInitError EVRerror = EVRInitError.None;
         public static float fPredictedSecondsToPhotonsFromNow = 0f;
         public static Matrix4 viewOffset = Matrix4.Identity;
-        public static float trackerAboveLens = 0.15f; //height of controller above camera lens center, later set for different installations 
+        public static float trackerAboveLens = 0.15f; //height of controller above camera lens center
+        public static float trackerBeforeLens = 0.05f; //distance between controller and lens optical cross
+        public static float trackerAsideOfLens = 0.013f; //distance between controllers and lens centers
+        public static float trackerOffXAxis = 0.1f; //radians - angle between controllers and lens Z axis 
         public static float lensAboveGround = 0.06f; //height of camera lens center above ground
         public static int maxPositionsBuffer = 5;
         public static Matrix4[,] allPositions = new Matrix4[maxPositionsBuffer, OpenVR.k_unMaxTrackedDeviceCount]; //shift from lens to the ground for each camera wanted during reset
         public static Matrix4[] trackedPositions = new Matrix4[OpenVR.k_unMaxTrackedDeviceCount]; //shift from lens to the ground for each camera wanted during reset
-      //  public static Matrix4[,] trackedPositions = new Matrix4[OpenVR.k_unMaxTrackedDeviceCount, 32]; //shift from lens to the ground for each camera wanted during reset
         public static bool[] activePositions = new bool[OpenVR.k_unMaxTrackedDeviceCount]; //only active trackers
         public static ETrackedDeviceClass[] deviceClasses = new ETrackedDeviceClass[OpenVR.k_unMaxTrackedDeviceCount]; //what sits at which index
         public static string[] deviceSNs = new string[OpenVR.k_unMaxTrackedDeviceCount];
@@ -31,6 +33,7 @@ namespace open3mod
         //smer Z se nastavi resetem, po montáži se podle SN nebo jine fix identifikace priradi correct i shiftmatrixy pri loadingu
         private static int countOffsetRequests = 0;
         private static int neededOffsetRequests = 50;
+        private static float maxAdvance = 0.04f;
 
         public static Matrix4 OpenVRMatrixToOpenTKMatrix(HmdMatrix34_t matrix)
         {
@@ -187,7 +190,9 @@ namespace open3mod
                         }
                         //one controller is always #1, two are always in the same order
                         lensToGround[i] = Matrix4.CreateTranslation(0, -lensAboveGround , 0);
-                        trackerToCamera[i] = Matrix4.CreateTranslation(0, -trackerAboveLens, 0); //first we want it NOT to be zero
+                        trackerToCamera[i] = Matrix4.CreateTranslation(-trackerAsideOfLens, -trackerAboveLens, trackerBeforeLens); //first we want it NOT to be zero
+                        trackerToCamera[i] = Matrix4.CreateRotationX(trackerOffXAxis) * trackerToCamera[i]; //camera moved first from controller, then rotated
+                        //trackerToCamera[i] = trackerToCamera[i]* Matrix4.CreateRotationZ(0.5f); //camera turned first, then moved
                     }
                     if (deviceClasses[i] == ETrackedDeviceClass.HMD)
                     {
@@ -208,7 +213,7 @@ namespace open3mod
         public static Matrix4 GetViewFromPosition(Matrix4 position)
         {
             //order: 1.rotate 2.translate: camera rotates
-            //order: 1.translate1 2.rotate : model rotates
+            //order: 1.translate 2.rotate : model rotates
             var transMatrix = new Matrix4();
             var orientMatrix = new Matrix4();
             transMatrix = Matrix4.Invert(position);
@@ -306,101 +311,104 @@ namespace open3mod
 
         public static void ProcessButtons(uint contIndex)
         {
+            // 4294967296 pad
+            // 8589934592 shoot (even just partially)
+            // 2 upper button - EVRButtonId.k_EButton_Gri
+            // 4 side button - EVRButtonId.k_EButton_DPad_Up
+            // status button nothing - switches to room mode, ALL IS OFF then!! Todo: check
             VRControllerState_t controllerState = new VRControllerState_t();
             //uint stateSize = sizeof(VRControllerState_t);
             uint stateSize = 64;
             OpenVR.System.GetControllerState(contIndex, ref controllerState, stateSize);
             ulong buttons = controllerState.ulButtonPressed;
-            if ((buttons == 4294967296) || (buttons == 4294967296))
+            if (buttons == 4294967296)
             {
-                if (trackerToCamera[contIndex] == Matrix4.Identity)// touch pad alone = end measuring trackerToCamera matrix
+
                 {
-                    //Mtx.Trans * Mtx-Rot = otočím a posunu, Mtx.Rot * Mtx:Trans = osunu a natočím
-                    //CreateRotation +z naklání kameru doleva a +x ji zvedá nahoru
-                    Matrix4 difference = viewOffset * GetViewFromPosition(trackerToCamera[contIndex] * trackedPositions[contIndex]);
-                    Matrix4 diffTrans = Matrix4.CreateTranslation(-difference.M41, -difference.M42, -difference.M43);
-                    //    if (difference.M42 / 2 > 0.02) ;//this is problem? , was not turned about Y axis??
-                    Matrix4 diffAngl = difference * diffTrans;//eliminating translation
-                    Matrix4 turnedMatrix = Matrix4.CreateRotationX(0f) * Matrix4.CreateRotationZ(0f) * Matrix4.CreateRotationY(MathHelper.Pi);
-                    trackerToCamera[contIndex] = turnedMatrix * diffAngl;
-                    //now we have in trackerToCamera[contIndex] the correction (camera looks to Z+), but doubled. Need to half it so it can be added to tracker position.
-                    Vector3 rXYZ = FromRotMatToEulerZYXInt(trackerToCamera[contIndex]);
-                    trackerToCamera[contIndex] = Matrix4.CreateRotationX(rXYZ.X / 2) * Matrix4.CreateRotationY(rXYZ.Y / 2) * Matrix4.CreateRotationZ(rXYZ.Z / 2);
-
-                    trackerToCamera[contIndex] = trackerToCamera[contIndex] * Matrix4.CreateTranslation(difference.M41 / 2, difference.M42 / 2 - trackerAboveLens, difference.M43 / 2);
-                    viewOffset = trackerToCamera[contIndex] * viewOffset;
-
-                    //save trackerToCamera for this index
-                    string saveStr = deviceSNs[contIndex] + MainWindow.recentDataSeparator[0] + Matrix4ToString(trackerToCamera[contIndex]);
-                    var saved = CoreSettings.CoreSettings.Default.TrackerToCamera;
-                    if (saved == null)
-                    {
-                        saved = CoreSettings.CoreSettings.Default.TrackerToCamera = new StringCollection();
-                        CoreSettings.CoreSettings.Default.Save();
-                    }
-                    string[] oldData;
-                    int i = 0;
-                    if (saved != null)
-                    {
-                        foreach (var s in saved)
-                        {
-                            oldData = s.Split(MainWindow.recentDataSeparator, StringSplitOptions.None);
-                            if (oldData[0] == deviceSNs[contIndex])
-                            {
-                                saved.Remove(s);
-                                break;
-                            }
-                            ++i;
-                        }
-                        saved.Insert(0, saveStr);
-                    }
-
-                    CoreSettings.CoreSettings.Default.Save();
+                    float step = 1.001f;
+                    /*    if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y > 0.5f))
+                        if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y < -0.5f))*/
+                    if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y > 0.5f)) fPredictedSecondsToPhotonsFromNow = fPredictedSecondsToPhotonsFromNow + (step - 1) / 1f;
+                    if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y < -0.5f)) fPredictedSecondsToPhotonsFromNow = fPredictedSecondsToPhotonsFromNow - (step - 1) / 1f;
+                    if (fPredictedSecondsToPhotonsFromNow < -maxAdvance) fPredictedSecondsToPhotonsFromNow = -maxAdvance;
+                    if (fPredictedSecondsToPhotonsFromNow > maxAdvance) fPredictedSecondsToPhotonsFromNow = maxAdvance;
+                    CoreSettings.CoreSettings.Default.SecondsToPhotons = fPredictedSecondsToPhotonsFromNow;
+                    // if (_fovy > MathHelper.PiOver2) _fovy = MathHelper.PiOver2;
+                    // if (_fovy < MathHelper.PiOver6 / 2) _fovy = MathHelper.PiOver6 / 2;
                 }
-
-            }
-            else
-            {
-                float step = 1.005f;
-                /*    if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y > 0.5f))
-                    if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y < -0.5f))*/
-                if ((controllerState.rAxis0.y > -0.5f) && (controllerState.rAxis0.y < 0.5f) && (controllerState.rAxis0.x > 0.5f)) fPredictedSecondsToPhotonsFromNow = fPredictedSecondsToPhotonsFromNow + (step - 1) / 1f;
-                if ((controllerState.rAxis0.y > -0.5f) && (controllerState.rAxis0.y < 0.5f) && (controllerState.rAxis0.x < -0.5f)) fPredictedSecondsToPhotonsFromNow = fPredictedSecondsToPhotonsFromNow - (step - 1) / 1f;
-                if (fPredictedSecondsToPhotonsFromNow < -0.4f) fPredictedSecondsToPhotonsFromNow = -0.4f;
-                if (fPredictedSecondsToPhotonsFromNow > 0.4f) fPredictedSecondsToPhotonsFromNow = 0.4f;
-                CoreSettings.CoreSettings.Default.SecondsToPhotons = fPredictedSecondsToPhotonsFromNow;
-                // if (_fovy > MathHelper.PiOver2) _fovy = MathHelper.PiOver2;
-                // if (_fovy < MathHelper.PiOver6 / 2) _fovy = MathHelper.PiOver6 / 2;
             }
 
             if ((buttons & (ulong)EVRButtonId.k_EButton_Grip) == (ulong)EVRButtonId.k_EButton_Grip)
             {
-                countOffsetRequests++;
-                if (countOffsetRequests > neededOffsetRequests) //this is dummy but works for now
+                // reset offset to camera, keeps offset cameraToground 
+                if ((buttons & (ulong)EVRButtonId.k_EButton_DPad_Up) == (ulong)EVRButtonId.k_EButton_DPad_Up)
                 {
-                    countOffsetRequests = 0;
-                    if ((buttons & (ulong)4) == (ulong)4) // simultaneously lower pad - start measure fixpos matrix, offset to controller
- //                   if ((buttons > 8589934590)) // simultaneously shoot - start measure fixpos matrix, offset to controller
-                    {
-                        trackerToCamera[contIndex] = Matrix4.Identity;
-                        viewOffset = Matrix4.Invert(GetViewFromPosition(trackedPositions[contIndex]));
-                    }
-                    else
-                    // only grip button = reset offset to camera, including ground offset
-                    {
-                        if (trackerToCamera[contIndex] != Matrix4.Identity) //not to break measurement
-                        {
-                            var shiftedFromGround = new Matrix4();
-                            shiftedFromGround = lensToGround[contIndex] * trackerToCamera[contIndex] * trackedPositions[contIndex]; 
-                            viewOffset = Matrix4.Invert(GetViewFromPosition(shiftedFromGround));
-                            string saveStr = "ViewOffset" + MainWindow.recentDataSeparator[0] + Matrix4ToString(viewOffset);
-                            CoreSettings.CoreSettings.Default.ViewOffset = saveStr;
-                            CoreSettings.CoreSettings.Default.Save();
-                        }
-                    }
+                    var shiftedFromGround = new Matrix4();
+                    shiftedFromGround = lensToGround[contIndex] * trackerToCamera[contIndex] * trackedPositions[contIndex];
+                    viewOffset = Matrix4.Invert(GetViewFromPosition(shiftedFromGround));
+                    string saveStr = "ViewOffset" + MainWindow.recentDataSeparator[0] + Matrix4ToString(viewOffset);
+                    CoreSettings.CoreSettings.Default.ViewOffset = saveStr;
+                    CoreSettings.CoreSettings.Default.Save();
                 }
             }
         }
+
+        //calculating trackerToCamera offset - now unused, we use preset offsets 
+        /*
+        if (condition) //  start measure trackerToCamera  - offset to controller, camera points 0,0,1 forward
+        {
+            trackerToCamera[contIndex] = Matrix4.Identity;
+            viewOffset = Matrix4.Invert(GetViewFromPosition(trackedPositions[contIndex]));
+        }
+        //later...
+
+          if (trackerToCamera[contIndex] == Matrix4.Identity)// touch pad alone = end measuring trackerToCamera matrix, camera points 0,0,-1 backwards
+          {
+              //Mtx.Trans * Mtx-Rot = otočím a posunu, Mtx.Rot * Mtx:Trans = osunu a natočím
+              //CreateRotation +z naklání kameru doleva a +x ji zvedá nahoru
+              Matrix4 difference = viewOffset * GetViewFromPosition(trackerToCamera[contIndex] * trackedPositions[contIndex]);
+              Matrix4 diffTrans = Matrix4.CreateTranslation(-difference.M41, -difference.M42, -difference.M43);
+              //    if (difference.M42 / 2 > 0.02) ;//this is problem? , was not turned about Y axis??
+              Matrix4 diffAngl = difference * diffTrans;//eliminating translation
+              Matrix4 turnedMatrix = Matrix4.CreateRotationX(0f) * Matrix4.CreateRotationZ(0f) * Matrix4.CreateRotationY(MathHelper.Pi);
+              trackerToCamera[contIndex] = turnedMatrix * diffAngl;
+              //now we have in trackerToCamera[contIndex] the correction (camera looks to Z+), but doubled. Need to half it so it can be added to tracker position.
+              Vector3 rXYZ = FromRotMatToEulerZYXInt(trackerToCamera[contIndex]);
+              trackerToCamera[contIndex] = Matrix4.CreateRotationX(rXYZ.X / 2) * Matrix4.CreateRotationY(rXYZ.Y / 2) * Matrix4.CreateRotationZ(rXYZ.Z / 2);
+
+              trackerToCamera[contIndex] = trackerToCamera[contIndex] * Matrix4.CreateTranslation(difference.M41 / 2, difference.M42 / 2 - trackerAboveLens, difference.M43 / 2);
+              viewOffset = trackerToCamera[contIndex] * viewOffset;
+
+              //save trackerToCamera for this index
+              string saveStr = deviceSNs[contIndex] + MainWindow.recentDataSeparator[0] + Matrix4ToString(trackerToCamera[contIndex]);
+              var saved = CoreSettings.CoreSettings.Default.TrackerToCamera;
+              if (saved == null)
+              {
+                  saved = CoreSettings.CoreSettings.Default.TrackerToCamera = new StringCollection();
+                  CoreSettings.CoreSettings.Default.Save();
+              }
+              string[] oldData;
+              int i = 0;
+              if (saved != null)
+              {
+                  foreach (var s in saved)
+                  {
+                      oldData = s.Split(MainWindow.recentDataSeparator, StringSplitOptions.None);
+                      if (oldData[0] == deviceSNs[contIndex])
+                      {
+                          saved.Remove(s);
+                          break;
+                      }
+                      ++i;
+                  }
+                  saved.Insert(0, saveStr);
+              }
+
+              CoreSettings.CoreSettings.Default.Save();
+          }
+      }
+      else*/
+
 
         public static string vector4ToString(Vector4 src)
         {

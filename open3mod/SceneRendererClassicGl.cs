@@ -117,6 +117,14 @@ namespace open3mod
             {
                 GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
             }
+
+            int[] CurrentViewport = new int[4];
+            GL.GetInteger(GetPName.Viewport, CurrentViewport);
+            var aspectRatio = (float)CurrentViewport[2] / CurrentViewport[3];
+            Matrix4 perspective = Matrix4.CreatePerspectiveFieldOfView(cam.GetFOV(), aspectRatio, renderer.zNear, renderer.zFar);
+            GL.MatrixMode(MatrixMode.Projection);
+            GL.LoadMatrix(ref perspective);
+
             var tmp = InitposeMax.X - InitposeMin.X;
             tmp = Math.Max(InitposeMax.Y - InitposeMin.Y, tmp);
             tmp = Math.Max(InitposeMax.Z - InitposeMin.Z, tmp);

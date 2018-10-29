@@ -229,6 +229,8 @@ namespace open3mod
         public void SetRenderTarget(RenderTarget rt)
         {
             RenderControl.GLError("BeforeTargetChange");
+            int[] CurrentViewport = new int[4];
+            GL.GetInteger(GetPName.Viewport, CurrentViewport);
             switch (rt)
             {
                 case RenderTarget.ScreenDirect:
@@ -267,6 +269,7 @@ namespace open3mod
                     GL.BindFramebuffer(FramebufferTarget.Framebuffer, frameBuffer[isCore,2]);
                     break;
             }
+            GL.Viewport(CurrentViewport[0], CurrentViewport[1], CurrentViewport[2], CurrentViewport[3]);//We copy viewport to the context we switched to..
             RenderControl.GLError("AfterTargetChange");
         }
 

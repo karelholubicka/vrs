@@ -1,27 +1,16 @@
-zpoždìní nastavit až s klikem, ne jen držením nad
-pojistka resetu studia
-nastavení kamery pøesnì na modely
-dodat sync mezi jednotkama
-
-jak vypadá Janssen nové studio v renderu-vyrobit...f/bg/gr atd
-test - nastavení FOV pro kameru+screen adekvátnì-testovací studio vs reál pøedmìt(?)
-= do foregroundu render VR pøedmìtù volitelnì = kontrola FOV pøedmìty pøes obraz (show VR modelsII+noMask setting)
-
-doplnit studio i po stranách
-noise filter/gauss upravit
 je klíè èistý jako v ediusu?
+jak vypadá Janssen nové studio v renderu-vyrobit...f/bg/gr atd
+doplnit studio i po stranách-pøíroda...
 
+noise filter median na gauss upravit(?)
 
 shadery 2 - jeden se switchem, resamplingem a blk,
 druhý bez resamplu a s blurem??
 
 
 pøepínání a pøiøazení ovladaèù - sna >sn b
-
-støih do druhé kamery buttonem ovladaèe
-
-
-místnosti ze steamu najít - výmìna??
+??obøas se tracking nespustí..???
+støih do druhé kamery buttonem ovladaèe??
 
 
 load fps+video output sizes z inputu BMD / scalable

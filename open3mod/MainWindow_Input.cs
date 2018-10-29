@@ -100,7 +100,7 @@ namespace open3mod
             if (_shiftPressed) step = 1.05f;
 
 
-            if ((cam.GetScenePartMode() == ScenePartMode.Camera) || (cam.GetScenePartMode() == ScenePartMode.Composite))
+            if ((cam.GetScenePartMode() > ScenePartMode.All))
             {
                 cam = _renderer.renderingController;
             }
@@ -127,7 +127,6 @@ namespace open3mod
             ScenePartMode spm = cam.GetScenePartMode();
             CameraMode cm = cam.GetCameraMode();
             cam.SetParam(fov, spm, cm);
-
         }
 
         private void UpdateActiveViewIfNeeded(MouseEventArgs e)
