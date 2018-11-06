@@ -1,15 +1,64 @@
-je klíè èistý jako v ediusu?
+Old: Assimp 3.1.29665513 (open3mod)
+New: Assimp 4.1.1257676222 (assimp-net)
+Newer. Assimp 4.1.216079013 (assimp viewer)
+Moje kompilace #1 : Assimp 4.1.0
+Moje kompilace #2+3 : Assimp 4.1.0 - ale z masteru
+
+blinn phong - pøedìlat+level of shininess
+
+fbx shininess strength = intensity shininess / 2,
+diffuse intensity je tam také uloženo nìjak
+v blenderu ani jedno není, shininess strength je 1: proto nepoužívat Intensity v blenderu"
+fbx color transparent (je 1-alpha)*diffuse (=množství prùsvitnosti)
+fbx import do fusion naète hodnoty 0-100, ale pro blender vzhled mají být 0-511, je tøeba dát vše *5
+
+
+Fix directional a spot lights+animace + attenuation u directional
+jas objektù vzájemnì
+jas emitting - diference od blenderu
+
+
 jak vypadá Janssen nové studio v renderu-vyrobit...f/bg/gr atd
-doplnit studio i po stranách-pøíroda...
+FOV pøepoèet na camera number
+
+jméno dynamic textury pøímo
+proè VLC hraje s pruhama MPG progressive
+proè Polas lítal i bez F identifikace
+zmenšit textury modelù
+
+audio nejde skrz proè???
+normály a position jako mode switch místo bones atd
+test normal map
+usb c++ lanc / bluetooth to lanc
+nastavení jednotlivých svìtel pomocí main brightness
+
+
+
+Model v Blenteru musí mít materiál, jinak crashne import
+Intensity u materiálu nefunguje, musí být 1.0
+RGB 000 nefunguje, musí být aspoò 0.001
+orientace: X+right, Y+up. Z+back
+Dodateèná rotace v Blenderu neopraví keyframy animací, proto není vhodná,
+Export FBX jako Yfront nebo -Zfront funguje obojí, ale do Fusionu je potøeba importovat BEZ CONVERT axis to Yup - takže -Z front
+Svìtla se musí nastavit, jinak mají implicitnì 0,8 color, i když hlásí 1,0
+
+
+
+kontrola masky over green/pozice do místnosti - jak live
+
+
+uklidit modely
+
+ndi receiver u scény??pozdìji.....??
+off stream senderu
+tøetí výstup-shift enter+offset pro èteèku, preset na vektory( 0,1,2
+
 
 noise filter median na gauss upravit(?)
 
-shadery 2 - jeden se switchem, resamplingem a blk,
-druhý bez resamplu a s blurem??
+pøepínání a pøiøazení ovladaèù - sna >sn bm
+??obèas se tracking nespustí..???Nespustí se ovlaadèe - reload VR devices
 
-
-pøepínání a pøiøazení ovladaèù - sna >sn b
-??obøas se tracking nespustí..???
 støih do druhé kamery buttonem ovladaèe??
 
 

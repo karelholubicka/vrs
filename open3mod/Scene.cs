@@ -43,9 +43,12 @@ namespace open3mod
     /// </summary>
     public sealed class Scene : IDisposable
     {
+
+        public const string NodeNameGenericPrefix = "__Node_";
         private readonly string _file;
         private readonly string _baseDir;
        
+
         private readonly Assimp.Scene _raw;
         private readonly Vector3 _sceneCenter;
         private readonly Vector3 _sceneMin;
@@ -284,6 +287,12 @@ namespace open3mod
                         //    angle of 66 degrees.
                         imp.SetConfig(new NormalSmoothingAngleConfig(66.0f));
 
+                        //  FBX presets
+                        //  imp.SetConfig(new FBXImportLightsConfig(false));
+                        //  imp.SetConfig(new FBXImportCamerasConfig(false));
+                        //  imp.SetConfig(new FBXPreservePivotsConfig(false));
+                        //  imp.SetConfig(new FBXStrictModeConfig(true));
+
                         // start with TargetRealTimeMaximumQuality and add/remove flags
                         // according to the import configuration
                         var postprocess = GetPostProcessStepsFlags();
@@ -313,6 +322,8 @@ namespace open3mod
             _animator = new SceneAnimator(this);
             _textureSet = new TextureSet(BaseDir);
             LoadTextures();
+
+            GiveNameToAllNodes();//as we search node by name, we must ensure each has some name 
 
             // compute a bounding box (AABB) for the scene we just loaded
             ComputeBoundingBox(out _sceneMin, out _sceneMax, out _sceneCenter);
@@ -481,7 +492,6 @@ namespace open3mod
         public void Render(UiState state, ICameraController cam, Renderer target, int toVideo, bool VRModel = false)
         {
             RenderFlags flags = 0;
-
             if (state.ShowNormals && toVideo == 0)
             {
                 flags |= RenderFlags.ShowNormals;
@@ -683,6 +693,28 @@ namespace open3mod
             }
         }
 
+        private int _nodeCount;
+        /// <summary>
+        /// Ensures all nodes have some name
+        /// </summary>
+        private void GiveNameToAllNodes()
+        {
+            _nodeCount = 0;
+            GiveNameToNodeAndAllChildrens(_raw.RootNode);
+        }
+
+        /// <summary>
+        /// Helper for NameToAllNodes()
+        /// </summary>
+        private void GiveNameToNodeAndAllChildrens(Node node)
+        {
+            _nodeCount++;
+            if (node.Name == "") node.Name = Scene.NodeNameGenericPrefix + _nodeCount.ToString();
+            for (var i = 0; i < node.ChildCount; i++)
+            {
+                GiveNameToNodeAndAllChildrens(node.Children[i]);
+            }
+        }
 
         /// <summary>
         /// Calculates the smallest AABB that encloses the scene.
@@ -692,8 +724,8 @@ namespace open3mod
         /// <param name="sceneCenter"> </param>
         /// <param name="node"> </param>
         /// <param name="omitRootNodeTrafo"> </param>
-        private void ComputeBoundingBox(out Vector3 sceneMin, out Vector3 sceneMax, out Vector3 sceneCenter, 
-            Node node = null, 
+        private void ComputeBoundingBox(out Vector3 sceneMin, out Vector3 sceneMax, out Vector3 sceneCenter,
+            Node node = null,
             bool omitRootNodeTrafo = false)
         {
             sceneMin = new Vector3(1e10f, 1e10f, 1e10f);
@@ -745,6 +777,7 @@ namespace open3mod
                 ComputeBoundingBox(node.Children[i], ref min, ref max, ref prev);
             }
         }
+
 
 
         /// <summary>

@@ -167,13 +167,15 @@ namespace open3mod
             {
                 m = AssimpToOpenTk.FromMatrix(node.Transform);
             }
-            // TODO for some reason, all OpenTk matrices need a ^T - we should clarify our conventions somewhere
-            RenderControl.GLError("A11");
-            m.Transpose();
-            PushWorld(ref m);
-            RenderControl.GLError("B11");
+            //ASSIMP410 hack to fix FBX animation import
+            // bool replaceTrafo = node.Parent != null && animated && node.Parent.Name.StartsWith(Scene.NodeNameGenericPrefix) && (m!= Matrix4.Identity);
+            // if (replaceTrafo) PopWorld();
 
-             if ((node.HasMeshes) && (currDispList == GetDispList(node.Name)))
+            m.Transpose();
+            // TODO for some reason, all OpenTk matrices need a ^T - we should clarify our conventions somewhere
+            PushWorld(ref m);
+
+            if ((node.HasMeshes) && (currDispList == GetDispList(node.Name)))
             {
                 needAlpha = DrawOpaqueMeshes(node, visibleMeshesByNode, flags, animated);
             }
@@ -182,7 +184,8 @@ namespace open3mod
             {
                 needAlpha = RecursiveRender(node.Children[i], visibleMeshesByNode, flags, animated, currDispList) || needAlpha;
             }
-            RenderControl.GLError("C11");
+            //ASSIMP410 hack to fix FBX animation import - add to alpha render too
+            // if (!replaceTrafo)
             PopWorld();
             return needAlpha;
         }
@@ -214,8 +217,8 @@ namespace open3mod
             {
                 m = AssimpToOpenTk.FromMatrix(node.Transform);
             }
-            // TODO for some reason, all OpenTk matrices need a ^T - we should clarify our conventions somewhere
             m.Transpose();
+            // TODO for some reason, all OpenTk matrices need a ^T - we should clarify our conventions somewhere
             PushWorld(ref m);
 
             // the following permutations could be compacted into one big loop with lots of
@@ -226,12 +229,10 @@ namespace open3mod
                 DrawAlphaMeshes(node, visibleNodes, flags, animated);
             }
 
-
             for (var i = 0; i < node.ChildCount; i++)
             {
                 RecursiveRenderWithAlpha(node.Children[i], visibleNodes, flags, animated, currDispList);
             }
-
             PopWorld();
         }
 

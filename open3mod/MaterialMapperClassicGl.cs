@@ -60,7 +60,7 @@ namespace open3mod
 
         private float[] Colo3DToFloat(Color3D col)
         {
-            float[] floatType = { col.B, col.G, col.R, 1};
+            float[] floatType = { col.R, col.G, col.B, 1};
             return floatType;
         }
         private float[] Vector3ToFloat(Vector3 col)
@@ -100,60 +100,65 @@ namespace open3mod
                         if ((node != null) && ((node == _scene.ActiveLight) || (null == _scene.ActiveLight)))
                         {
                             //                        var matrix4X4 = node.Transform;
-                            var mat1 = Matrix4x4.Identity;
+                            var mat1 = Matrix4.Identity;
                             var cur = node;
                             while (cur != null)
                             {
-                                var trafo = cur.Transform;
+                                var trafo = AssimpToOpenTk.FromMatrix(cur.Transform);
+                                //_scene.SceneAnimator.GetLocalTransform(node.Name, out trafo);
                                 trafo.Transpose();
                                 mat1 = trafo * mat1;
                                 cur = cur.Parent;
                             }
                             mat1.Transpose();
 
-                            var mat = renderer.LightRotation;
+                            _scene.SceneAnimator.GetGlobalTransform(node.Name, out mat1); //well identical result :-)
+
                             var light_type = lights[i].LightType;
-                            Vector3 lposTemp = new Vector3(mat1.A4, mat1.B4, mat1.C4);
-                            Vector3 ldirTemp = new Vector3(mat1.B1, -mat1.B2, mat1.B3); //partially a guess, needed verification
+
+                            //here move position info into lights[]
+                            //   Vector3 lposTemp = new Vector3(mat1.A4, mat1.B4, mat1.C4);
+                            Vector3 lposTemp = new Vector3(mat1.M14, mat1.M24, mat1.M34);
+                            mat1.Transpose();//yes, again the transpose thing...
+                            Vector3 lightStandardDir = new Vector3(-lights[i].Direction.X, -lights[i].Direction.Y, -lights[i].Direction.Z);
+                            // lightStandardDir = new Vector3(0,1,0);
+                            Vector3.TransformVector(ref lightStandardDir, ref mat1, out Vector3 ldirTemp);
+                            //TransformNormal did no work, produced identical results for different light directions
+
                             float[] light_position = { -0f, 0f, -2f, 1.0f }; //X doprava, Y nahoru, - Z vpøed
                             light_position = Vector3ToFloat(lposTemp);
                             if (light_type == LightSourceType.Directional)
                             {
-                               // Vector3.TransformNormal(ref ldirTemp, ref mat, out ldirTemp); //only if we want to change dir lights
-                                light_position = Vector3ToFloat(-ldirTemp);
+                                light_position = Vector3ToFloat(ldirTemp);
                                 light_position[3] = 0.0f;
                                 //If the w component of the position is 0, the light is treated as a directional source with no actual position
                             }
 
-                            float[] light_ambient = { 0.0f, 0.0f, 0.0f, 1.0f }; // na tohle v zasade reaguji nektere predmety, rozsah 0-1
-                            light_ambient = Colo3DToFloat(lights[i].ColorAmbient);
-                            float[] light_diffuse = { 0.2f, 0.2f, 0.2f, 1.0f };//jak moc svítí
-                            light_diffuse = Colo3DToFloat(lights[i].ColorDiffuse); // 100); //v Assimp je v %
-                            float[] light_specular = { 1f, 1f, 1f, 1.0f };//not saved in dae, we assume 1
-                            light_specular = Colo3DToFloat(lights[i].ColorSpecular / 100*2);// / 100);
-                            //diffuse+specular are just like two lights
+                            float _SceneBrightness = 0.1f + (float)GraphicsSettings.Default.OutputBrightness / 100.0f;
+                            //correction:
+                            if (light_type == LightSourceType.Point)  _SceneBrightness *= 0.01f;
 
-                            var coltmp = new Vector3D(light_diffuse[0], light_diffuse[1], light_diffuse[2]);
-                            coltmp *= (0.0f + 2f * GraphicsSettings.Default.OutputBrightness / 100.0f) * 2f;
-                            if (light_type != LightSourceType.Point) coltmp *= 0.01f;
-                            light_diffuse = Vector3DToFloat(coltmp);
-    
+                            float[] light_ambient = { 0.0f, 0.0f, 0.0f, 1.0f }; // na tohle v zasade reaguji nektere predmety, rozsah 0-1
+                            light_ambient = Colo3DToFloat(lights[i].ColorAmbient * _SceneBrightness);
+                            float[] light_diffuse = { 0.2f, 0.2f, 0.2f, 1.0f };//jak moc svítí
+                            light_diffuse = Colo3DToFloat(lights[i].ColorDiffuse * _SceneBrightness); 
+                            float[] light_specular = { 1f, 1f, 1f, 1.0f };//not saved in dae, we assume 1
+                            light_specular = Colo3DToFloat(lights[i].ColorSpecular * _SceneBrightness);
+
                             float light_aic = lights[i].AngleInnerCone;
                             float light_aoc = lights[i].AngleOuterCone;
                             float light_ac = lights[i].AttenuationConstant * _scene.Scale;
                             float light_al = lights[i].AttenuationLinear * _scene.Scale;
                             float light_aq = lights[i].AttenuationQuadratic * _scene.Scale *_scene.Scale;
 
-                            //float[] spot_direction = { 0, 0, -1 };//(0,-1,0)directly down
                             float[] spot_direction = Vector3DToFloat(lights[i].Direction); //makes sense only when cutoff is set
                             float light_cutoff = 180;
                             if (light_type == LightSourceType.Spot)
                             {
-                                //Vector3.TransformNormal(ref ldirTemp, ref mat, out ldirTemp); //only if we want to change spot lights direction
-                                spot_direction = Vector3ToFloat(ldirTemp);
-                                light_cutoff = light_aic * 180 / MathHelper.Pi;
+                                spot_direction = Vector3ToFloat(-ldirTemp);
+                                light_cutoff = light_aoc * 90 / MathHelper.Pi;
                             }
-                            float lessAttenuation =  _scene.Scale;
+                            float lessAttenuation = 1;// _scene.Scale;
                             light_ac = light_ac / lessAttenuation;    //lesser attenuation for testing
                             light_al = light_al / lessAttenuation;
                             light_aq = light_aq / lessAttenuation;
@@ -164,15 +169,16 @@ namespace open3mod
                             GL.Light(LightName.Light0 + i, LightParameter.Diffuse, light_diffuse);
                             GL.Light(LightName.Light0 + i, LightParameter.Specular, light_specular);
 
-                            GL.Light(LightName.Light0 + i, LightParameter.ConstantAttenuation, light_ac); //intenzita odlesku a osvícení
-                            GL.Light(LightName.Light0 + i, LightParameter.QuadraticAttenuation, light_aq);
-                            GL.Light(LightName.Light0 + i, LightParameter.LinearAttenuation, light_al);
+                           GL.Light(LightName.Light0 + i, LightParameter.ConstantAttenuation, light_ac); //intenzita odlesku a osvícení
+                           GL.Light(LightName.Light0 + i, LightParameter.QuadraticAttenuation, light_aq);
+                           GL.Light(LightName.Light0 + i, LightParameter.LinearAttenuation, light_al);
 
                            GL.Light(LightName.Light0 + i, LightParameter.SpotCutoff, light_cutoff); //180-unidirectional, 0-90 - directional
                            GL.Light(LightName.Light0 + i, LightParameter.SpotDirection, spot_direction); //direction if not infinity
                            GL.Light(LightName.Light0 + i, LightParameter.SpotExponent, spot_exp);
 
                             GL.Enable(EnableCap.Light0 + i);
+                            RenderControl.GLError("GLClassicLightsUseEnd");
                         }
                     }
                 }
@@ -199,6 +205,7 @@ namespace open3mod
                 GL.Light(LightName.Light0, LightParameter.Specular, new float[] { col.X, col.Y, col.Z, 1 });
                 GL.Enable(EnableCap.Light0);
             }
+         RenderControl.GLError("GLClassicLights");
         }
 
         public override void EndScene(Renderer renderer)
@@ -209,6 +216,7 @@ namespace open3mod
 
         private void ApplyFixedFunctionMaterial(Mesh mesh, Material mat, bool textured, bool shaded)
         {
+            var file = _scene.Renderer.MainWindow.UiState.ActiveTab.File;
             shaded = shaded && (mesh == null || mesh.HasNormals);
             if (shaded)
             {
@@ -297,10 +305,23 @@ namespace open3mod
                     GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Diffuse, color);
                 }
 
+                // todo: I don't even remember how shininess strength was supposed to be handled in assimp
+                float strength = 1;
+                if (mat.HasShininessStrength)
+                {
+                    strength = mat.ShininessStrength;
+                    if (file.EndsWith("fbx")) strength = strength * 2.0f; // fbx has basic value 0.5
+                }
+                if (mat.HasColorSpecular)
+                {
+                    color = AssimpToOpenTk.FromColor(mat.ColorSpecular);
+                    color = new Color4(color.R * strength, color.G * strength, color.B * strength, color.A);
+                }
                 color = new Color4(0, 0, 0, 1.0f);
                 if (mat.HasColorSpecular)
                 {
-                    color = AssimpToOpenTk.FromColor(mat.ColorSpecular);              
+                    color = AssimpToOpenTk.FromColor(mat.ColorSpecular);
+                    color = new Color4(color.R * strength, color.G * strength, color.B * strength, color.A);
                 }
                 GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, color);
 
@@ -319,24 +340,18 @@ namespace open3mod
                 GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Emission, color);
 
                 float shininess = 1;
-                float strength = 1;
                 if (mat.HasShininess)
                 {
                     shininess = mat.Shininess;
-
                 }
-                // todo: I don't even remember how shininess strength was supposed to be handled in assimp
-                if (mat.HasShininessStrength)
-                {
-                    strength = mat.ShininessStrength;
-                }
-
-                var exp = shininess;
+                // todo: I don't even remember how shininess strength was supposed to be handled in assimp .. Scales the specular color of the material.
+                //match FBX to Fusion:  Match 
+                var exp = shininess * 5.11f;//experimental value to match GL4.5 renderer 
+                if (file.EndsWith("blend")) exp = exp / 5.11f; // 511 blender value = 100 fbx value //skip this, if is desired to match FBX view in Fusion
                 if (exp >= 128.0f) // 128 is the maximum exponent as per the Gl spec
                 {
                     exp = 128.0f;
                 }
-
                 GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, exp);
             }
             else if (!hasColors)

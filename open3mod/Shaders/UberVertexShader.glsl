@@ -45,11 +45,10 @@ void main(void)
 {
   //in2pos = vec4(0.5, 0.5, 0.0, 1.0);
   gl_Position = WorldViewProjection * inposition;
-  position = vec3(World * inposition); //fragment position
+  position = vec3(WorldView * inposition); //dummy to keep WV active
+  position = vec3(World * inposition); //fragment position in world
   texCoord = textureCoordinate.xy; 
  
- vs_color = vec4(inposition/2+0.5); //zelena-zluta-modra-fialova
-
 #ifdef HAS_VERTEX_COLOR
   vertexColor = color.rgb;
 #endif
@@ -58,10 +57,11 @@ void main(void)
   // Scale is always uniform so the 3x3 part of World is the same as the WorldViewTranspose.
   normal = normalize(vec3(World * vec4(innormal.xyz, 0.0))); //OK for diffuse dir light 
 
+    vs_color = vec4(color); // cerna
 //  vs_color = vec4(0.25, 0.25, 0.5, 1.0);
 //  vs_color = vec4(inposition/8+0.5); //zelena-zluta-modra-fialova
-    vs_color = vec4((normal/2+0.5),1.0); //svetle fialovomodra;
-//  vs_color = vec4(color); // cerna
+//  vs_color = vec4((position/8+0.5),1.0);
+//  vs_color = vec4((normal/2+0.5),1.0); //svetle fialovomodra;
 //  vs_color = vec4(textureCoordinate/2+0.5); //zelena-zluta-bila-cervena
 //  vs_color = vec4(tangent/2+0.5); //slabe cervena zesvetlava doprava dolu
 //  vs_color = vec4((bitangent)/2+0.5); //fialova

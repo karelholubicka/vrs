@@ -245,6 +245,7 @@ namespace open3mod
                 string filePath = modelPath + "vr_controller_vive_1_5\\vr_controller_vive_1_5.obj";
                 _controller = File.Exists(filePath) ? new Scene(filePath, this) : null;
                 filePath = modelPath + "lh_basestation_vive\\lh_basestation_vive.obj";
+                filePath = modelPath + "lighthouse_ufo\\lighthouse_ufo.obj";
                 _lighthouse = File.Exists(filePath) ? new Scene(filePath, this) : null;
                 filePath = modelPath + "generic_hmd\\generic_hmd.obj";
                 _hmd = File.Exists(filePath) ? new Scene(filePath, this) : null;
@@ -330,12 +331,11 @@ namespace open3mod
         private void UploadModernGLTexture(TextureType currType, Color4 c)
         {
             int index = currType - TextureType.Diffuse;
-            GL.ActiveTexture((TextureUnit)((int)TextureUnit.Texture0 + index));
+            GL.ActiveTexture(TextureUnit.Texture0); //we will bind textures to their respective units later in MaterialMapper
             Bitmap _OwnTextureBitmap = new Bitmap(_ModernGLTextureSize, _ModernGLTextureSize);
             Color color = Color.FromArgb((byte)(c.A * 255), (byte)(c.R * 255), (byte)(c.G * 255), (byte)(c.B * 255));
             Graphics gr = Graphics.FromImage(_OwnTextureBitmap);
             gr.Clear(color);
-            GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, modernGLTextureType[index]);
             // _OwnTextureBitmap.SetPixel(0, 0, color);
             var ownData = _OwnTextureBitmap.LockBits(new Rectangle(0, 0, _OwnTextureBitmap.Width, _OwnTextureBitmap.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
@@ -344,30 +344,28 @@ namespace open3mod
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)OpenTK.Graphics.OpenGL.TextureWrapMode.Repeat);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)OpenTK.Graphics.OpenGL.TextureWrapMode.Repeat);
-            //GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);textures have fixed values, do not need mipmaps
+            //GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);these textures have fixed values, do not need mipmaps
             _OwnTextureBitmap.UnlockBits(ownData);
             gr.Dispose();
             _OwnTextureBitmap.Dispose();
-            GL.ActiveTexture(TextureUnit.Texture0);
         }
 
         private void UploadModernGLTextures()
         {
-            Color4 color = new Color4(1.0f, 1.0f, 1.0f, 1.0f);
+            Color4 color;
+            color = Color4.White;
             UploadModernGLTexture(TextureType.Diffuse, color);
-            color = new Color4(0, 0, 0, 1.0f);
+            color = Color4.White;
             UploadModernGLTexture(TextureType.Specular, color);
-            color = new Color4(.2f, .2f, .2f, 1.0f);
+            color = Color4.White;
             UploadModernGLTexture(TextureType.Ambient, color);
-            color = new Color4(0, 0, 0, 1.0f);
+            color = Color4.Black;
             UploadModernGLTexture(TextureType.Emissive, color);
-            color = new Color4(0, 0, 0, 1.0f);
+            color = Color4.Black;
             UploadModernGLTexture(TextureType.Height, color);
-            color = new Color4(0, 0, 0, 1.0f);
+            color = Color4.Black;
             UploadModernGLTexture(TextureType.Normals, color);
         }
-
-
 
         /// <summary>
         /// Creates and uploads texture

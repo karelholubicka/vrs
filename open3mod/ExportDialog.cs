@@ -188,21 +188,21 @@ namespace open3mod
             // Create a shallow copy of the original scene that replaces all the texture paths with their
             // corresponding output paths, and omits animations if requested.
             var sourceScene = new Assimp.Scene
-                              {
-                                  Textures = scene.Raw.Textures,
-                                  SceneFlags = scene.Raw.SceneFlags,
-                                  RootNode = scene.Raw.RootNode,
-                                  Meshes = scene.Raw.Meshes,
-                                  Lights = scene.Raw.Lights,
-                                  Cameras = scene.Raw.Cameras
-                              };
+            {
+                /* //ASSIMP410           Textures = scene.Raw.Textures,
+                            SceneFlags = scene.Raw.SceneFlags,
+                            RootNode = scene.Raw.RootNode,
+                            Meshes = scene.Raw.Meshes,
+                            Lights = scene.Raw.Lights,
+                            Cameras = scene.Raw.Cameras
+                  */
+            };
 
             if (includeAnimations)
             {
-                sourceScene.Animations = scene.Raw.Animations;
+                ////ASSIMP410    sourceScene.Animations = scene.Raw.Animations;
             }
-
-            var uniques = new HashSet<string>();
+           var uniques = new HashSet<string>();
             var textureMapping = new Dictionary<string, string>();
 
             PushLog("Locating all textures");

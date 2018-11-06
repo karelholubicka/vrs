@@ -16,8 +16,8 @@ namespace open3mod
         public static void DeepCopy(Mesh dest, Mesh src)
         {
             ShallowCopy(dest, src);
-            dest.Vertices = new List<Vector3D>(src.Vertices);
-            dest.Normals = new List<Vector3D>(src.Normals);
+            //ASSIMP410    dest.Vertices = new List<Vector3D>(src.Vertices);
+         /*  dest.Normals = new List<Vector3D>(src.Normals);
             dest.Tangents = new List<Vector3D>(src.Tangents);
             dest.BiTangents = new List<Vector3D>(src.BiTangents);
             dest.TextureCoordinateChannels = new List<Vector3D>[AiDefines.AI_MAX_NUMBER_OF_TEXTURECOORDS];
@@ -35,7 +35,7 @@ namespace open3mod
             {
                 dest.Faces[i] = new Face(dest.Faces[i].Indices.ToArray());
             }
-            // TODO(acgessler): Handle bones.
+         */   // TODO(acgessler): Handle bones.
         }
 
         public static void ShallowCopy(Mesh dest, Mesh src)

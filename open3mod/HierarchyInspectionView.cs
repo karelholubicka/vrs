@@ -434,7 +434,19 @@ namespace open3mod
                 _visibleMeshes = _meshCountFullScene;
                 _visibleInstancedMeshes = _instancedMeshCountFullScene;
 
-                HidePopups();
+                if (node != null)
+                {
+                    PopulateNodeInfoPopup(node);
+
+                    if (_nodeDiag != null && _nodeDiag != null && _nodeDiag.HoverUpdateEnabled)
+                    {
+                        SetNodeDetailDialogInfo(itemAsNode);
+                    }
+                }
+                else
+                {
+                    HidePopups();
+                }
                 return;
             }
             // If the selected item is a mesh, we render only the corresponding
@@ -1137,14 +1149,14 @@ namespace open3mod
                     parent = node.Parent;
                     parentChildIndex = node.Index;
 
-                    sceneNode.Remove();
+                 //ASSIMP410   sceneNode.Remove();
                     node.Remove();
                 },
                 () =>
                 {
                     node = _treeNodesBySceneNode[sceneNode];
                     oldSceneParent.Children.Insert(oldSceneParentChildPosition, sceneNode);
-                    sceneNode.Parent = oldSceneParent;
+                 //   sceneNode.Parent = oldSceneParent;
                     parent.Nodes.Insert(parentChildIndex, node);
                 },
                 FinishUpdatingTree);
@@ -1165,12 +1177,12 @@ namespace open3mod
                 () =>
                 {
                     _scene.Raw.RootNode = sceneNode;
-                    sceneNode.Parent = null;
+                    //ASSIMP410 sceneNode.Parent = null;
                 },
                 () =>
                 {
                     _scene.Raw.RootNode = oldRootNode;
-                    sceneNode.Parent = oldParent;
+                    //ASSIMP410 sceneNode.Parent = oldParent;
                 },
                 RebuildTree);
         }
@@ -1204,13 +1216,13 @@ namespace open3mod
                     parent = node.Parent;
                     parentChildIndex = node.Index;
 
-                    nodeMeshPair.Key.MeshIndices = newList;
+                    //ASSIMP410 nodeMeshPair.Key.MeshIndices = newList;
                     node.Remove();
                 },
                 () =>
                 {
                     node = _treeNodesBySceneNodeMeshPair[nodeMeshPair];
-                    nodeMeshPair.Key.MeshIndices = oldList;
+                    //ASSIMP410 nodeMeshPair.Key.MeshIndices = oldList;
                     parent.Nodes.Insert(parentChildIndex, node);
                 },
                 FinishUpdatingTree);

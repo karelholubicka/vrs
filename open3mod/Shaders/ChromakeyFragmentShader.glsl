@@ -276,7 +276,7 @@ void main(void)
 	vec4 mask = texelFetch(iMask, texPos, 0);
 
 	vec4 foreground = texelFetch(iForeground, texPos, 0);
-    mask = vec4(0.0,0.0,0.0,1.0); //mask switched off
+   // mask = vec4(0.0,0.0,0.0,1.0); //mask switched off
 
 	fragColor = vec4(0.0,0.0,0.0,0.0);
     fragColor = vec4(color,alpha);

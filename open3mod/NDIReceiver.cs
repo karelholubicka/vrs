@@ -8,6 +8,7 @@ using NewTek;
 using NewTek.NDI;
 using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -34,7 +35,7 @@ namespace open3mod
 
         public Bitmap Received
         {
-            get { return _bitmap; }
+            get { return _received; }
         }
 
         public Object ReceiverLock;      
@@ -223,18 +224,18 @@ namespace open3mod
 
                         int stride = (int)videoFrame.line_stride_in_bytes;
                         int bufferSize = yres * stride;
-                        Bitmap NDIRecvd = new Bitmap(xres, yres, stride, System.Drawing.Imaging.PixelFormat.Format32bppPArgb, videoFrame.p_data);
-                        /* this is done in apply resolution bias, but we need really small texture*/
                         lock (ReceiverLock)
                         {
-                            if (_bitmap != null) _bitmap.Dispose();
-                            _bitmap = new Bitmap(xres / 4, yres / 4);
-                            using (var g = Graphics.FromImage(_bitmap))
+                            if (_received != null) _received.Dispose();
+                            _received = new Bitmap(xres, yres, stride, System.Drawing.Imaging.PixelFormat.Format32bppPArgb, videoFrame.p_data);
+
+                            // apply texture resolution bias? (i.e. low quality textures)
+                            if (GraphicsSettings.Default.TexQualityBias > 0)
                             {
-                                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Bilinear;
-                                g.DrawImage(NDIRecvd, 0, 0, _bitmap.Width, _bitmap.Height);
+                                var b = ApplyResolutionBias(_received, GraphicsSettings.Default.TexQualityBias);
+                                _received.Dispose();
+                                _received = b;
                             }
-                            NDIRecvd.Dispose();
                         }
 
                         NDIlib.recv_free_video_v2(_recvInstancePtr, ref videoFrame);
@@ -262,6 +263,22 @@ namespace open3mod
             }
         }
 
+
+        private static Bitmap ApplyResolutionBias(Bitmap textureBitmap, int bias)
+        {
+            var width = textureBitmap.Width >> bias;
+            var height = textureBitmap.Height >> bias;
+
+            var b = new Bitmap(width, height);
+            using (var g = Graphics.FromImage(b))
+            {
+                g.InterpolationMode = InterpolationMode.HighQualityBilinear;
+                g.DrawImage(textureBitmap, 0, 0, width, height);
+            }
+
+            return b;
+        }
+
         // a pointer to our unmanaged NDI receiver instance
         IntPtr _recvInstancePtr = IntPtr.Zero;
 
@@ -274,7 +291,7 @@ namespace open3mod
         // should we send video to Windows or not?
         private bool _videoEnabled = true;
 
-        private Bitmap _bitmap;
+        private Bitmap _received;
         /// <summary>
         /// Host window
         /// </summary>

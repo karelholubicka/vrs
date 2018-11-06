@@ -1,5 +1,5 @@
 ﻿/*
-* Copyright (c) 2012-2013 AssimpNet - Nicholas Woodfield
+* Copyright (c) 2012-2014 AssimpNet - Nicholas Woodfield
 * 
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -24,13 +24,15 @@ using System;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Assimp.Unmanaged {
+namespace Assimp.Unmanaged
+{
     /// <summary>
     /// Represents an aiScene struct.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     [CLSCompliant(false)]
-    public struct AiScene {
+    public struct AiScene
+    {
         /// <summary>
         /// unsigned int, flags about the state of the scene
         /// </summary>
@@ -112,7 +114,8 @@ namespace Assimp.Unmanaged {
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     [CLSCompliant(false)]
-    public struct AiNode {
+    public struct AiNode
+    {
         /// <summary>
         /// Name of the node.
         /// </summary>
@@ -148,13 +151,51 @@ namespace Assimp.Unmanaged {
         /// </summary>
         public IntPtr Meshes;
 
-#if WITH_NODE_METADATA
         /// <summary>
-        /// aiMetadata* mMetaData; -- not supported for now, but
-        /// present in assimp trunk.
+        /// aiMetadata*, pointer to a metadata container. May be NULL, if an importer doesn't document metadata then it doesn't write any.
         /// </summary>
         public IntPtr MetaData;
-#endif
+    }
+
+    /// <summary>
+    /// Represents an aiMetadataEntry struct.
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    [CLSCompliant(false)]
+    public struct AiMetadataEntry
+    {
+        /// <summary>
+        /// Type of metadata.
+        /// </summary>
+        public MetaDataType DataType;
+
+        /// <summary>
+        /// Pointer to data.
+        /// </summary>
+        public IntPtr Data;
+    }
+
+    /// <summary>
+    /// Represents an aiMetadata struct.
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    [CLSCompliant(false)]
+    public struct AiMetadata
+    {
+        /// <summary>
+        /// Length of the Keys and Values arrays.
+        /// </summary>
+        public uint NumProperties;
+
+        /// <summary>
+        /// aiString*, array of keys. May not be NULL. Each entry must exist.
+        /// </summary>
+        public IntPtr keys;
+
+        /// <summary>
+        /// aiMetadataEntry*, array of values. May not be NULL. Entries may be NULL if the corresponding property key has no assigned value.
+        /// </summary>
+        public IntPtr Values;
     }
 
     /// <summary>
@@ -162,7 +203,8 @@ namespace Assimp.Unmanaged {
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     [CLSCompliant(false)]
-    public struct AiMesh {
+    public struct AiMesh
+    {
         /// <summary>
         /// unsigned int, bitwise flag detailing types of primitives contained.
         /// </summary>
@@ -200,23 +242,21 @@ namespace Assimp.Unmanaged {
         public IntPtr BiTangents;
 
         /// <summary>
-        /// aiColor*[Max_Value], array of arrays of vertex colors. Max_Value is a defined constant.
+        /// aiColor4D*[Max_Value], array of arrays of vertex colors. Max_Value is defined as <see cref="AiDefines.AI_MAX_NUMBER_OF_COLOR_SETS"/>.
         /// </summary>
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = AiDefines.AI_MAX_NUMBER_OF_COLOR_SETS, ArraySubType = UnmanagedType.SysUInt)]
-        public IntPtr[] Colors;
+        public AiMeshColorArray Colors;
 
         /// <summary>
-        /// aiColor*[Max_Value], array of arrays of texture coordinates. Max_Value is a defined constant.
+        /// aiVector3D*[Max_Value], array of arrays of texture coordinates. Max_Value is defined as <see cref="AiDefines.AI_MAX_NUMBER_OF_TEXTURECOORDS"/>.
         /// </summary>
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = AiDefines.AI_MAX_NUMBER_OF_TEXTURECOORDS, ArraySubType = UnmanagedType.SysUInt)]
-        public IntPtr[] TextureCoords;
+        public AiMeshTextureCoordinateArray TextureCoords;
 
         /// <summary>
-        /// unsigned int[4], array of ints denoting the number of components for each set of texture coordinates - UV (2), UVW (3) for example.
+        /// unsigned int[Max_Value], array of ints denoting the number of components for each set of texture coordinates - UV (2), UVW (3) for example.
+        /// Max_Value is defined as <see cref="AiDefines.AI_MAX_NUMBER_OF_TEXTURECOORDS"/>.
         /// </summary>
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = AiDefines.AI_MAX_NUMBER_OF_TEXTURECOORDS, ArraySubType = UnmanagedType.U4)]
-        public uint[] NumUVComponents;
-
+        public AiMeshUVComponentArray NumUVComponents;
+ 
         /// <summary>
         /// aiFace*, array of faces.
         /// </summary>
@@ -258,7 +298,8 @@ namespace Assimp.Unmanaged {
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     [CLSCompliant(false)]
-    public unsafe struct AiTexture {
+    public unsafe struct AiTexture
+    {
         //Internal use only
         private static readonly char[] s_nullFormat = new char[] { '\0', '\0', '\0', '\0' };
 
@@ -273,15 +314,9 @@ namespace Assimp.Unmanaged {
         public uint Height;
 
         /// <summary>
-        /// char[4], format extension hint.
+        /// sbyte[4], format extension hint. Fixed size char is two bytes regardless of encoding. Unmanaged assimp uses a char that
+        /// maps to one byte.
         /// </summary>
-        //[MarshalAs(UnmanagedType.ByValTStr, SizeConst=4)]
-        //public String FormatHint;
-
-        // Note: As per http://msdn.microsoft.com/en-us/library/zycewsya.aspx,
-        // fixed size char buffers always use two bytes per character,
-        // regardless of the encoding. Assmp's aiTexture uss char, which 
-        // maps to one byte.
         public fixed sbyte FormatHint[4];
 
         /// <summary>
@@ -293,16 +328,18 @@ namespace Assimp.Unmanaged {
         /// Sets the format hint.
         /// </summary>
         /// <param name="formatHint">Format hint - must be 3 characters or less</param>
-        public void SetFormatHint(String formatHint) {
+        public void SetFormatHint(String formatHint)
+        {
             char[] hintChars = (String.IsNullOrEmpty(formatHint)) ? s_nullFormat : formatHint.ToLowerInvariant().ToCharArray();
 
             int count = hintChars.Length;
 
-            fixed(sbyte* charPtr = FormatHint) {
-                charPtr[0] = (sbyte)((count > 0) ? hintChars[0] : '\0');
-                charPtr[1] = (sbyte)((count > 1) ? hintChars[1] : '\0');
-                charPtr[2] = (sbyte)((count > 2) ? hintChars[2] : '\0');
-                charPtr[3] = (sbyte)'\0';
+            fixed(sbyte* charPtr = FormatHint)
+            {
+                charPtr[0] = (sbyte) ((count > 0) ? hintChars[0] : '\0');
+                charPtr[1] = (sbyte) ((count > 1) ? hintChars[1] : '\0');
+                charPtr[2] = (sbyte) ((count > 2) ? hintChars[2] : '\0');
+                charPtr[3] = (sbyte) '\0';
             }
         }
 
@@ -310,8 +347,10 @@ namespace Assimp.Unmanaged {
         /// Gets the format hint.
         /// </summary>
         /// <returns>The format hint</returns>
-        public String GetFormatHint() {
-            fixed(sbyte* charPtr = FormatHint) {
+        public String GetFormatHint()
+        {
+            fixed(sbyte* charPtr = FormatHint)
+            {
                 return new String(charPtr);
             }
         }
@@ -322,7 +361,8 @@ namespace Assimp.Unmanaged {
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     [CLSCompliant(false)]
-    public struct AiFace {
+    public struct AiFace
+    {
         /// <summary>
         /// Number of indices in the face.
         /// </summary>
@@ -339,7 +379,8 @@ namespace Assimp.Unmanaged {
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     [CLSCompliant(false)]
-    public struct AiBone {
+    public struct AiBone
+    {
         /// <summary>
         /// Name of the bone.
         /// </summary>
@@ -366,7 +407,8 @@ namespace Assimp.Unmanaged {
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     [CLSCompliant(false)]
-    public struct AiMaterialProperty {
+    public struct AiMaterialProperty
+    {
         /// <summary>
         /// Name of the property (key).
         /// </summary>
@@ -405,7 +447,8 @@ namespace Assimp.Unmanaged {
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     [CLSCompliant(false)]
-    public struct AiMaterial {
+    public struct AiMaterial
+    {
         /// <summary>
         /// aiMaterialProperty**, array of material properties.
         /// </summary>
@@ -427,7 +470,8 @@ namespace Assimp.Unmanaged {
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     [CLSCompliant(false)]
-    public struct AiNodeAnim {
+    public struct AiNodeAnim
+    {
         /// <summary>
         /// Name of the node affected by the animation. The node must exist
         /// and be unique.
@@ -484,7 +528,8 @@ namespace Assimp.Unmanaged {
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     [CLSCompliant(false)]
-    public struct AiMeshAnim {
+    public struct AiMeshAnim
+    {
         /// <summary>
         /// Name of the mesh to be animated. Empty string not allowed.
         /// </summary>
@@ -506,7 +551,8 @@ namespace Assimp.Unmanaged {
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     [CLSCompliant(false)]
-    public struct AiAnimation {
+    public struct AiAnimation
+    {
         /// <summary>
         /// Name of the animation.
         /// </summary>
@@ -542,6 +588,10 @@ namespace Assimp.Unmanaged {
         /// aiMeshAnim**, mesh animation channels. Each channel affects a single mesh. 
         /// </summary>
         public IntPtr MeshChannels;
+
+        public IntPtr MorphMeshChannels;
+
+        public uint NumMorphMeshChannels;
     }
 
     /// <summary>
@@ -549,7 +599,8 @@ namespace Assimp.Unmanaged {
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     [CLSCompliant(false)]
-    public struct AiLight {
+    public struct AiLight
+    {
         /// <summary>
         /// Name of the light.
         /// </summary>
@@ -570,6 +621,11 @@ namespace Assimp.Unmanaged {
         /// </summary>
         public Vector3D Direction;
 
+        /// <summary>
+        /// Direction up.
+        /// </summary>
+        public Vector3D Up;
+        
         /// <summary>
         /// Attenuation constant value.
         /// </summary>
@@ -609,6 +665,12 @@ namespace Assimp.Unmanaged {
         /// Spot light outer angle.
         /// </summary>
         public float AngleOuterCone;
+
+        /// <summary>
+        /// Size of an Area light.
+        /// </summary>
+        public Vector2D Size;
+
     }
 
     /// <summary>
@@ -616,7 +678,8 @@ namespace Assimp.Unmanaged {
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     [CLSCompliant(false)]
-    public struct AiCamera {
+    public struct AiCamera
+    {
         /// <summary>
         /// Name of the camera.
         /// </summary>
@@ -663,7 +726,8 @@ namespace Assimp.Unmanaged {
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     [CLSCompliant(false)]
-    public unsafe struct AiString {
+    public unsafe struct AiString
+    {
         /// <summary>
         /// Byte length of the UTF-8 string.
         /// </summary>
@@ -678,9 +742,10 @@ namespace Assimp.Unmanaged {
         /// Constructs a new instance of the <see cref="AiString"/> struct.
         /// </summary>
         /// <param name="data">The string data</param>
-        public AiString(String data) {
+        public AiString(String data)
+        {
             Length = UIntPtr.Zero;
- 
+
             SetString(data);
         }
 
@@ -689,19 +754,24 @@ namespace Assimp.Unmanaged {
         /// an empty string rather than garbage.
         /// </summary>
         /// <returns>AiString string data</returns>
-        public unsafe String GetString() {
+        public unsafe String GetString()
+        {
             int length = (int) Length.ToUInt32();
 
-            if(length > 0) {
+            if(length > 0)
+            {
                 byte[] copy = new byte[length];
 
-                fixed(byte* bytePtr = Data) {
+                fixed(byte* bytePtr = Data)
+                {
                     MemoryHelper.Read<byte>(new IntPtr(bytePtr), copy, 0, length);
                 }
 
                 //Note: aiTypes.h specifies aiString is UTF-8 encoded string.
                 return Encoding.UTF8.GetString(copy, 0, length);
-            } else {
+            }
+            else
+            {
                 return String.Empty;
             }
         }
@@ -710,21 +780,28 @@ namespace Assimp.Unmanaged {
         /// Convienence method for setting the AiString string (and length).
         /// </summary>
         /// <param name="data">String data to set</param>
-        public unsafe bool SetString(String data) {
-            if(String.IsNullOrEmpty(data)) {
+        /// <returns>True if the operation was successful, false otherwise.</returns>
+        public unsafe bool SetString(String data)
+        {
+            if(String.IsNullOrEmpty(data))
+            {
                 Length = new UIntPtr(0);
-                return false;
+                fixed(byte* bytePtr = Data)
+                    MemoryHelper.ClearMemory(new IntPtr(bytePtr), 0, AiDefines.MAX_LENGTH);
+
+                return true;
             }
 
             //Note: aiTypes.h specifies aiString is UTF-8 encoded string.
-            if(Encoding.UTF8.GetByteCount(data) <= AiDefines.MAX_LENGTH) {
+            if(Encoding.UTF8.GetByteCount(data) <= AiDefines.MAX_LENGTH)
+            {
                 byte[] copy = Encoding.UTF8.GetBytes(data);
 
                 //Write bytes to data field
-                if(copy.Length > 0) {
-                    fixed(byte* bytePtr = Data) {
+                if(copy.Length > 0)
+                {
+                    fixed(byte* bytePtr = Data)
                         MemoryHelper.Write<byte>(new IntPtr(bytePtr), copy, 0, copy.Length);
-                    }
                 }
 
                 Length = new UIntPtr((uint) copy.Length);
@@ -739,7 +816,8 @@ namespace Assimp.Unmanaged {
         /// Returns the fully qualified type name of this instance.
         /// </summary>
         /// <returns>A <see cref="T:System.String" /> containing a fully qualified type name.</returns>
-        public override String ToString() {
+        public override String ToString()
+        {
             return GetString();
         }
     }
@@ -749,7 +827,8 @@ namespace Assimp.Unmanaged {
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     [CLSCompliant(false)]
-    public struct AiLogStream {
+    public struct AiLogStream
+    {
         /// <summary>
         /// Function pointer that gets called when a message is to be logged.
         /// </summary>
@@ -767,7 +846,8 @@ namespace Assimp.Unmanaged {
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     [CLSCompliant(false)]
-    public struct AiMemoryInfo {
+    public struct AiMemoryInfo
+    {
         /// <summary>
         /// Size of the storage allocated for texture data, in bytes.
         /// </summary>
@@ -814,7 +894,8 @@ namespace Assimp.Unmanaged {
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     [CLSCompliant(false)]
-    public struct AiAnimMesh {
+    public struct AiAnimMesh
+    {
         /// <summary>
         /// aiVector3D*, replacement position array.
         /// </summary>
@@ -836,16 +917,14 @@ namespace Assimp.Unmanaged {
         public IntPtr BiTangents;
 
         /// <summary>
-        /// aiColor4D*[4], replacement vertex colors.
+        /// aiColor4D*[Max_Value], array of arrays of vertex colors. Max_Value is defined as <see cref="AiDefines.AI_MAX_NUMBER_OF_COLOR_SETS"/>.
         /// </summary>
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = AiDefines.AI_MAX_NUMBER_OF_COLOR_SETS, ArraySubType = UnmanagedType.SysUInt)]
-        public IntPtr[] Colors;
+        public AiMeshColorArray Colors;
 
         /// <summary>
-        /// aiVector3D*[4], replacement texture coordinates.
+        /// aiVector3D*[Max_Value], array of arrays of texture coordinates. Max_Value is defined as <see cref="AiDefines.AI_MAX_NUMBER_OF_TEXTURECOORDS"/>.
         /// </summary>
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = AiDefines.AI_MAX_NUMBER_OF_TEXTURECOORDS, ArraySubType = UnmanagedType.SysUInt)]
-        public IntPtr[] TextureCoords;
+        public AiMeshTextureCoordinateArray TextureCoords;
 
         /// <summary>
         /// unsigned int, number of vertices.
@@ -858,9 +937,10 @@ namespace Assimp.Unmanaged {
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     [CLSCompliant(false)]
-    public struct AiExportFormatDesc {
+    public struct AiExportFormatDesc
+    {
         /// <summary>
-        /// char*, a short string ID to uniquely identify the export format. e.g. "dae" or "obj"
+        /// char*, a short string ID to uniquely identify the export format. e.g. "collada" or "obj"
         /// </summary>
         public IntPtr FormatId;
 
@@ -881,7 +961,8 @@ namespace Assimp.Unmanaged {
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     [CLSCompliant(false)]
-    public struct AiExportDataBlob {
+    public struct AiExportDataBlob
+    {
         /// <summary>
         /// size_t, size of the data in bytes.
         /// </summary>
@@ -908,7 +989,8 @@ namespace Assimp.Unmanaged {
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     [CLSCompliant(false)]
-    public struct AiFileIO {
+    public struct AiFileIO
+    {
         /// <summary>
         /// Function pointer to open a new file.
         /// </summary>
@@ -930,7 +1012,8 @@ namespace Assimp.Unmanaged {
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     [CLSCompliant(false)]
-    public struct AiFile {
+    public struct AiFile
+    {
         /// <summary>
         /// Function pointer to read from a file.
         /// </summary>
@@ -1050,6 +1133,265 @@ namespace Assimp.Unmanaged {
     [CLSCompliant(false)]
     public delegate void AiFileCloseProc(IntPtr fileIO, IntPtr file);
 
+
+    #endregion
+
+    #region Collections
+
+    /// <summary>
+    /// Fixed length array for representing the color channels of a mesh. Length is equal
+    /// to <see cref="AiDefines.AI_MAX_NUMBER_OF_COLOR_SETS"/>.
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    [CLSCompliant(false)]
+    public unsafe struct AiMeshColorArray
+    {
+        //No fixed size intptrs
+        private IntPtr m_ptr0, m_ptr1, m_ptr2, m_ptr3, m_ptr4, m_ptr5, m_ptr6, m_ptr7;
+
+        /// <summary>
+        /// Gets the length of the array.
+        /// </summary>
+        public int Length
+        {
+            get
+            {
+                return AiDefines.AI_MAX_NUMBER_OF_COLOR_SETS;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets an array value at the specified index.
+        /// </summary>
+        /// <param name="index">Zero-based index.</param>
+        public IntPtr this[int index]
+        {
+            get
+            {
+                switch(index)
+                {
+                    case 0:
+                        return m_ptr0;
+                    case 1:
+                        return m_ptr1;
+                    case 2:
+                        return m_ptr2;
+                    case 3:
+                        return m_ptr3;
+                    case 4:
+                        return m_ptr4;
+                    case 5:
+                        return m_ptr5;
+                    case 6:
+                        return m_ptr6;
+                    case 7:
+                        return m_ptr7;
+                    default:
+                        return IntPtr.Zero;
+                }
+            }
+            set
+            {
+                switch(index)
+                {
+                    case 0:
+                        m_ptr0 = value;
+                        break;
+                    case 1:
+                        m_ptr1 = value;
+                        break;
+                    case 2:
+                        m_ptr2 = value;
+                        break;
+                    case 3:
+                        m_ptr3 = value;
+                        break;
+                    case 4:
+                        m_ptr4 = value;
+                        break;
+                    case 5:
+                        m_ptr5 = value;
+                        break;
+                    case 6:
+                        m_ptr6 = value;
+                        break;
+                    case 7:
+                        m_ptr7 = value;
+                        break;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Fixed length array for representing the texture coordinate channels of a mesh. Length is equal
+    /// to <see cref="AiDefines.AI_MAX_NUMBER_OF_TEXTURECOORDS"/>.
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    [CLSCompliant(false)]
+    public unsafe struct AiMeshTextureCoordinateArray
+    {
+        //No fixed size intptrs
+        private IntPtr m_ptr0, m_ptr1, m_ptr2, m_ptr3, m_ptr4, m_ptr5, m_ptr6, m_ptr7;
+
+        /// <summary>
+        /// Gets the length of the array.
+        /// </summary>
+        public int Length
+        {
+            get
+            {
+                return AiDefines.AI_MAX_NUMBER_OF_TEXTURECOORDS;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets an array value at the specified index.
+        /// </summary>
+        /// <param name="index">Zero-based index.</param>
+        public IntPtr this[int index]
+        {
+            get
+            {
+                switch(index)
+                {
+                    case 0:
+                        return m_ptr0;
+                    case 1:
+                        return m_ptr1;
+                    case 2:
+                        return m_ptr2;
+                    case 3:
+                        return m_ptr3;
+                    case 4:
+                        return m_ptr4;
+                    case 5:
+                        return m_ptr5;
+                    case 6:
+                        return m_ptr6;
+                    case 7:
+                        return m_ptr7;
+                    default:
+                        return IntPtr.Zero;
+                }
+            }
+            set
+            {
+                switch(index)
+                {
+                    case 0:
+                        m_ptr0 = value;
+                        break;
+                    case 1:
+                        m_ptr1 = value;
+                        break;
+                    case 2:
+                        m_ptr2 = value;
+                        break;
+                    case 3:
+                        m_ptr3 = value;
+                        break;
+                    case 4:
+                        m_ptr4 = value;
+                        break;
+                    case 5:
+                        m_ptr5 = value;
+                        break;
+                    case 6:
+                        m_ptr6 = value;
+                        break;
+                    case 7:
+                        m_ptr7 = value;
+                        break;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Fixed length array for representing the number of UV components for each texture coordinate channel of a mesh. Length is equal
+    /// to <see cref="AiDefines.AI_MAX_NUMBER_OF_TEXTURECOORDS"/>.
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    [CLSCompliant(false)]
+    public struct AiMeshUVComponentArray
+    {
+        //Could use fixed size array here, but have an inkling that constantly fixing for each indexer operation might be burdensome
+        private uint m_uvw0, m_uvw1, m_uvw2, m_uvw3, m_uvw4, m_uvw5, m_uvw6, m_uvw7;
+
+        /// <summary>
+        /// Gets the length of the array.
+        /// </summary>
+        public int Length
+        {
+            get
+            {
+                return AiDefines.AI_MAX_NUMBER_OF_TEXTURECOORDS;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets an array value at the specified index.
+        /// </summary>
+        /// <param name="index">Zero-based index.</param>
+        public uint this[int index]
+        {
+            get
+            {
+                switch(index)
+                {
+                    case 0:
+                        return m_uvw0;
+                    case 1:
+                        return m_uvw1;
+                    case 2:
+                        return m_uvw2;
+                    case 3:
+                        return m_uvw3;
+                    case 4:
+                        return m_uvw4;
+                    case 5:
+                        return m_uvw5;
+                    case 6:
+                        return m_uvw6;
+                    case 7:
+                        return m_uvw7;
+                    default:
+                        return 0;
+                }
+            }
+            set
+            {
+                switch(index)
+                {
+                    case 0:
+                        m_uvw0 = value;
+                        break;
+                    case 1:
+                        m_uvw1 = value;
+                        break;
+                    case 2:
+                        m_uvw2 = value;
+                        break;
+                    case 3:
+                        m_uvw3 = value;
+                        break;
+                    case 4:
+                        m_uvw4 = value;
+                        break;
+                    case 5:
+                        m_uvw5 = value;
+                        break;
+                    case 6:
+                        m_uvw6 = value;
+                        break;
+                    case 7:
+                        m_uvw7 = value;
+                        break;
+                }
+            }
+        }
+    }
 
     #endregion
 }

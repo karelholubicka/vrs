@@ -1,5 +1,5 @@
 ﻿/*
-* Copyright (c) 2012-2013 AssimpNet - Nicholas Woodfield
+* Copyright (c) 2012-2014 AssimpNet - Nicholas Woodfield
 * 
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,8 @@ using System;
 using System.Collections.Generic;
 using Assimp.Unmanaged;
 
-namespace Assimp {
+namespace Assimp
+{
     /// <summary>
     /// A mesh attachment store per-vertex animations for a particular frame. You may
     /// think of this as a 'patch' for the host mesh, since the mesh attachment replaces only certain
@@ -32,7 +33,8 @@ namespace Assimp {
     /// relationship between the time line and mesh attachments is established by the mesh animation channel,
     /// which references singular mesh attachments by their ID and binds them to a time offset.
     /// </summary>
-    public sealed class MeshAnimationAttachment : IMarshalable<MeshAnimationAttachment, AiAnimMesh> {
+    public sealed class MeshAnimationAttachment : IMarshalable<MeshAnimationAttachment, AiAnimMesh>
+    {
         private List<Vector3D> m_vertices;
         private List<Vector3D> m_normals;
         private List<Vector3D> m_tangents;
@@ -46,8 +48,10 @@ namespace Assimp {
         /// cannot add or remove per-vertex attributes, therefore the existance
         /// of vertex data will match the existance of data in the mesh.
         /// </summary>
-        public int VertexCount {
-            get {
+        public int VertexCount
+        {
+            get
+            {
                 return m_vertices.Count;
             }
         }
@@ -56,8 +60,10 @@ namespace Assimp {
         /// Checks whether the attachment mesh overrides the vertex positions
         /// of its host mesh.
         /// </summary>
-        public bool HasVertices {
-            get {
+        public bool HasVertices
+        {
+            get
+            {
                 return m_vertices.Count > 0;
             }
         }
@@ -65,8 +71,10 @@ namespace Assimp {
         /// <summary>
         /// Gets the vertex position list.
         /// </summary>
-        public List<Vector3D> Vertices {
-            get {
+        public List<Vector3D> Vertices
+        {
+            get
+            {
                 return m_vertices;
             }
         }
@@ -75,8 +83,10 @@ namespace Assimp {
         /// Checks whether the attachment mesh overrides the vertex normals of
         /// its host mesh.
         /// </summary>
-        public bool HasNormals {
-            get {
+        public bool HasNormals
+        {
+            get
+            {
                 return m_normals.Count > 0;
             }
         }
@@ -84,8 +94,10 @@ namespace Assimp {
         /// <summary>
         /// Gets the vertex normal list.
         /// </summary>
-        public List<Vector3D> Normals {
-            get {
+        public List<Vector3D> Normals
+        {
+            get
+            {
                 return m_normals;
             }
         }
@@ -94,8 +106,10 @@ namespace Assimp {
         /// Checks whether the attachment mesh overrides the vertex
         /// tangents and bitangents of its host mesh.
         /// </summary>
-        public bool HasTangentBasis {
-            get {
+        public bool HasTangentBasis
+        {
+            get
+            {
                 return m_tangents.Count > 0 && m_bitangents.Count > 0;
             }
         }
@@ -103,8 +117,10 @@ namespace Assimp {
         /// <summary>
         /// Gets the vertex tangent list.
         /// </summary>
-        public List<Vector3D> Tangents {
-            get {
+        public List<Vector3D> Tangents
+        {
+            get
+            {
                 return m_tangents;
             }
         }
@@ -112,8 +128,10 @@ namespace Assimp {
         /// <summary>
         /// Gets the vertex bitangent list.
         /// </summary>
-        public List<Vector3D> BiTangents {
-            get {
+        public List<Vector3D> BiTangents
+        {
+            get
+            {
                 return m_bitangents;
             }
         }
@@ -123,10 +141,13 @@ namespace Assimp {
         /// mesh (list is not empty/not null). This can be a value between zero and the maximum vertex color count. Each individual channel
         /// should be the size of <see cref="VertexCount"/>.
         /// </summary>
-        public int VertexColorChannelCount {
-            get {
+        public int VertexColorChannelCount
+        {
+            get
+            {
                 int count = 0;
-                for(int i = 0; i < m_colors.Length; i++) {
+                for(int i = 0; i < m_colors.Length; i++)
+                {
                     if(HasVertexColors(i))
                         count++;
                 }
@@ -140,10 +161,13 @@ namespace Assimp {
         /// in the mesh (list is not empty/not null). This can be a value between zero and the maximum texture coordinate count.
         /// Each individual channel should be the size of <see cref="VertexCount"/>.
         /// </summary>
-        public int TextureCoordinateChannelCount {
-            get {
+        public int TextureCoordinateChannelCount
+        {
+            get
+            {
                 int count = 0;
-                for(int i = 0; i < m_texCoords.Length; i++) {
+                for(int i = 0; i < m_texCoords.Length; i++)
+                {
                     if(HasTextureCoords(i))
                         count++;
                 }
@@ -156,8 +180,10 @@ namespace Assimp {
         /// Gets the array that contains each vertex color channels that override a specific channel in the host mesh, by default all are lists of zero (but can be set to null). 
         /// Each index in the array corresponds to the texture coordinate channel. The length of the array corresponds to Assimp's maximum vertex color channel limit.
         /// </summary>
-        public List<Color4D>[] VertexColorChannels {
-            get {
+        public List<Color4D>[] VertexColorChannels
+        {
+            get
+            {
                 return m_colors;
             }
         }
@@ -166,8 +192,10 @@ namespace Assimp {
         /// Gets the array that contains each texture coordinate channel that override a specific channel in the host mesh, by default all are lists of zero (but can be set to null).
         /// Each index in the array corresponds to the texture coordinate channel. The length of the array corresponds to Assimp's maximum UV channel limit.
         /// </summary>
-        public List<Vector3D>[] TextureCoordinateChannels {
-            get {
+        public List<Vector3D>[] TextureCoordinateChannels
+        {
+            get
+            {
                 return m_texCoords;
             }
         }
@@ -175,20 +203,23 @@ namespace Assimp {
         /// <summary>
         /// Constructs a new instance of the <see cref="MeshAnimationAttachment"/> class.
         /// </summary>
-        public MeshAnimationAttachment() {
+        public MeshAnimationAttachment()
+        {
             m_vertices = new List<Vector3D>();
             m_normals = new List<Vector3D>();
             m_tangents = new List<Vector3D>();
             m_bitangents = new List<Vector3D>();
             m_colors = new List<Color4D>[AiDefines.AI_MAX_NUMBER_OF_COLOR_SETS];
 
-            for(int i = 0; i < m_colors.Length; i++) {
+            for(int i = 0; i < m_colors.Length; i++)
+            {
                 m_colors[i] = new List<Color4D>();
             }
 
             m_texCoords = new List<Vector3D>[AiDefines.AI_MAX_NUMBER_OF_TEXTURECOORDS];
 
-            for(int i = 0; i < m_texCoords.Length; i++) {
+            for(int i = 0; i < m_texCoords.Length; i++)
+            {
                 m_texCoords[i] = new List<Vector3D>();
             }
         }
@@ -200,7 +231,8 @@ namespace Assimp {
         /// </summary>
         /// <param name="channelIndex">Channel index</param>
         /// <returns>True if vertex colors are present in the channel.</returns>
-        public bool HasVertexColors(int channelIndex) {
+        public bool HasVertexColors(int channelIndex)
+        {
             if(channelIndex >= m_colors.Length || channelIndex < 0)
                 return false;
 
@@ -219,7 +251,8 @@ namespace Assimp {
         /// </summary>
         /// <param name="channelIndex">Channel index</param>
         /// <returns>True if texture coordinates are present in the channel.</returns>
-        public bool HasTextureCoords(int channelIndex) {
+        public bool HasTextureCoords(int channelIndex)
+        {
             if(channelIndex >= m_texCoords.Length || channelIndex < 0)
                 return false;
 
@@ -231,13 +264,15 @@ namespace Assimp {
             return false;
         }
 
-        private void ClearBuffers() {
+        private void ClearBuffers()
+        {
             m_vertices.Clear();
             m_normals.Clear();
             m_tangents.Clear();
             m_bitangents.Clear();
 
-            for(int i = 0; i < m_colors.Length; i++) {
+            for(int i = 0; i < m_colors.Length; i++)
+            {
                 List<Color4D> colors = m_colors[i];
 
                 if(colors == null)
@@ -246,7 +281,8 @@ namespace Assimp {
                     colors.Clear();
             }
 
-            for(int i = 0; i < m_texCoords.Length; i++) {
+            for(int i = 0; i < m_texCoords.Length; i++)
+            {
                 List<Vector3D> texCoords = m_texCoords[i];
 
                 if(texCoords == null)
@@ -256,7 +292,8 @@ namespace Assimp {
             }
         }
 
-        private Vector3D[] CopyTo(List<Vector3D> list, Vector3D[] copy) {
+        private Vector3D[] CopyTo(List<Vector3D> list, Vector3D[] copy)
+        {
             list.CopyTo(copy);
 
             return copy;
@@ -267,8 +304,9 @@ namespace Assimp {
         /// <summary>
         /// Gets if the native value type is blittable (that is, does not require marshaling by the runtime, e.g. has MarshalAs attributes).
         /// </summary>
-        bool IMarshalable<MeshAnimationAttachment, AiAnimMesh>.IsNativeBlittable {
-            get { return false; }
+        bool IMarshalable<MeshAnimationAttachment, AiAnimMesh>.IsNativeBlittable
+        {
+            get { return true; }
         }
 
         /// <summary>
@@ -276,16 +314,18 @@ namespace Assimp {
         /// </summary>
         /// <param name="thisPtr">Optional pointer to the memory that will hold the native value.</param>
         /// <param name="nativeValue">Output native value</param>
-        void IMarshalable<MeshAnimationAttachment, AiAnimMesh>.ToNative(IntPtr thisPtr, out AiAnimMesh nativeValue) {
+        void IMarshalable<MeshAnimationAttachment, AiAnimMesh>.ToNative(IntPtr thisPtr, out AiAnimMesh nativeValue)
+        {
             nativeValue.Vertices = IntPtr.Zero;
             nativeValue.Normals = IntPtr.Zero;
             nativeValue.Tangents = IntPtr.Zero;
             nativeValue.BiTangents = IntPtr.Zero;
-            nativeValue.Colors = new IntPtr[AiDefines.AI_MAX_NUMBER_OF_COLOR_SETS];
-            nativeValue.TextureCoords = new IntPtr[AiDefines.AI_MAX_NUMBER_OF_TEXTURECOORDS];
+            nativeValue.Colors = new AiMeshColorArray();
+            nativeValue.TextureCoords = new AiMeshTextureCoordinateArray();
             nativeValue.NumVertices = (uint) VertexCount;
 
-            if(VertexCount > 0) {
+            if(VertexCount > 0)
+            {
 
                 //Since we can have so many buffers of Vector3D with same length, lets re-use a buffer
                 Vector3D[] copy = new Vector3D[VertexCount];
@@ -295,29 +335,38 @@ namespace Assimp {
                 if(HasNormals)
                     nativeValue.Normals = MemoryHelper.ToNativeArray<Vector3D>(CopyTo(m_normals, copy));
 
-                if(HasTangentBasis) {
+                if(HasTangentBasis)
+                {
                     nativeValue.Tangents = MemoryHelper.ToNativeArray<Vector3D>(CopyTo(m_tangents, copy));
                     nativeValue.BiTangents = MemoryHelper.ToNativeArray<Vector3D>(CopyTo(m_bitangents, copy));
                 }
 
                 //Vertex Color channels
-                for(int i = 0; i < m_colors.Length; i++) {
+                for(int i = 0; i < m_colors.Length; i++)
+                {
                     List<Color4D> list = m_colors[i];
 
-                    if(list == null || list.Count == 0) {
+                    if(list == null || list.Count == 0)
+                    {
                         nativeValue.Colors[i] = IntPtr.Zero;
-                    } else {
+                    }
+                    else
+                    {
                         nativeValue.Colors[i] = MemoryHelper.ToNativeArray<Color4D>(list.ToArray());
                     }
                 }
 
                 //Texture coordinate channels
-                for(int i = 0; i < m_texCoords.Length; i++) {
+                for(int i = 0; i < m_texCoords.Length; i++)
+                {
                     List<Vector3D> list = m_texCoords[i];
 
-                    if(list == null || list.Count == 0) {
+                    if(list == null || list.Count == 0)
+                    {
                         nativeValue.TextureCoords[i] = IntPtr.Zero;
-                    } else {
+                    }
+                    else
+                    {
                         nativeValue.TextureCoords[i] = MemoryHelper.ToNativeArray<Vector3D>(CopyTo(list, copy));
                     }
                 }
@@ -328,12 +377,14 @@ namespace Assimp {
         /// Reads the unmanaged data from the native value.
         /// </summary>
         /// <param name="nativeValue">Input native value</param>
-        void IMarshalable<MeshAnimationAttachment, AiAnimMesh>.FromNative(ref AiAnimMesh nativeValue) {
+        void IMarshalable<MeshAnimationAttachment, AiAnimMesh>.FromNative(ref AiAnimMesh nativeValue)
+        {
             ClearBuffers();
 
             int vertexCount = (int) nativeValue.NumVertices;
 
-            if(vertexCount > 0) {
+            if(vertexCount > 0)
+            {
 
                 if(nativeValue.Vertices != IntPtr.Zero)
                     m_vertices.AddRange(MemoryHelper.FromNativeArray<Vector3D>(nativeValue.Vertices, vertexCount));
@@ -348,27 +399,21 @@ namespace Assimp {
                     m_bitangents.AddRange(MemoryHelper.FromNativeArray<Vector3D>(nativeValue.BiTangents, vertexCount));
 
                 //Vertex Color channels
-                IntPtr[] colors = nativeValue.Colors;
+                for(int i = 0; i < nativeValue.Colors.Length; i++)
+                {
+                    IntPtr colorPtr = nativeValue.Colors[i];
 
-                if(colors != null) {
-                    for(int i = 0; i < colors.Length; i++) {
-                        IntPtr colorPtr = colors[i];
-
-                        if(colorPtr != IntPtr.Zero)
-                            m_colors[i].AddRange(MemoryHelper.FromNativeArray<Color4D>(colorPtr, vertexCount));
-                    }
+                    if(colorPtr != IntPtr.Zero)
+                        m_colors[i].AddRange(MemoryHelper.FromNativeArray<Color4D>(colorPtr, vertexCount));
                 }
 
                 //Texture coordinate channels
-                IntPtr[] texCoords = nativeValue.TextureCoords;
+                for(int i = 0; i < nativeValue.TextureCoords.Length; i++)
+                {
+                    IntPtr texCoordsPtr = nativeValue.TextureCoords[i];
 
-                if(texCoords != null) {
-                    for(int i = 0; i < texCoords.Length; i++) {
-                        IntPtr texCoordsPtr = texCoords[i];
-
-                        if(texCoordsPtr != IntPtr.Zero)
-                            m_texCoords[i].AddRange(MemoryHelper.FromNativeArray<Vector3D>(texCoordsPtr, vertexCount));
-                    }
+                    if(texCoordsPtr != IntPtr.Zero)
+                        m_texCoords[i].AddRange(MemoryHelper.FromNativeArray<Vector3D>(texCoordsPtr, vertexCount));
                 }
             }
         }
@@ -378,47 +423,43 @@ namespace Assimp {
         /// </summary>
         /// <param name="nativeValue">Native value to free</param>
         /// <param name="freeNative">True if the unmanaged memory should be freed, false otherwise.</param>
-        public static void FreeNative(IntPtr nativeValue, bool freeNative) {
+        public static void FreeNative(IntPtr nativeValue, bool freeNative)
+        {
             if(nativeValue == IntPtr.Zero)
                 return;
 
-            AiMesh aiMesh = MemoryHelper.MarshalStructure<AiMesh>(nativeValue);
+            AiAnimMesh aiAnimMesh = MemoryHelper.Read<AiAnimMesh>(nativeValue);
 
-            if(aiMesh.NumVertices > 0) {
-                if(aiMesh.Vertices != IntPtr.Zero)
-                    MemoryHelper.FreeMemory(aiMesh.Vertices);
+            if(aiAnimMesh.NumVertices > 0)
+            {
+                if(aiAnimMesh.Vertices != IntPtr.Zero)
+                    MemoryHelper.FreeMemory(aiAnimMesh.Vertices);
 
-                if(aiMesh.Normals != IntPtr.Zero)
-                    MemoryHelper.FreeMemory(aiMesh.Normals);
+                if(aiAnimMesh.Normals != IntPtr.Zero)
+                    MemoryHelper.FreeMemory(aiAnimMesh.Normals);
 
-                if(aiMesh.Tangents != IntPtr.Zero)
-                    MemoryHelper.FreeMemory(aiMesh.Tangents);
+                if(aiAnimMesh.Tangents != IntPtr.Zero)
+                    MemoryHelper.FreeMemory(aiAnimMesh.Tangents);
 
-                if(aiMesh.BiTangents != IntPtr.Zero)
-                    MemoryHelper.FreeMemory(aiMesh.BiTangents);
+                if(aiAnimMesh.BiTangents != IntPtr.Zero)
+                    MemoryHelper.FreeMemory(aiAnimMesh.BiTangents);
 
                 //Vertex Color channels
-                IntPtr[] colors = aiMesh.Colors;
+                for(int i = 0; i < aiAnimMesh.Colors.Length; i++)
+                {
+                    IntPtr colorPtr = aiAnimMesh.Colors[i];
 
-                if(colors != null) {
-                    for(int i = 0; i < colors.Length; i++) {
-                        IntPtr colorPtr = colors[i];
-
-                        if(colorPtr != IntPtr.Zero)
-                            MemoryHelper.FreeMemory(colorPtr);
-                    }
+                    if(colorPtr != IntPtr.Zero)
+                        MemoryHelper.FreeMemory(colorPtr);
                 }
 
                 //Texture coordinate channels
-                IntPtr[] texCoords = aiMesh.TextureCoords;
+                for(int i = 0; i < aiAnimMesh.TextureCoords.Length; i++)
+                {
+                    IntPtr texCoordsPtr = aiAnimMesh.TextureCoords[i];
 
-                if(texCoords != null) {
-                    for(int i = 0; i < texCoords.Length; i++) {
-                        IntPtr texCoordsPtr = texCoords[i];
-
-                        if(texCoordsPtr != IntPtr.Zero)
-                            MemoryHelper.FreeMemory(texCoordsPtr);
-                    }
+                    if(texCoordsPtr != IntPtr.Zero)
+                        MemoryHelper.FreeMemory(texCoordsPtr);
                 }
             }
 

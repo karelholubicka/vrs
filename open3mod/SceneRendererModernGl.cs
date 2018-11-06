@@ -98,7 +98,6 @@ namespace open3mod
                 UploadTextures();
             }
             var animated = Owner.SceneAnimator.IsAnimationActive;
-
             int currDispList=0;
             int count = 1;
             switch (cam.GetScenePartMode())

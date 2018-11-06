@@ -20,10 +20,10 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ///////////////////////////////////////////////////////////////////////////////////
 
-struct Material {
+struct materialTexs {
     sampler2D diffuse;
-    sampler2D ambient;
     sampler2D specular;
+    sampler2D ambient;
     sampler2D emissive;
     sampler2D height;
     sampler2D normal;
@@ -47,8 +47,6 @@ struct lightStruct {
 
 // #define NR_LIGHTS 1 //line is generated in ShaderGen
 
-// note: all lighting calculations done in modelview space
-
 //variables for whole material
 uniform vec4 MaterialDiffuse_Alpha;
 uniform vec4 MaterialSpecular;
@@ -58,7 +56,7 @@ uniform float MaterialShininess;
 
 uniform float SceneBrightness;
 uniform lightStruct Lights[NR_LIGHTS]; // modelview space, norm.
-uniform Material material;
+uniform materialTexs material;
 uniform vec3 CameraPosition;
 uniform mat4 View;
 
@@ -73,68 +71,84 @@ in vec2 texCoord;
 in vec3 vertexColor; 
 #endif
 
-// Function prototypes
+// Light function prototypes
 vec3 CalcDirLight(lightStruct light, vec3 normal, vec3 viewDir, vec2 TexCoords);
 vec3 CalcPointLight(lightStruct light, vec3 normal, vec3 fragPos, vec3 viewDir, vec2 TexCoords);
 vec3 CalcSpotLight(lightStruct light, vec3 normal, vec3 fragPos, vec3 viewDir, vec2 TexCoords);
 
+//Global variables - we need them in all light functions
+  vec4 materialDiffuseAndAlpha = MaterialAmbient*MaterialSpecular*MaterialEmissive*MaterialShininess*Lights[0].lightType; //to keep variables active
+  vec4 materialSpecular;
+  vec4 materialAmbient;
+  vec4 materialEmissive;
 
 void main(void) 
 {
-  vec4 diffuseAndAlpha = MaterialAmbient*MaterialSpecular*MaterialEmissive*MaterialShininess*Lights[0].lightType; //to keep variables active
-  vec2 texCoordsFlipped = texCoord;
-  texCoordsFlipped.y = 1.-texCoord.y;
+  vec2 texCoordFlipped = texCoord;
+  texCoordFlipped.y = 1.-texCoord.y;
 
-vec3 norm = normalize(normal);
-vec3 dir = normalize(Lights[0].direction);
-#ifdef HAS_TWOSIDE
-  if (!gl_FrontFacing) norm = -norm;
-#endif
-#ifdef HAS_SKINNING
-#endif
+  float alpha = MaterialDiffuse_Alpha.a * texture2D(material.diffuse, texCoordFlipped.xy).a; // alpha channel
+  materialDiffuseAndAlpha = MaterialDiffuse_Alpha;
+  materialSpecular = MaterialSpecular;
+  materialAmbient = MaterialAmbient;
+  materialEmissive = MaterialEmissive;
 
-  diffuseAndAlpha = MaterialDiffuse_Alpha.rgba;
+  vec3 norm = normalize(normal);
+  vec3 dir = normalize(Lights[0].direction);
+  #ifdef HAS_TWOSIDE
+    if (!gl_FrontFacing) norm = -norm;
+  #endif
+  #ifdef HAS_SKINNING
+  #endif
+  
 #ifdef HAS_VERTEX_COLOR
-  diffuseAndAlpha.rgb *= vertexColor;
+  materialDiffuseAndAlpha.rgb *= vertexColor;
+  materialSpecular.rgb *= vertexColor;
+  materialAmbient.rgb *= vertexColor;
+  materialEmissive.rgb *= vertexColor;
 #endif
+
 #ifndef HAS_LIGHTING
-  diffuseAndAlpha *= texture2D(material.diffuse, texCoordsFlipped.xy); //texture or owntexture apply
-  fragColor = diffuseAndAlpha;
+  materialDiffuseAndAlpha *= texture2D(material.diffuse, texCoordFlipped.xy); //texture or owntexture apply
+  fragColor = materialDiffuseAndAlpha;
 #endif
+
 #ifdef HAS_LIGHTING
-    diffuseAndAlpha.a *= texture2D(material.diffuse, texCoordsFlipped.xy).a; 
+	vec4 emission = texture2D(material.diffuse, texCoordFlipped.xy)*materialEmissive + texture2D(material.emissive, texCoordFlipped.xy); 
     vec3 viewDir = normalize(CameraPosition - position);
 	vec3 result = vec3(0.0, 0.0, 0.0);
     for(int i = 0; i < NR_LIGHTS; i++)
 	{
 	lightStruct currLight = Lights[i];
-    if  (currLight.lightType == 1)  result += CalcDirLight(currLight, norm, viewDir, texCoordsFlipped);
-    if  (currLight.lightType == 2)  result += CalcPointLight(currLight, norm, position, viewDir, texCoordsFlipped);    
-    if  (currLight.lightType == 3)  result += CalcSpotLight(currLight, norm, position, viewDir, texCoordsFlipped);    
+    if  (currLight.lightType == 1)  result += CalcDirLight(currLight, norm, viewDir, texCoordFlipped);
+    if  (currLight.lightType == 2)  result += CalcPointLight(currLight, norm, position, viewDir, texCoordFlipped);    
+    if  (currLight.lightType == 3)  result += CalcSpotLight(currLight, norm, position, viewDir, texCoordFlipped);    
 	}
-    fragColor = vec4(result * SceneBrightness, diffuseAndAlpha.a) ;
+    fragColor = vec4(result * SceneBrightness + emission.rgb, alpha) ;
 #endif
 
 #ifndef HAS_PHONG_SPECULAR_SHADING //= control test with one directional light
 //  vec3 specular = vec3(0.0, 0.0, 0.0);
-//  diffuseAndAlpha = MaterialDiffuse_Alpha.rgba;
-//  diffuseAndAlpha *= texture2D(material.diffuse, texCoordsFlipped.xy); //texture or owntexture apply
+//  materialDiffuseAndAlpha = MaterialDiffuse_Alpha.rgba;
+//  materialDiffuseAndAlpha *= texture2D(material.diffuse, texCoordsFlipped.xy); //texture or owntexture apply
 //  float diff = 1.0;
 //  diff = max(dot(norm, dir),0.0);
-//  diffuseAndAlpha.rgb = diff * diffuseAndAlpha.rgb * Lights[0].diffuse + MaterialAmbient.rgb * Lights[0].ambient;
+//  materialDiffuseAndAlpha.rgb = diff * materialDiffuseAndAlpha.rgb * Lights[0].diffuse + MaterialAmbient.rgb * Lights[0].ambient;
 //  vec3 eyeDir = normalize(CameraPosition-position);
 //  vec3 reflectDir = normalize(reflect(-dir, norm));
 //  specular = Lights[0].specular * pow(max(dot(reflectDir, eyeDir), 0.0), MaterialShininess);	
-//  vec3 totalColor = (diffuseAndAlpha.rgb + specular + MaterialEmissive.rgb) * SceneBrightness;
-//  fragColor = vec4(totalColor.rgb, diffuseAndAlpha.a);
+//  vec3 totalColor = (materialDiffuseAndAlpha.rgb + specular) * SceneBrightness + MaterialEmissive.rgb*materialDiffuseAndAlpha.rgb;//when scene brightness drives lights only
+//  fragColor = vec4(totalColor.rgb, materialDiffuseAndAlpha.a);
 #endif
 
-  //  fragColor = vs_color;
+//  fragColor = vs_color;
 //  fragColor = vec4(1.0, 0.0, 0.0, 1.0);
 //  fragColor = texelFetch(Texture0, texPos, 0); 
- // fragColor = vec4(normal, 1.0);
-}
+//  fragColor = vec4(viewDir, 1.0);
+//  fragColor = vec4((position/8+0.5),1.0);
+//  fragColor  = vec4((normal/2+0.5),1.0); 
 
+}
 
 
 
@@ -146,12 +160,12 @@ vec3 CalcDirLight(lightStruct light, vec3 normal, vec3 viewDir, vec2 TexCoords)
     // Diffuse shading
     float diff = max(dot(normal, lightDir), 0.0);
     // Specular shading
-    vec3 reflectDir = reflect(-lightDir, normal);
+    vec3 reflectDir = normalize(reflect(-lightDir, normal));
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), MaterialShininess);
     // Combine results
-    vec3 ambient = light.ambient *          vec3(texture(material.ambient, TexCoords))*MaterialAmbient.rgb;
-    vec3 diffuse = light.diffuse * diff *   vec3(texture(material.diffuse, TexCoords))*MaterialDiffuse_Alpha.rgb;
-    vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords))*MaterialSpecular.rgb;
+    vec3 ambient = light.ambient *          vec3(texture(material.ambient, TexCoords))*materialAmbient.rgb;
+    vec3 diffuse = light.diffuse * diff *   vec3(texture(material.diffuse, TexCoords))*materialDiffuseAndAlpha.rgb;
+    vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords))*materialSpecular.rgb;
     return (ambient + diffuse + specular);
 }
 
@@ -168,13 +182,12 @@ vec3 CalcPointLight(lightStruct light, vec3 normal, vec3 fragPos, vec3 viewDir, 
     float distance = length(light.position - fragPos);
     float attenuation = 1.0f / (light.constant + light.linear * distance + light.quadratic * (distance * distance));    
     // Combine results
-    vec3 ambient = light.ambient *          vec3(texture(material.ambient, TexCoords))*MaterialAmbient.rgb;
-    vec3 diffuse = light.diffuse * diff *   vec3(texture(material.diffuse, TexCoords))*MaterialDiffuse_Alpha.rgb;
-    vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords))*MaterialSpecular.rgb;
+    vec3 ambient = light.ambient *          vec3(texture(material.ambient, TexCoords))*materialAmbient.rgb;
+    vec3 diffuse = light.diffuse * diff *   vec3(texture(material.diffuse, TexCoords))*materialDiffuseAndAlpha.rgb;
+    vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords))*materialSpecular.rgb;
     ambient *= attenuation;
     diffuse *= attenuation;
     specular *= attenuation;
-	vec3 shift = vec3(0.0, 0.2, 0.0);
     return (ambient + diffuse + specular);
 }
 
@@ -191,13 +204,14 @@ vec3 CalcSpotLight(lightStruct light, vec3 normal, vec3 fragPos, vec3 viewDir, v
     float distance = length(light.position - fragPos);
     float attenuation = 1.0f / (light.constant + light.linear * distance + light.quadratic * (distance * distance));    
     // Spotlight intensity
-    float theta = dot(lightDir, normalize(-light.direction)); 
-    float epsilon = light.cutOff - light.outerCutOff;
-    float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
+    float theta = dot(lightDir, normalize(light.direction)); //values 0.0f (at 180degrees spot size, outerCutOff=PI) - 1.0f (at 0 degrees,outerCutoff=0 )
+	float epsilon = cos(light.cutOff/2) - cos(light.outerCutOff/2); 
+	if (epsilon == 0.0f) epsilon = 0.001f;
+    float intensity = clamp((theta - cos(light.outerCutOff/2)) / epsilon, 0.0, 1.0);
     // Combine results
-    vec3 ambient = light.ambient *          vec3(texture(material.ambient, TexCoords))*MaterialAmbient.rgb;
-    vec3 diffuse = light.diffuse * diff *   vec3(texture(material.diffuse, TexCoords))*MaterialDiffuse_Alpha.rgb;
-    vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords))*MaterialSpecular.rgb;
+    vec3 ambient = light.ambient *          vec3(texture(material.ambient, TexCoords))*materialAmbient.rgb;
+    vec3 diffuse = light.diffuse * diff *   vec3(texture(material.diffuse, TexCoords))*materialDiffuseAndAlpha.rgb;
+    vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords))*materialSpecular.rgb;
     ambient *= attenuation * intensity;
     diffuse *= attenuation * intensity;
     specular *= attenuation * intensity;

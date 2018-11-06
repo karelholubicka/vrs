@@ -48,7 +48,8 @@ namespace open3mod
     public partial class MainWindow : Form
     {
         bool firstRun = true;
-        public const bool useIO = true;
+      //  public const bool useIO = true;
+        public const bool useIO = false;
 
         public static string exePath = "e:\\vr-software\\open3mod-master\\open3mod\\";
         public static string[] recentDataSeparator = new string[] { "::" };
@@ -292,8 +293,8 @@ namespace open3mod
                 int delay = 5;
                 DelayExecution(TimeSpan.FromSeconds(delay),
                     capturePreview1.StartCapture);
-                //   DelayExecution(TimeSpan.FromSeconds(delay+1),
-                //      capturePreview2.StartCapture);
+                   DelayExecution(TimeSpan.FromSeconds(delay+1),
+                      capturePreview2.StartCapture);
                 DelayExecution(TimeSpan.FromSeconds(delay+2),
                     GenlockOn);
                 DelayExecution(TimeSpan.FromSeconds(delay+3),
@@ -700,7 +701,7 @@ namespace open3mod
             var camOut = UiState.ActiveTab.ActiveCameraControllerForView(Tab.ViewIndex.Index4);
             if ((camIn != null)&& (camOut != null)) camOut.SetViewNoOffset(oldSingleView);
             var insp = UiForTab(_ui.ActiveTab).GetInspector();
-            if (insp != null) insp.SelectPlaybackView();
+         //   if (insp != null) insp.SelectPlaybackView();
             string statusText = CoreSettings.CoreSettings.Default.UseSceneLights ? "" : " | Keep right mouse button pressed to move light source";
             if (outer.ActiveScene != null)
             {
@@ -1217,6 +1218,7 @@ namespace open3mod
             {
                 _settings.Show();
             }
+            _settings.Activate();
         }
 
 

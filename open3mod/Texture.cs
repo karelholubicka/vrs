@@ -540,7 +540,7 @@ namespace open3mod
             var b = new Bitmap(width, height);
             using (var g = Graphics.FromImage(b))
             {
-                g.InterpolationMode = InterpolationMode.NearestNeighbor;
+                g.InterpolationMode = InterpolationMode.HighQualityBilinear;
                 g.DrawImage(textureBitmap, 0, 0, width, height);
             }
 

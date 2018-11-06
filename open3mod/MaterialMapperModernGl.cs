@@ -65,6 +65,7 @@ namespace open3mod
         private GLLight[] _GLLights;
         private float _SceneBrightness = 1.0f;
         private bool _UseSceneLights = false;
+        private Node[] lightNodes;
 
 #if DEBUG
         ~MaterialMapperModernGl()
@@ -101,13 +102,14 @@ namespace open3mod
             ShaderGen.GenFlags flags = 0;
             var hasAlpha = false;
             var hasTexture = false;
+            var file = _scene.Renderer.MainWindow.UiState.ActiveTab.File;
 
             // note: keep this up-to-date with the code in MaterialMapper.UploadTextures()
             for (int i = 0; i < Renderer.modernGLUsedTextureTypeCount; i++)
             {
                 TextureType currTextureType = (TextureType)((int)TextureType.Diffuse + i);
                 GL.ActiveTexture((TextureUnit)((int)TextureUnit.Texture0 + i));
-                GL.BindTexture(TextureTarget.Texture2D, Renderer.modernGLTextureType[i]); //we use own texture always, even when textures off to supply preset values
+                GL.BindTexture(TextureTarget.Texture2D, Renderer.modernGLTextureType[i]); //we use own texture always, even when textures are off, to supply preset values
                 if (textured && mat.GetMaterialTextureCount(currTextureType) > 0)
                 {
                     hasTexture = true;
@@ -147,21 +149,25 @@ namespace open3mod
             shader.SetMat4("WorldViewProjection", _World * curView * _Perspective);
             Matrix4 cameraPos = _View.ClearRotation();
             Matrix4 cameraRotation = _View.ClearTranslation();
+            cameraRotation.Transpose();
             Matrix4 cam = Matrix4.Identity;
             cam =  cameraPos * cameraRotation;
-            Vector3 cameraPosition = -cam.ExtractTranslation()/ _scene.Scale;//does not work for orbitcontroller
+            Vector3 cameraPosition = cam.ExtractTranslation()/ _scene.Scale;//does not work for orbitcontroller
+            cameraPosition.Z = - cameraPosition.Z;
+
             //            cameraPosition = new Vector3(200,100,-100); //1m = 100units and positive 
             cameraPosition.Z = -cameraPosition.Z;
             shader.SetVec3("CameraPosition", -cameraPosition);
             shader.SetMat4("World", _World); 
             shader.SetMat4("WorldView", _World * curView); //_world* curView keeps light source at "fixed" position during rotating of the model
             shader.SetFloat("SceneBrightness", _SceneBrightness);
-            shader.SetFloat("Material.diffuse", 0);
-            shader.SetFloat("Material.ambient", 1);
-            shader.SetFloat("Material.specular", 2);
-            shader.SetFloat("Material.emissive", 3);
-            shader.SetFloat("Material.height", 4);
-            shader.SetFloat("Material.normal", 5);
+            RenderControl.GLError("UniformSettings");
+            shader.SetInt("material.diffuse", 0);
+            shader.SetInt("material.specular", 1);
+            shader.SetInt("material.ambient", 2);
+            shader.SetInt("material.emissive", 3);
+            shader.SetInt("material.height", 4);
+            shader.SetInt("material.normal", 5);
             shader.SetLights(_GLLights, _LightCount);
             RenderControl.GLError("UniformSettings");
 
@@ -198,10 +204,18 @@ namespace open3mod
                 }
                 shader.SetCol4("MaterialDiffuse_Alpha", color);
 
+                float strength = 1;
+                if (mat.HasShininessStrength)
+                {
+                    strength = mat.ShininessStrength;
+                    if (file.EndsWith("fbx")) strength = strength * 2.0f; // fbx has basic value 0.5
+
+                }
                 color = new Color4(0, 0, 0, 1.0f);
                 if (mat.HasColorSpecular)
                 {
                     color = AssimpToOpenTk.FromColor(mat.ColorSpecular);
+                    color = new Color4(color.R * strength, color.G * strength, color.B* strength, color.A);
                 }
                 shader.SetCol4("MaterialSpecular", color);
 
@@ -220,23 +234,20 @@ namespace open3mod
                 shader.SetCol4("MaterialEmissive", color);
 
                 float shininess = 1;
-                float strength = 1;
                 if (mat.HasShininess)
                 {
                     shininess = mat.Shininess;
-
                 }
-                // todo: I don't even remember how shininess strength was supposed to be handled in assimp .. Scales the specular color of the material.Not implemented here.
-                if (mat.HasShininessStrength)
-                {
-                    strength = mat.ShininessStrength;
-                }
+                // todo: I don't even remember how shininess strength was supposed to be handled in assimp .. Scales the specular color of the material.
                 var exp = shininess;
+                if (file.EndsWith("blend")) exp = exp / 5.11f; // 511 blender value = 100 fbx value //skip this, if is desired to match FBX view in Fusion
                 if (exp >= 128.0f) // 128 is the maximum exponent as per the Gl spec
                 {
                     exp = 128.0f;
                 }
                 shader.SetFloat("MaterialShininess", exp);
+
+                
                 //Shininess may be at mat.ColorSpecular.a too..?? but in FBX is 
             }
             else if (!hasColors)
@@ -284,48 +295,78 @@ namespace open3mod
             _UseSceneLights = useSceneLights;
             if (useSceneLights)
             {
-                  var lightNodes = GenerateLightNodes();
-                  var Lights = GenerateLights();
-                  _LightCount = LightCount();
-                  _GLLights = new GLLight[_LightCount];
-                  for (var i = 0; i < _LightCount; i++)
-                  {
-                      Node node = lightNodes[i];
-                      if ((node != null) && ((node == _scene.ActiveLight) || (null == _scene.ActiveLight)))
-                      {
-                          var mat1 = Matrix4x4.Identity;
-                          var cur = node;
-                          while (cur != null)
-                          {
-                              var trafo = cur.Transform;
-                              trafo.Transpose();
-                              mat1 = trafo * mat1;
-                              cur = cur.Parent;
-                          }
-                          mat1.Transpose();
-                          var mat = renderer.LightRotation;
+                if (lightNodes == null) lightNodes = GenerateLightNodes(); //may be slow, need to do it only once, if possible
+                var lights = GenerateLights();
+                _LightCount = LightCount();
+                _GLLights = new GLLight[_LightCount];
+                for (var i = 0; i < _LightCount; i++)
+                {
+                    Node node = lightNodes[i];
+                    if ((node != null) && ((node == _scene.ActiveLight) || (null == _scene.ActiveLight)))
+                    {
+                        var mat1 = Matrix4.Identity;
+                        var cur = node;
+
+
+                    /*    if (animated)
+                        {
+                            
+                        }
+                        else
+                        {
+                            m = AssimpToOpenTk.FromMatrix(node.Transform);
+                        }*/
+
+                        while (cur != null)
+                        {
+                            var trafo = AssimpToOpenTk.FromMatrix(cur.Transform);
+                            //_scene.SceneAnimator.GetLocalTransform(node.Name, out trafo);
+                            trafo.Transpose();
+                            mat1 = trafo * mat1;
+                            cur = cur.Parent;
+                        }
+                        /*   while (cur != null)
+                           {
+                               var trafo = cur.Transform;
+                               trafo.Transpose();
+                               mat1 = trafo * mat1;
+                               cur = cur.Parent;
+                           }*/
+
+                        mat1.Transpose();
+                        _scene.SceneAnimator.GetGlobalTransform(node.Name, out mat1); //well identical result :-)
+                        _GLLights[i].lightType = (int)lights[i].LightType;
+                        //Directional = 0x1,, Point = 0x2, Spot = 0x3,
+                        float lightScale = _GLLights[i].lightType == 2 ? 0.01f : 1f;
+
                         //here move position info into lights[]
-                        _GLLights[i].lightType = (int)Lights[i].LightType;
-                        Vector3 lposTemp = new Vector3(mat1.A4, mat1.B4, mat1.C4);
-                        Vector3 ldirTemp = new Vector3(mat1.B1, -mat1.B2, mat1.B3); //partially a guess, needed verification
+                        //   Vector3 lposTemp = new Vector3(mat1.A4, mat1.B4, mat1.C4);
+                        Vector3 lposTemp = new Vector3(mat1.M14, mat1.M24, mat1.M34);
+                        mat1.Transpose();//yes, again the transpose thing...
+                        Vector3 lightStandardDir = new Vector3(-lights[i].Direction.X, -lights[i].Direction.Y, -lights[i].Direction.Z);
+                       // lightStandardDir = new Vector3(0,1,0);
+                        Vector3.TransformVector(ref lightStandardDir, ref mat1, out Vector3 ldirTemp);
+                        //TransformNormal did no work, produced identical results for different light directions
 
                         _GLLights[i].position = lposTemp;
-                        _GLLights[i].direction = -ldirTemp;
+                        _GLLights[i].direction = ldirTemp;
 
-                        float baseBrightness = 0.01f;
-                        float lightScale = _GLLights[i].lightType == 1 ? baseBrightness : 1.0f;
-                        _GLLights[i].ambient = Colo3DToVector3(Lights[i].ColorAmbient) * lightScale;
-                        _GLLights[i].specular = Colo3DToVector3(Lights[i].ColorSpecular) * lightScale *2;
-                        _GLLights[i].diffuse = Colo3DToVector3(Lights[i].ColorDiffuse) * lightScale;
+                        float baseBrightness = _scene.Scale * 100;
+                        float baseDirBrightness = 10;
+                        //lightScale = _scene.Scale;
+                       // lightScale = 1f;
+                        _GLLights[i].ambient = Colo3DToVector3(lights[i].ColorAmbient) * lightScale;
+                        _GLLights[i].specular = Colo3DToVector3(lights[i].ColorSpecular) * lightScale;
+                        _GLLights[i].diffuse = Colo3DToVector3(lights[i].ColorDiffuse) * lightScale;
 
-                        _GLLights[i].constant = Lights[i].AttenuationConstant ;
-                        _GLLights[i].linear = Lights[i].AttenuationLinear * _scene.Scale;
-                        _GLLights[i].quadratic = Lights[i].AttenuationQuadratic * _scene.Scale * _scene.Scale;
-                        _GLLights[i].outerCutOff = Lights[i].AngleOuterCone;
-                        _GLLights[i].cutOff = Lights[i].AngleInnerCone;
+                        _GLLights[i].constant = lights[i].AttenuationConstant;
+                        _GLLights[i].linear = lights[i].AttenuationLinear * _scene.Scale;
+                        _GLLights[i].quadratic = lights[i].AttenuationQuadratic * _scene.Scale * _scene.Scale;
+                        _GLLights[i].outerCutOff = lights[i].AngleOuterCone;
+                        _GLLights[i].cutOff = lights[i].AngleInnerCone;
                     }
                 }
-                _SceneBrightness = (0.25f + 1.5f * GraphicsSettings.Default.OutputBrightness / 100.0f) * 1.5f;
+                _SceneBrightness = 0.1f + GraphicsSettings.Default.OutputBrightness / 100.0f;
                 int neededUniformComponents = 21 * 4 * _LightCount + 15 * 4 * 4;//approximately
                 if (neededUniformComponents > GL.GetInteger(GetPName.MaxFragmentUniformComponents))
                 {
@@ -337,7 +378,7 @@ namespace open3mod
                 _LightCount = 1;
 
                 // light direction
-                var dir = new Vector3(0, 0, 1);
+                var dir = new Vector3(1, 0, 1); //001 from Z, 100 from X, 010 fromY side
                 var mat = renderer.LightRotation;
                 Vector3.TransformNormal(ref dir, ref mat, out dir);
                 // light color
