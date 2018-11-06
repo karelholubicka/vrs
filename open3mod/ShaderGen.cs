@@ -79,7 +79,7 @@ namespace open3mod
                 pp += "#define HAS_VERTEX_COLOR\n";
             }
 
-            if (flags.HasFlag(GenFlags.PhongSpecularShading))
+            if (flags.HasFlag(GenFlags.PhongSpecularShading))//Otherwise we use Blinn-Phong
             {
                 pp += "#define HAS_PHONG_SPECULAR_SHADING\n";
             }

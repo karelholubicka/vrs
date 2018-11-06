@@ -361,9 +361,9 @@ namespace open3mod
             UploadModernGLTexture(TextureType.Ambient, color);
             color = Color4.Black;
             UploadModernGLTexture(TextureType.Emissive, color);
-            color = Color4.Black;
+            color = Color4.Gray;
             UploadModernGLTexture(TextureType.Height, color);
-            color = Color4.Black;
+            color = Color4.Gray;
             UploadModernGLTexture(TextureType.Normals, color);
         }
 

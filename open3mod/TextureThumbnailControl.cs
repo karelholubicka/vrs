@@ -312,12 +312,14 @@ namespace open3mod
                     SetPictureBoxImage();
                     SetZoom();
 
-                    // Enable the remainder menu items
-//                  for (var i = 2; i < ContextMenuStrip.Items.Count; ++i)
+                    // Enable the remainder menu items, except Dynamic
+                    // for (var i = 2; i < ContextMenuStrip.Items.Count; ++i)
                     for (var i = 2; i < 10; ++i)
-                        {
-                            ContextMenuStrip.Items[i].Enabled = true;
+                    {
+                        ContextMenuStrip.Items[i].Enabled = true;
                     }
+                    if (texture.ActualLocation.Contains("Placeholder")|| texture.ActualLocation.Contains("NDI")) OnContextMenuToggleDynamic(this, null);
+                    //maybe add here selection of NDI stream for dynamic.....+add NDI receiver to the scene..
                 }
                 else
                 {

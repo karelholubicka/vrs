@@ -4,67 +4,57 @@ Newer. Assimp 4.1.216079013 (assimp viewer)
 Moje kompilace #1 : Assimp 4.1.0
 Moje kompilace #2+3 : Assimp 4.1.0 - ale z masteru
 
-blinn phong - pøedìlat+level of shininess
+
+audio nejde skrz proè???
+kontrola masky over green = pozice do místnosti - jak live?= studiorender wireframe over video
+FOV pøepoèet na camera number-závislost? tabulka?nastavení kamery??
+zmenšit textury VR modelù/png/tga/psd
+
+proè VLC hraje s pruhama MPG progressive..pøeskakuje fps - vyrobit test, zjistit
+jak vypadá Janssen nové studio v renderu-vyrobit...f/bg/gr atd
+
+
+INFO:
+Model v Blenteru musí mít materiál, jinak crashne import
+Intensity u materiálu nefunguje, musí být 1.0
+RGB 000 nefunguje, musí být aspoò 0.001
+
+color management - pochopit roli srgb, jinak zatím dát scene-color management-none
+Dodateèná rotace v Blenderu neopraví keyframy animací, proto není vhodná,
+orientace: X+right, Y+up. Z+back
+Export FBX jako Yfront nebo -Zfront funguje obojí, ale do Fusionu je potøeba importovat BEZ CONVERT axis to Yup - takže -Z front
+Svìtla se musí nastavit, jinak mají implicitnì 0,8 color, i když hlásí 1,0
 
 fbx shininess strength = intensity shininess / 2,
 diffuse intensity je tam také uloženo nìjak
 v blenderu ani jedno není, shininess strength je 1: proto nepoužívat Intensity v blenderu"
 fbx color transparent (je 1-alpha)*diffuse (=množství prùsvitnosti)
 fbx import do fusion naète hodnoty 0-100, ale pro blender vzhled mají být 0-511, je tøeba dát vše *5
+normal map je v blend pojmenována jako height map (assimp error?)
 
-
-Fix directional a spot lights+animace + attenuation u directional
-jas objektù vzájemnì
-jas emitting - diference od blenderu
-
-
-jak vypadá Janssen nové studio v renderu-vyrobit...f/bg/gr atd
-FOV pøepoèet na camera number
-
-jméno dynamic textury pøímo
-proè VLC hraje s pruhama MPG progressive
-proè Polas lítal i bez F identifikace
-zmenšit textury modelù
-
-audio nejde skrz proè???
-normály a position jako mode switch místo bones atd
-test normal map
-usb c++ lanc / bluetooth to lanc
-nastavení jednotlivých svìtel pomocí main brightness
-
-
-
-Model v Blenteru musí mít materiál, jinak crashne import
-Intensity u materiálu nefunguje, musí být 1.0
-RGB 000 nefunguje, musí být aspoò 0.001
-orientace: X+right, Y+up. Z+back
-Dodateèná rotace v Blenderu neopraví keyframy animací, proto není vhodná,
-Export FBX jako Yfront nebo -Zfront funguje obojí, ale do Fusionu je potøeba importovat BEZ CONVERT axis to Yup - takže -Z front
-Svìtla se musí nastavit, jinak mají implicitnì 0,8 color, i když hlásí 1,0
-
-
-
-kontrola masky over green/pozice do místnosti - jak live
-
+____________
 
 uklidit modely
 
-ndi receiver u scény??pozdìji.....??
-off stream senderu
-tøetí výstup-shift enter+offset pro èteèku, preset na vektory( 0,1,2
-
-
+POZDÌJI:
+https://learnopengl.com/Advanced-Lighting/Normal-Mapping - correct TBN tangent mapping(!transposed matrices!)
+normály a position jako mode switch místo bones atd, dtto blinn/phong
+nastavení jednotlivých svìtel pomocí main brightness(?)
+ndi receiver u každé scény??
+off stream senderu - 
+tøetí výstup-støih shift enter+offset pro èteèku, preset na vektory( 0,1,2
 noise filter median na gauss upravit(?)
 
+
 pøepínání a pøiøazení ovladaèù - sna >sn bm
-??obèas se tracking nespustí..???Nespustí se ovlaadèe - reload VR devices
+??obèas se tracking nespustí..???Nespustí se ovladaèe - reload VR devices
 
 støih do druhé kamery buttonem ovladaèe??
 
 
 load fps+video output sizes z inputu BMD / scalable
 destroy všech kontextù
-??assimp411-compile - vymìnit dllky?Loadblender??
+
 show fps/info overlay. switch info hned on/off (render prázdný text)
 sample hodnoty plátna pro klíè??
 
@@ -76,7 +66,6 @@ sync druhá kamera - poèítání frame kamery#1, k tomu kdy dorazil frame2, v render
 Settings:
 c:\Users\Studio\AppData\Local\open3mod\open3mod.exe_Url_stpzoig5vx2tayffj4l0jhaydooqznaj\
 Textury v Blenderu musí mít UV, tj až po Unwrappingu - jinak UV nemají
-
 
 
 
@@ -108,10 +97,6 @@ alfa kolem konce textury polasu = hrany všechny
 http://www.zenvideo.co.uk/ndi.htm
 
 
-øešit svìtlo  100% nebo 1.0
-øešit targa/png textura - jiná pozice loaderu
-update blender all
-
 OBS studio škytá na NDI výstupu, na vstupech se to dá nìkdy uchytat...
 vMix škytá na všech NDI vstupech, a má nedefin zpoždìní na kameøe
 Když bude nejhùø, natoèit 3 kamery extra a 4x vstup multirecordem, lépe - IsoRecorderNEMá ALPHA!!
@@ -119,13 +104,7 @@ Když bude nejhùø, natoèit 3 kamery extra a 4x vstup multirecordem, lépe - IsoRec
 ?? NDI výstup popøedí+pozadí pro statickou 3. kameru a generování její pozice
 
 
-
-isVRmodel flag dorozchodit (scene má vždy umìlé svìtlo a nemá šipky svìtla)
-nastavování - potvrdit reset scény
-bìhem sledování otoèení - kamera zelená??
-
 zvážit kopírování view pro všechny view
-GLlegacy/modern
 Dodìlat ?? selekci všech nodù, jejichž parent a oni jsou animovaní
 render do HMD??
 open3Mod zmìnit na VRStudio
@@ -135,7 +114,6 @@ zasekávání èasu pøi inspektoru textur - dìlá to WIN+24MB textura, je potøeba pøe
 stream IN = dynamic texture zpomaluje, pro SD rozlišení je celkem OK
 kontrola prostoru blikaèkou proti lesklým vìcem
 hlavní monitor musí být AMD!!!
-
 
 
 
@@ -171,7 +149,6 @@ GetSortedTrackedDeviceIndicesOfClass
 GetType???
 ApplyTransform???
 GetXTrackedDeviceProperty....jaké jsou ty property?!!!
-
                         
 
 

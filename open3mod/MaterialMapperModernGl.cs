@@ -137,7 +137,7 @@ namespace open3mod
             }
             if (_UseSceneLights)
             {
-                flags |= ShaderGen.GenFlags.PhongSpecularShading;
+                // flags |= ShaderGen.GenFlags.PhongSpecularShading; //otherwise we use Blinn-Phong shading
             }
             if ((mat.IsTwoSided)||(twoSided))
             {
@@ -293,7 +293,7 @@ namespace open3mod
         public override void BeginScene(Renderer renderer, bool useSceneLights = true)
         {
             _UseSceneLights = useSceneLights;
-            if (useSceneLights)
+            if (_UseSceneLights)
             {
                 if (lightNodes == null) lightNodes = GenerateLightNodes(); //may be slow, need to do it only once, if possible
                 var lights = GenerateLights();
@@ -306,8 +306,6 @@ namespace open3mod
                     {
                         var mat1 = Matrix4.Identity;
                         var cur = node;
-
-
                     /*    if (animated)
                         {
                             
@@ -334,32 +332,24 @@ namespace open3mod
                            }*/
 
                         mat1.Transpose();
-                        _scene.SceneAnimator.GetGlobalTransform(node.Name, out mat1); //well identical result :-)
-                        _GLLights[i].lightType = (int)lights[i].LightType;
-                        //Directional = 0x1,, Point = 0x2, Spot = 0x3,
-                        float lightScale = _GLLights[i].lightType == 2 ? 0.01f : 1f;
+                        _scene.SceneAnimator.GetGlobalTransform(node.Name, out mat1); //well.. identical result :-)
+                        _GLLights[i].lightType = (int)lights[i].LightType;  //Directional = 0x1,, Point = 0x2, Spot = 0x3,
 
-                        //here move position info into lights[]
-                        //   Vector3 lposTemp = new Vector3(mat1.A4, mat1.B4, mat1.C4);
+                        //here we move position info into GLLights[i]
                         Vector3 lposTemp = new Vector3(mat1.M14, mat1.M24, mat1.M34);
                         mat1.Transpose();//yes, again the transpose thing...
                         Vector3 lightStandardDir = new Vector3(-lights[i].Direction.X, -lights[i].Direction.Y, -lights[i].Direction.Z);
-                       // lightStandardDir = new Vector3(0,1,0);
                         Vector3.TransformVector(ref lightStandardDir, ref mat1, out Vector3 ldirTemp);
                         //TransformNormal did no work, produced identical results for different light directions
 
                         _GLLights[i].position = lposTemp;
                         _GLLights[i].direction = ldirTemp;
-
-                        float baseBrightness = _scene.Scale * 100;
-                        float baseDirBrightness = 10;
-                        //lightScale = _scene.Scale;
-                       // lightScale = 1f;
-                        _GLLights[i].ambient = Colo3DToVector3(lights[i].ColorAmbient) * lightScale;
-                        _GLLights[i].specular = Colo3DToVector3(lights[i].ColorSpecular) * lightScale;
-                        _GLLights[i].diffuse = Colo3DToVector3(lights[i].ColorDiffuse) * lightScale;
+                        _GLLights[i].ambient = Colo3DToVector3(lights[i].ColorAmbient);
+                        _GLLights[i].specular = Colo3DToVector3(lights[i].ColorSpecular);
+                        _GLLights[i].diffuse = Colo3DToVector3(lights[i].ColorDiffuse);
 
                         _GLLights[i].constant = lights[i].AttenuationConstant;
+                        _GLLights[i].constant = 1.0f;//Well - AttenuationConstant does not bring any information, an we need to keep light attenuation at zero distance at 1.0
                         _GLLights[i].linear = lights[i].AttenuationLinear * _scene.Scale;
                         _GLLights[i].quadratic = lights[i].AttenuationQuadratic * _scene.Scale * _scene.Scale;
                         _GLLights[i].outerCutOff = lights[i].AngleOuterCone;

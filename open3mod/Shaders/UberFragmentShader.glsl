@@ -94,6 +94,7 @@ void main(void)
   materialEmissive = MaterialEmissive;
 
   vec3 norm = normalize(normal);
+  norm = normalize((texture(material.normal,texCoordFlipped.xy).rgb*2.0 - 1.0) + normal);//should be in vertex shader
   vec3 dir = normalize(Lights[0].direction);
   #ifdef HAS_TWOSIDE
     if (!gl_FrontFacing) norm = -norm;
@@ -147,6 +148,7 @@ void main(void)
 //  fragColor = vec4(viewDir, 1.0);
 //  fragColor = vec4((position/8+0.5),1.0);
 //  fragColor  = vec4((normal/2+0.5),1.0); 
+//  fragColor  = vec4((norm/2+0.5),1.0); 
 
 }
 
@@ -161,7 +163,13 @@ vec3 CalcDirLight(lightStruct light, vec3 normal, vec3 viewDir, vec2 TexCoords)
     float diff = max(dot(normal, lightDir), 0.0);
     // Specular shading
     vec3 reflectDir = normalize(reflect(-lightDir, normal));
+#ifndef HAS_PHONG_SPECULAR_SHADING
+    vec3 halfwayDir = normalize(lightDir + viewDir);
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), MaterialShininess*4);
+#endif
+#ifdef HAS_PHONG_SPECULAR_SHADING
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), MaterialShininess);
+#endif
     // Combine results
     vec3 ambient = light.ambient *          vec3(texture(material.ambient, TexCoords))*materialAmbient.rgb;
     vec3 diffuse = light.diffuse * diff *   vec3(texture(material.diffuse, TexCoords))*materialDiffuseAndAlpha.rgb;
@@ -172,12 +180,18 @@ vec3 CalcDirLight(lightStruct light, vec3 normal, vec3 viewDir, vec2 TexCoords)
 // Calculates the color when using a point light.
 vec3 CalcPointLight(lightStruct light, vec3 normal, vec3 fragPos, vec3 viewDir, vec2 TexCoords)
 {
-    vec3 lightDir = normalize(light.position - fragPos);
+    vec3 lightDir = normalize(light.position - fragPos);//
     // Diffuse shading
     float diff = max(dot(normal, lightDir), 0.0);
     // Specular shading
     vec3 reflectDir = reflect(-lightDir, normal);
+#ifndef HAS_PHONG_SPECULAR_SHADING
+    vec3 halfwayDir = normalize(lightDir + viewDir);
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), MaterialShininess*4);
+#endif
+#ifdef HAS_PHONG_SPECULAR_SHADING
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), MaterialShininess);
+#endif
     // Attenuation
     float distance = length(light.position - fragPos);
     float attenuation = 1.0f / (light.constant + light.linear * distance + light.quadratic * (distance * distance));    
@@ -188,6 +202,7 @@ vec3 CalcPointLight(lightStruct light, vec3 normal, vec3 fragPos, vec3 viewDir, 
     ambient *= attenuation;
     diffuse *= attenuation;
     specular *= attenuation;
+    //return (ambient + diffuse);
     return (ambient + diffuse + specular);
 }
 
@@ -199,7 +214,13 @@ vec3 CalcSpotLight(lightStruct light, vec3 normal, vec3 fragPos, vec3 viewDir, v
     float diff = max(dot(normal, lightDir), 0.0);
     // Specular shading
     vec3 reflectDir = reflect(-lightDir, normal);
+#ifndef HAS_PHONG_SPECULAR_SHADING
+    vec3 halfwayDir = normalize(lightDir + viewDir);
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), MaterialShininess*4);
+#endif
+#ifdef HAS_PHONG_SPECULAR_SHADING
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), MaterialShininess);
+#endif
     // Attenuation
     float distance = length(light.position - fragPos);
     float attenuation = 1.0f / (light.constant + light.linear * distance + light.quadratic * (distance * distance));    

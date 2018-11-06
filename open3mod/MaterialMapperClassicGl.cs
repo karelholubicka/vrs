@@ -116,16 +116,14 @@ namespace open3mod
 
                             var light_type = lights[i].LightType;
 
-                            //here move position info into lights[]
-                            //   Vector3 lposTemp = new Vector3(mat1.A4, mat1.B4, mat1.C4);
+                            //here move position info into each light
                             Vector3 lposTemp = new Vector3(mat1.M14, mat1.M24, mat1.M34);
                             mat1.Transpose();//yes, again the transpose thing...
                             Vector3 lightStandardDir = new Vector3(-lights[i].Direction.X, -lights[i].Direction.Y, -lights[i].Direction.Z);
-                            // lightStandardDir = new Vector3(0,1,0);
                             Vector3.TransformVector(ref lightStandardDir, ref mat1, out Vector3 ldirTemp);
                             //TransformNormal did no work, produced identical results for different light directions
 
-                            float[] light_position = { -0f, 0f, -2f, 1.0f }; //X doprava, Y nahoru, - Z vpøed
+                            float[] light_position = { 0f, 0f, -2f, 1.0f }; 
                             light_position = Vector3ToFloat(lposTemp);
                             if (light_type == LightSourceType.Directional)
                             {
@@ -135,8 +133,6 @@ namespace open3mod
                             }
 
                             float _SceneBrightness = 0.1f + (float)GraphicsSettings.Default.OutputBrightness / 100.0f;
-                            //correction:
-                            if (light_type == LightSourceType.Point)  _SceneBrightness *= 0.01f;
 
                             float[] light_ambient = { 0.0f, 0.0f, 0.0f, 1.0f }; // na tohle v zasade reaguji nektere predmety, rozsah 0-1
                             light_ambient = Colo3DToFloat(lights[i].ColorAmbient * _SceneBrightness);
@@ -147,7 +143,7 @@ namespace open3mod
 
                             float light_aic = lights[i].AngleInnerCone;
                             float light_aoc = lights[i].AngleOuterCone;
-                            float light_ac = lights[i].AttenuationConstant * _scene.Scale;
+                            float light_ac = lights[i].AttenuationConstant;
                             float light_al = lights[i].AttenuationLinear * _scene.Scale;
                             float light_aq = lights[i].AttenuationQuadratic * _scene.Scale *_scene.Scale;
 
@@ -158,19 +154,16 @@ namespace open3mod
                                 spot_direction = Vector3ToFloat(-ldirTemp);
                                 light_cutoff = light_aoc * 90 / MathHelper.Pi;
                             }
-                            float lessAttenuation = 1;// _scene.Scale;
-                            light_ac = light_ac / lessAttenuation;    //lesser attenuation for testing
-                            light_al = light_al / lessAttenuation;
-                            light_aq = light_aq / lessAttenuation;
-                            float spot_exp = 0.5f; //genarate from light_aoc?,1f = uniform, 
+                            float spot_exp = 0.5f; //genarate from light_aic?,1f = uniform? 
 
                             GL.Light(LightName.Light0 + i, LightParameter.Position, light_position);
                             GL.Light(LightName.Light0 + i, LightParameter.Ambient, light_ambient);
                             GL.Light(LightName.Light0 + i, LightParameter.Diffuse, light_diffuse);
                             GL.Light(LightName.Light0 + i, LightParameter.Specular, light_specular);
 
-                           GL.Light(LightName.Light0 + i, LightParameter.ConstantAttenuation, light_ac); //intenzita odlesku a osvícení
-                           GL.Light(LightName.Light0 + i, LightParameter.QuadraticAttenuation, light_aq);
+                            GL.Light(LightName.Light0 + i, LightParameter.ConstantAttenuation, light_ac); //intenzita odlesku a osvícení
+                            GL.Light(LightName.Light0 + i, LightParameter.ConstantAttenuation, 1.0f);//Well - AttenuationConstant does not bring any information, an we need to keep light attenuation at zero distance at 1.0
+                            GL.Light(LightName.Light0 + i, LightParameter.QuadraticAttenuation, light_aq);
                            GL.Light(LightName.Light0 + i, LightParameter.LinearAttenuation, light_al);
 
                            GL.Light(LightName.Light0 + i, LightParameter.SpotCutoff, light_cutoff); //180-unidirectional, 0-90 - directional
