@@ -224,18 +224,21 @@ namespace open3mod
 
                         int stride = (int)videoFrame.line_stride_in_bytes;
                         int bufferSize = yres * stride;
+                        Bitmap tempVideoFrame;
                         lock (ReceiverLock)
                         {
+                            tempVideoFrame = new Bitmap(xres, yres, stride, System.Drawing.Imaging.PixelFormat.Format32bppPArgb, videoFrame.p_data);
                             if (_received != null) _received.Dispose();
-                            _received = new Bitmap(xres, yres, stride, System.Drawing.Imaging.PixelFormat.Format32bppPArgb, videoFrame.p_data);
-
                             // apply texture resolution bias? (i.e. low quality textures)
-                            if (GraphicsSettings.Default.TexQualityBias > 0)
+                            if (GraphicsSettings.Default.NdiTexQualityBias > 0)
                             {
-                                var b = ApplyResolutionBias(_received, GraphicsSettings.Default.TexQualityBias);
-                                _received.Dispose();
-                                _received = b;
+                              _received = ApplyResolutionBias(tempVideoFrame, GraphicsSettings.Default.NdiTexQualityBias);
                             }
+                            else
+                            {
+                              _received = new Bitmap(tempVideoFrame);//we need a copy, so we can free videoframe
+                            }
+                            tempVideoFrame.Dispose();
                         }
 
                         NDIlib.recv_free_video_v2(_recvInstancePtr, ref videoFrame);

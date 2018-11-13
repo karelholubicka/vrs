@@ -139,6 +139,7 @@ namespace open3mod
             this.linkLabelWebsite = new System.Windows.Forms.LinkLabel();
             this.renderControl1 = new open3mod.RenderControl();
             this.trackBarBrightness = new System.Windows.Forms.TrackBar();
+            this.resetCaptureWindowsPositionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.toolStripSelectRenderer.SuspendLayout();
             this.tabContextMenuStrip.SuspendLayout();
@@ -508,7 +509,7 @@ namespace open3mod
             this.toolStripSeparator8,
             this.optionsToolStripMenuItem});
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
-            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
+            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(48, 20);
             this.toolsToolStripMenuItem.Text = "Tools";
             this.toolsToolStripMenuItem.Click += new System.EventHandler(this.ToolsToolStripMenuItemClick);
             // 
@@ -570,7 +571,8 @@ namespace open3mod
             this.toolStripMenuItem2,
             this.toolStripSeparator10,
             this.aboutToolStripMenuItem,
-            this.showCaptureWindowsToolStripMenuItem});
+            this.showCaptureWindowsToolStripMenuItem,
+            this.resetCaptureWindowsPositionsToolStripMenuItem});
             this.toolStripMenuItem1.Name = "toolStripMenuItem1";
             this.toolStripMenuItem1.Size = new System.Drawing.Size(24, 20);
             this.toolStripMenuItem1.Text = "?";
@@ -578,26 +580,26 @@ namespace open3mod
             // toolStripMenuItem2
             // 
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(200, 22);
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(250, 22);
             this.toolStripMenuItem2.Text = "Tip of the Day";
             this.toolStripMenuItem2.Click += new System.EventHandler(this.OnTipOfTheDay);
             // 
             // toolStripSeparator10
             // 
             this.toolStripSeparator10.Name = "toolStripSeparator10";
-            this.toolStripSeparator10.Size = new System.Drawing.Size(197, 6);
+            this.toolStripSeparator10.Size = new System.Drawing.Size(247, 6);
             // 
             // aboutToolStripMenuItem
             // 
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(250, 22);
             this.aboutToolStripMenuItem.Text = "About";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.AboutToolStripMenuItemClick);
             // 
             // showCaptureWindowsToolStripMenuItem
             // 
             this.showCaptureWindowsToolStripMenuItem.Name = "showCaptureWindowsToolStripMenuItem";
-            this.showCaptureWindowsToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.showCaptureWindowsToolStripMenuItem.Size = new System.Drawing.Size(250, 22);
             this.showCaptureWindowsToolStripMenuItem.Text = "Show Capture Windows";
             this.showCaptureWindowsToolStripMenuItem.Click += new System.EventHandler(this.ShowCaptureWindows_Click);
             // 
@@ -1042,6 +1044,13 @@ namespace open3mod
             this.trackBarBrightness.Value = global::open3mod.GraphicsSettings.Default.OutputBrightness;
             this.trackBarBrightness.Scroll += new System.EventHandler(this.trackBarBrightness_Scroll);
             // 
+            // resetCaptureWindowsPositionsToolStripMenuItem
+            // 
+            this.resetCaptureWindowsPositionsToolStripMenuItem.Name = "resetCaptureWindowsPositionsToolStripMenuItem";
+            this.resetCaptureWindowsPositionsToolStripMenuItem.Size = new System.Drawing.Size(250, 22);
+            this.resetCaptureWindowsPositionsToolStripMenuItem.Text = "Reset Capture Windows Positions";
+            this.resetCaptureWindowsPositionsToolStripMenuItem.Click += new System.EventHandler(this.resetCaptureWindowsPositionsToolStripMenuItem_Click);
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1183,6 +1192,7 @@ namespace open3mod
         private ToolStripButton toolStripButtonUseSceneLights;
         private ToolStripMenuItem showCaptureWindowsToolStripMenuItem;
         private ToolStripMenuItem setDynamicSourceToolStripMenuItem;
+        private ToolStripMenuItem resetCaptureWindowsPositionsToolStripMenuItem;
     }
 }
 

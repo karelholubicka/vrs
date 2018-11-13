@@ -45,7 +45,7 @@ namespace open3mod
             kOutputSignalPip = 0,
             kOutputSignalDrop = 1
         };
-        const uint m_prerollFrames = 5;
+        const uint m_prerollFrames = 2;
         const uint kAudioWaterlevel = 48000 / 25 * m_prerollFrames;
         private IReadOnlyList<int> kAudioChannels = new List<int> {2, 8, 16};
 
@@ -98,7 +98,7 @@ namespace open3mod
             m_pixelFormat = _BMDPixelFormat.bmdFormat10BitYUV;//jede, pruhy svisle 10bit
             m_pixelFormat = _BMDPixelFormat.bmdFormat8BitYUV;//jede, pruhy...
             m_pixelFormat = _BMDPixelFormat.bmdFormat8BitBGRA;//správné pořadí, ale nejede...
-            m_pixelFormat = _BMDPixelFormat.bmdFormat8BitARGB;
+            m_pixelFormat = _BMDPixelFormat.bmdFormat8BitARGB;//správné pořadí, OK.
             m_audioSampleDepth = _BMDAudioSampleType.bmdAudioSampleType16bitInteger;
         }
         IDeckLinkVideoConversion frameConverter = new CDeckLinkVideoConversion();
@@ -174,8 +174,8 @@ namespace open3mod
         public void StartRunning()
         {
 
-       //     m_selectedDevice.VideoFrameCompleted += new DeckLinkVideoOutputHandler((b) => this.BeginInvoke((Action)(() => { ScheduleNextFrame(b); })));
-            m_selectedDevice.AudioOutputRequested += new DeckLinkAudioOutputHandler(() => this.BeginInvoke((Action)(() => { WriteNextAudioSamples(); })));
+          //  m_selectedDevice.VideoFrameCompleted += new DeckLinkVideoOutputHandler((b) => this.BeginInvoke((Action)(() => { ScheduleNextFrame(b); })));
+            m_selectedDevice.AudioOutputRequested += new DeckLinkAudioOutputHandler(() => this.BeginInvoke((Action)(() => { WriteNextAudioSamples(); })));//used only for preroll and when in sync troubles
             m_selectedDevice.PlaybackStopped += new DeckLinkPlaybackStoppedHandler(() => this.BeginInvoke((Action)(() => { DisableOutput(); })));
 
             m_audioChannelCount = 16;
@@ -197,8 +197,8 @@ namespace open3mod
             // Set the audio output mode
             m_selectedDevice.deckLinkOutput.EnableAudioOutput(m_audioSampleRate, m_audioSampleDepth, m_audioChannelCount, _BMDAudioOutputStreamType.bmdAudioOutputStreamContinuous);
 
-            // Generate one second of audio
-            m_audioBufferSampleLength = (uint)(m_framesPerSecond * audioSamplesPerFrame());
+            // Generate prerollFrames of audio
+            m_audioBufferSampleLength = (uint)(m_prerollFrames * audioSamplesPerFrame());
             int m_audioBufferDataLength = (int)(m_audioBufferSampleLength * audioDataPerSample());
             m_audioBuffer = Marshal.AllocCoTaskMem(m_audioBufferDataLength);
             m_audioBufferAllocated = true;
@@ -263,7 +263,7 @@ namespace open3mod
             if (!m_audioBufferAllocated) return;
             m_selectedDevice.deckLinkOutput.ScheduleAudioSamples(audioData, audioSamplesPerFrame(), 0, 0, out uint samplesWritten);
             return;
-
+            //as we copy audio to BMD output directly, we do not need to maintain audio buffer
             lock (m_selectedDevice)
 
             {
@@ -361,7 +361,7 @@ namespace open3mod
                 m_selectedDevice.deckLinkOutput.ScheduleVideoFrame(m_videoFrame, (m_totalFramesScheduled * m_frameDuration), m_frameDuration, m_frameTimescale);
                 m_totalFramesScheduled += 1;
             }
-            if ((buffered < 2) &&(!prerolling))
+            if ((buffered < 1) &&(!prerolling))
             {
                 m_selectedDevice.deckLinkOutput.ScheduleVideoFrame(m_videoFrame, (m_totalFramesScheduled * m_frameDuration), m_frameDuration, m_frameTimescale);
                 m_totalFramesScheduled += 1;
@@ -369,15 +369,16 @@ namespace open3mod
                 m_totalFramesScheduled += 1;
                 m_selectedDevice.deckLinkOutput.ScheduleVideoFrame(m_videoFrame, (m_totalFramesScheduled * m_frameDuration), m_frameDuration, m_frameTimescale);
                 m_totalFramesScheduled += 1;
-                // addAudioFrame(m_audioBuffer);//no need to further buffering, WriteNextAudioSamples() is almost not used, addAudioFrame schedules directly all incoming audio
-                Console.WriteLine("Buffered {0} frames, Upbuffered 3 frames!! , total {1} ", buffered, m_totalFramesScheduled);
+                addAudioFrame(m_audioBuffer);//WriteNextAudioSamples() is almost not used, addAudioFrame schedules directly all incoming audio
+                addAudioFrame(m_audioBuffer);//we need to add two audioframes more to keep sync (??)
+                Console.WriteLine("Buffered {0} frames, Upbuffered 2 frames!! , total {1} ", buffered, m_totalFramesScheduled);
             }
         }
 
         void WriteNextAudioSamples()
         {
             if (!m_audioBufferAllocated) return;
-            // Write one second of audio to the DeckLink API.
+            // Write audio to the DeckLink API, length equivalent to m_prerollFrames
             uint bufferedSamples;
             // Make sure that playback is still active
             if (m_running == false)

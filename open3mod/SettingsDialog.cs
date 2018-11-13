@@ -106,6 +106,19 @@ namespace open3mod
             {
                 comboBoxTexResolution.SelectedIndex = 2;
             }
+            bias = _gSettings.NdiTexQualityBias;
+            if (bias == 0)
+            {
+                comboBoxNdiTexResolution.SelectedIndex = 0;
+            }
+            else if (bias == 1)
+            {
+                comboBoxNdiTexResolution.SelectedIndex = 1;
+            }
+            else if (bias > 1)
+            {
+                comboBoxNdiTexResolution.SelectedIndex = 2;
+            }
         }
 
 
@@ -135,6 +148,31 @@ namespace open3mod
             foreach (var scene in _main.UiState.ActiveScenes())
             {
                 scene.RequestReuploadTextures();
+            }
+        }
+
+        private void OnChangeNdiTextureResolution(object sender, EventArgs e)
+        {
+            switch (comboBoxNdiTexResolution.SelectedIndex)
+            {
+                case 0:
+                    _gSettings.NdiTexQualityBias = 0;
+
+                    break;
+                case 1:
+                    _gSettings.NdiTexQualityBias = 1;
+                    break;
+                case 2:
+                    _gSettings.NdiTexQualityBias = 3;
+                    break;
+                default:
+                    Debug.Assert(false);
+                    break;
+            }
+
+            if (_main == null)
+            {
+                return;
             }
         }
 

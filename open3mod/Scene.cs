@@ -489,8 +489,9 @@ namespace open3mod
         /// <summary>
         /// Call once per frame to render the scene to the current viewport.
         /// </summary>
-        public void Render(UiState state, ICameraController cam, Renderer target, int toVideo, bool VRModel = false)
+        public void Render(UiState inState, ICameraController cam, Renderer target, int toVideo, bool VRModel = false)
         {
+            var state = inState;
             RenderFlags flags = 0;
             if (state.ShowNormals && toVideo == 0)
             {
@@ -527,7 +528,7 @@ namespace open3mod
 
             flags |= RenderFlags.ShowGhosts;
             flags |= RenderFlags.ForceTwoSidedLighting;
-
+    
             _wantSetTexturesChanged = false;
             _sceneRenderer.Render(cam, _meshesToShow, _nodesToShowChanged, _texturesChanged, flags, target);
 

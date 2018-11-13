@@ -169,6 +169,7 @@ namespace open3mod
         public void GLDrawFrame()
         {
             if (!glIsInitialized) return;
+            GL.Viewport(0, 0, Width, Height);
             m_previewHelper.PaintGL();
         }
 

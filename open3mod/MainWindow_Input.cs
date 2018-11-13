@@ -437,6 +437,7 @@ namespace open3mod
                     break;
 
                 case Keys.OemPeriod:
+//                    _renderer.activeCamera = 3 - _renderer.activeCamera;
                     UiForTab(_ui.ActiveTab).GetInspector().Animations.SetTime(0);
                     break;
 
@@ -506,10 +507,6 @@ namespace open3mod
                 case Keys.V:
                     // reset NDI streams
                     if (useIO) _renderer.FlushNDI();
-                    break;
-                case Keys.T:
-                    // skips one frame
-                    _renderer.skipFrames = 1;
                     break;
                 case Keys.B:
                     if (_renderer.renderIO) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.Background);

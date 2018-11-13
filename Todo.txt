@@ -4,14 +4,18 @@ Newer. Assimp 4.1.216079013 (assimp viewer)
 Moje kompilace #1 : Assimp 4.1.0
 Moje kompilace #2+3 : Assimp 4.1.0 - ale z masteru
 
-
-audio nejde skrz proè???
-kontrola masky over green = pozice do místnosti - jak live?= studiorender wireframe over video
+ovìøit cukání a sync pøi stávající kombinaci
+pøesunout render screen úplnì extra od render video,
+aby render video vùbec netrpìl ev. zásekem renderscreen
+synchron - reset synchron AV??
+timing II kamera a NDI in
+proè GL kulhá a spraví to player
+proè je ovladaè aktivní jen v oknì-zvıraznit nìjak??
 FOV pøepoèet na camera number-závislost? tabulka?nastavení kamery??
 zmenšit textury VR modelù/png/tga/psd
 
-proè VLC hraje s pruhama MPG progressive..pøeskakuje fps - vyrobit test, zjistit
 jak vypadá Janssen nové studio v renderu-vyrobit...f/bg/gr atd
+
 
 
 INFO:
@@ -44,6 +48,7 @@ ndi receiver u kadé scény??
 off stream senderu - 
 tøetí vıstup-støih shift enter+offset pro èteèku, preset na vektory( 0,1,2
 noise filter median na gauss upravit(?)
+audio nejde skrz proè???...jde, kontrola vdy
 
 
 pøepínání a pøiøazení ovladaèù - sna >sn bm

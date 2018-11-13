@@ -328,7 +328,7 @@ namespace open3mod
             PlaybackStopped();
         }
 
-        void IDeckLinkAudioOutputCallback.RenderAudioSamples(int preroll)
+        void IDeckLinkAudioOutputCallback.RenderAudioSamples(int preroll) //called at 50Hz during playback
         {
             // Provide further audio samples to the DeckLink API until our preferred buffer waterlevel is reached
             AudioOutputRequested();

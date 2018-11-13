@@ -63,6 +63,8 @@ namespace open3mod
         GLControl glCore;
         int samples = 1; //1 no MSAA, 8 max
         int isCore = 0;//0 = compat,1= core;
+        IGraphicsContext compatContext;
+        IGraphicsContext coreContext;
 
         public RenderControl()
             : base(new GraphicsMode(new ColorFormat(32), 24, 8, GetSampleCount(GraphicsSettings.Default.MultiSampling)))
@@ -150,6 +152,8 @@ namespace open3mod
             GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer,  RenderbufferStorage.Depth24Stencil8, videoSizeX, videoSizeY);
 
             this.MakeCurrent();
+            compatContext = GraphicsContext.CurrentContext;
+            GraphicsContext.ShareContexts = true;
             VSync = false;
             isCore = 0;
             int[] frameBufferCompat = new int[numBuffers];
@@ -166,6 +170,8 @@ namespace open3mod
             GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
 
             glCore.MakeCurrent();
+            coreContext = GraphicsContext.CurrentContext;
+            GraphicsContext.ShareContexts = true;
             glCore.VSync = false;
             isCore = 1;
             int[] frameBufferCore = new int[numBuffers];
@@ -228,9 +234,16 @@ namespace open3mod
         /// <returns></returns>
         public void SetRenderTarget(RenderTarget rt)
         {
-            RenderControl.GLError("BeforeTargetChange");
+            IGraphicsContext currentContext = GraphicsContext.CurrentContext;
             int[] CurrentViewport = new int[4];
-            GL.GetInteger(GetPName.Viewport, CurrentViewport);
+            bool validVp = false;
+            if (currentContext != null)
+            {
+                RenderControl.GLError("BeforeTargetChange");
+                GL.GetInteger(GetPName.Viewport, CurrentViewport);
+                validVp = true;
+               // GL.Finish();
+            }
             switch (rt)
             {
                 case RenderTarget.ScreenDirect:
@@ -269,8 +282,23 @@ namespace open3mod
                     GL.BindFramebuffer(FramebufferTarget.Framebuffer, frameBuffer[isCore,2]);
                     break;
             }
-            GL.Viewport(CurrentViewport[0], CurrentViewport[1], CurrentViewport[2], CurrentViewport[3]);//We copy viewport to the context we switched to..
+            if (validVp) GL.Viewport(CurrentViewport[0], CurrentViewport[1], CurrentViewport[2], CurrentViewport[3]);//We copy viewport to the context we switched to..
             RenderControl.GLError("AfterTargetChange");
+        }
+
+        /// <summary>
+        /// Releases all contexts, so may be used in another thread.
+        /// </summary>
+        /// <returns></returns>
+        public void ReleaseRenderTargets()
+        {
+            RenderControl.GLError("BeforeReleasingTargets");
+            IGraphicsContext currentContext = GraphicsContext.CurrentContext;
+            if (currentContext == null) return;
+            GL.Finish();
+            if (currentContext == compatContext) compatContext.MakeCurrent(null);
+            if (currentContext == coreContext) coreContext.MakeCurrent(null);
+            // now is no context current, co calling GLError does not make sense
         }
 
         /// <summary>

@@ -38,6 +38,7 @@ namespace open3mod
         private DeckLinkInputDevice         m_selectedDevice;
         private int m_number;
         private readonly MainWindow m_mainWindow;
+        private bool m_capturing = false;
 
         public CapturePreview(MainWindow mainWindow, int numb)
         {
@@ -148,6 +149,7 @@ namespace open3mod
             // Update UI
             buttonStartStop.Text = "Stop Capture";
             EnableInterface(false);
+            m_capturing = true;
         }
 
 
@@ -170,6 +172,7 @@ namespace open3mod
             buttonStartStop.Text = "Start Capture";
             EnableInterface(true);
             labelInvalidInput.Visible = false;
+            m_capturing = false;
         }
 
         public void SetTimecode(string timecode)
@@ -178,6 +181,10 @@ namespace open3mod
             labelTimecode.Invalidate();
         }
 
+        public bool IsCapturing()
+        {
+            return m_capturing;
+        }
 
         private void comboBoxInputDevice_SelectedValueChanged(object sender, EventArgs e)
         {

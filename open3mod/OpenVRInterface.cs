@@ -300,6 +300,7 @@ namespace open3mod
         }
         public static void ProcessAllButtons()
         {
+            if (EVRerror != EVRInitError.None) return;
             for (uint i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; i++)
             {
                 if (deviceClasses[i] == ETrackedDeviceClass.Controller)

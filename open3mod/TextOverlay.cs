@@ -198,7 +198,6 @@ namespace open3mod
         {
             var cs = _renderer.RenderResolution;
             if ((cs.Width == 0) || (cs.Height == 0)) return;
-
             // Updates the GL texture if there were any changes to the .net offscreen buffer. 
             if (_tempContext != null)
             {

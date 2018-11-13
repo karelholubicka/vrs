@@ -226,5 +226,17 @@ namespace open3mod {
                 this["KeyingMatteBlur"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int NdiTexQualityBias {
+            get {
+                return ((int)(this["NdiTexQualityBias"]));
+            }
+            set {
+                this["NdiTexQualityBias"] = value;
+            }
+        }
     }
 }
