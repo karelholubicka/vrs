@@ -22,8 +22,8 @@ namespace open3mod
         public static float trackerOffXAxis = 0.1f; //radians - angle between controllers and lens Z axis 
         public static float lensAboveGround = 0.06f; //height of camera lens center above ground
         public static int maxPositionsBuffer = 5;
-        public static Matrix4[,] allPositions = new Matrix4[maxPositionsBuffer, OpenVR.k_unMaxTrackedDeviceCount]; //shift from lens to the ground for each camera wanted during reset
-        public static Matrix4[] trackedPositions = new Matrix4[OpenVR.k_unMaxTrackedDeviceCount]; //shift from lens to the ground for each camera wanted during reset
+        public static Matrix4[,] allPositions = new Matrix4[maxPositionsBuffer, OpenVR.k_unMaxTrackedDeviceCount]; 
+        public static Matrix4[] trackedPositions = new Matrix4[OpenVR.k_unMaxTrackedDeviceCount]; 
         public static bool[] activePositions = new bool[OpenVR.k_unMaxTrackedDeviceCount]; //only active trackers
         public static ETrackedDeviceClass[] deviceClasses = new ETrackedDeviceClass[OpenVR.k_unMaxTrackedDeviceCount]; //what sits at which index
         public static string[] deviceSNs = new string[OpenVR.k_unMaxTrackedDeviceCount];
@@ -226,7 +226,7 @@ namespace open3mod
             return transMatrix * orientMatrix;
         }
 
-        public static void ScanPositions()
+        public static void ScanPositions()//todo - allow scan for one frame less delay (olderFrame)+modify photons for camera n if we know the delay)
         {
             var vrMatrix = new HmdMatrix34_t();
             TrackedDevicePose_t[] pTrackedDevicePoseArray = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
@@ -270,7 +270,6 @@ namespace open3mod
                     {
                         allPositions[j, i] = trackedPositions[i];
                     }
-                    activePositions[i] = true;
                     activePositions[i] = true;
                 }
                 else

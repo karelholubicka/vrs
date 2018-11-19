@@ -95,6 +95,11 @@ namespace open3mod
         public int syncCamera = 1;
         public IDeckLinkMutableVideoFrame uploadFrame1 = null;//keep as separate objects to allow locking
         public IDeckLinkMutableVideoFrame uploadFrame2 = null;
+        public IDeckLinkMutableVideoFrame uploadFrameOlder = null;//keep as separate objects to allow locking
+        private long timeFrame1;
+        private long timeFrame2;
+        private long timeFrameOlder;
+        private bool useFrameOlder = false; //takes older frame from non-synced camera, this variable ensures hysteresis in case time difference becomes too low
         NDIReceiver _NDIReceiver;
         int dynTexture;
         Size dynTextureSize = new Size(0, 0);
@@ -482,27 +487,45 @@ namespace open3mod
             //     if (timeTrack) Console.Clear();
         }
 
+        private void performBufferCopy(ref IDeckLinkMutableVideoFrame uploadFrame, ref IDeckLinkMutableVideoFrame uploadFrameOlder, ref long timeFrame, int cam, IntPtr videoData)
+        {
+            if (uploadFrame == null) return;
+            //timeFrame = _renderClock.ElapsedMilliseconds;
+            // lock (uploadFrame) needs to check this if this works Ok
+            {
+                uploadFrame.GetBytes(out IntPtr vF);
+                uint size = (uint)(uploadFrame.GetRowBytes() * uploadFrame.GetHeight());
+                if (cam != syncCamera)
+                {
+                    uploadFrameOlder.GetBytes(out IntPtr vFO);
+                    lock (uploadFrameOlder)
+                    {
+                        MainWindow.CopyMemory(vFO, vF, size);
+                        timeFrameOlder = timeFrame;
+                    }
+                }
+                MainWindow.CopyMemory(vF, videoData, size);
+            }
+        }
+
+
         public void uploadCameraBuffer(int cam, IntPtr videoData)
         {
             if (!buffersInitialized) return;
             if (cam == 2)
             {
-                if (uploadFrame2 == null) return;
+                timeFrame2 = _renderClock.ElapsedMilliseconds; //must be before lock
                 lock (uploadFrame2)
                 {
-                    uploadFrame2.GetBytes(out IntPtr dest);
-                    uint size = (uint)(uploadFrame2.GetRowBytes() * uploadFrame2.GetHeight());
-                    MainWindow.CopyMemory(dest, videoData, size);
+                    performBufferCopy(ref uploadFrame2, ref uploadFrameOlder, ref timeFrame2, cam, videoData);
                 }
             }
             else
             {
-                if (uploadFrame1 == null) return;
+                timeFrame1 = _renderClock.ElapsedMilliseconds; //must be before lock
                 lock (uploadFrame1)
                 {
-                    uploadFrame1.GetBytes(out IntPtr dest);
-                    uint size = (uint)(uploadFrame1.GetRowBytes() * uploadFrame1.GetHeight());
-                    MainWindow.CopyMemory(dest, videoData, size);
+                    performBufferCopy(ref uploadFrame1, ref uploadFrameOlder, ref timeFrame1, cam, videoData);
                 }
             }
         }
@@ -705,22 +728,66 @@ namespace open3mod
                 GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba8, dynTextureSize.Width, dynTextureSize.Height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, (IntPtr)0);
                 GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
             }
+
+            IntPtr dest;
             //upload camera 1 from videoframe to buffer
             lock (uploadFrame1)
             {
-                uploadFrame1.GetBytes(out IntPtr dest);
+                uploadFrame1.GetBytes(out dest);
                 GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[shift]);
                 GL.BufferData(BufferTarget.PixelUnpackBuffer, (int)YUVstride * NDISender.videoSizeY, dest, BufferUsageHint.DynamicDraw);
                 GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
             }
-            //upload camera 2 from videoframe to buffer
-            lock (uploadFrame2)
+
+            //upload camera 2 from videoframe (or older frame) to buffer
+            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[2 + shift]);
+            //assuming syncCam=1;
+            long timeDiff = timeFrame1 - timeFrame2;//positive - camera2 frame came sooner than cam1-sync
+            if (useFrameOlder)
             {
-                uploadFrame2.GetBytes(out IntPtr dest);
-                GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[2 + shift]);
-                GL.BufferData(BufferTarget.PixelUnpackBuffer, (int)YUVstride * NDISender.videoSizeY, dest, BufferUsageHint.DynamicDraw);
-                GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
+                if (timeDiff < MainWindow.mainTiming / 2) //20
+                {
+                    uploadFrameOlder.GetBytes(out dest);
+                    timeDiff = timeDiff + MainWindow.mainTiming;
+                    lock (uploadFrameOlder)
+                    {
+                        GL.BufferData(BufferTarget.PixelUnpackBuffer, (int)YUVstride * NDISender.videoSizeY, dest, BufferUsageHint.DynamicDraw);
+                    }
+                }
+                else
+                {
+                    useFrameOlder = false;
+                    uploadFrame2.GetBytes(out dest);
+                    lock (uploadFrame2)
+                    {
+                        GL.BufferData(BufferTarget.PixelUnpackBuffer, (int)YUVstride * NDISender.videoSizeY, dest, BufferUsageHint.DynamicDraw);
+                    }
+                }
             }
+            else
+            {
+                if (timeDiff < MainWindow.mainTiming / 8) //5
+                {
+                    uploadFrameOlder.GetBytes(out dest);
+                    useFrameOlder = true;
+                    timeDiff = timeDiff + MainWindow.mainTiming;
+                    lock (uploadFrameOlder)
+                    {
+                        GL.BufferData(BufferTarget.PixelUnpackBuffer, (int)YUVstride * NDISender.videoSizeY, dest, BufferUsageHint.DynamicDraw);
+                    }
+                }
+                else
+                {
+                    uploadFrame2.GetBytes(out dest);
+                    lock (uploadFrame2)
+                    {
+                        GL.BufferData(BufferTarget.PixelUnpackBuffer, (int)YUVstride * NDISender.videoSizeY, dest, BufferUsageHint.DynamicDraw);
+                    }
+                }
+            }
+            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
+            int cam2Delay = (int)timeDiff;
+
 
             //upload dynamic texture from receiver bitmap to buffer
             if ((scene.dynamicTexture != null) && (_NDIReceiver.ConnectedSource != null))
