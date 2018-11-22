@@ -216,7 +216,6 @@ namespace open3mod
             GL.MatrixMode(MatrixMode.Projection);
             GL.PushMatrix();
             GL.LoadIdentity();
-
             GL.Ortho(0, cs.Width, cs.Height, 0, -1, 1);
 
             GL.Enable(EnableCap.Texture2D);
@@ -224,7 +223,7 @@ namespace open3mod
             GL.BlendFuncSeparate(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha, BlendingFactorSrc.SrcAlpha, BlendingFactorDest.One);
 
             GL.BindTexture(TextureTarget.Texture2D, _textTexture);
-         
+
             const float offset = 0;
 
             // clear color (otherwise multiplies texture)

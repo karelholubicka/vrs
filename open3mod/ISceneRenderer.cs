@@ -37,6 +37,7 @@ namespace open3mod
         UseSceneLights = 0x80,
         ForceTwoSidedLighting = 0x100,
         ShowLightDirection = 0x200,
+        ToVideo = 0x400,
     }
 
 

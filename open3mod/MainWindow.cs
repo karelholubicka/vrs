@@ -218,8 +218,10 @@ namespace open3mod
             ProcessPriorityClass Priority = ProcessPriorityClass.High;
             Process MainProcess = Process.GetCurrentProcess();
              MainProcess.PriorityClass = Priority;
+
             _initialized = true;
             CloseTab(_emptyTab);
+
         }
 
         public override sealed string Text
@@ -859,7 +861,6 @@ namespace open3mod
             lock (_renderer)
             {
                 _renderer.Resize();
-                renderControl1.ReleaseRenderTargets();
             }
         }
 
@@ -880,34 +881,35 @@ namespace open3mod
             {
                 return;
             }
-         //    if (_renderer.timeTrack) Console.WriteLine("Start AppIdle {0}", _renderer._runsw.Elapsed.TotalMilliseconds);
+            //    if (_renderer.timeTrack) Console.WriteLine("Start AppIdle {0}", _renderer._runsw.Elapsed.TotalMilliseconds);
+            if (firstRun)
+            {
+                CloseTab(_emptyTab);
+                firstRun = false;
+                if (CoreSettings.CoreSettings.Default.RecentTabs != null)
+                {
+                    for (int i = CoreSettings.CoreSettings.Default.RecentTabs.Count - 1; i >= 0; i--)
+                    {
+                        var s = CoreSettings.CoreSettings.Default.RecentTabs[i];
+                        string[] recentData = s.Split(recentDataSeparator, StringSplitOptions.None);
+                        Thread.Sleep(500);
+                        AddTab(recentData[0], true, false, true);
+                    }
+                }
+            }
 #if USE_APP_IDLE
-            while (renderControl1.IsIdle)
+            while (renderControl1.IsIdle && !CoreSettings.CoreSettings.Default.Genlock)
 #endif
             {
+                 if  (CoreSettings.CoreSettings.Default.Genlock) Thread.Sleep(50);
+
                 bool InputIsRunning = false;
                 if (_renderer.activeCamera == 1) InputIsRunning = capturePreview1.IsCapturing();
                 if (_renderer.activeCamera == 2) InputIsRunning = capturePreview2.IsCapturing();
-                if (!CoreSettings.CoreSettings.Default.Genlock || !InputIsRunning)
+                if (!InputIsRunning || !CoreSettings.CoreSettings.Default.Genlock)
                 {
-                  FrameUpdate();
-                  FrameRender();
-                }
-
-                if (firstRun)
-                {
-                    CloseTab(_emptyTab);
-                    firstRun = false;
-                    if (CoreSettings.CoreSettings.Default.RecentTabs != null)
-                    {
-                        for (int i = CoreSettings.CoreSettings.Default.RecentTabs.Count - 1; i >= 0; i--)
-                        {
-                            var s = CoreSettings.CoreSettings.Default.RecentTabs[i];
-                            string[] recentData = s.Split(recentDataSeparator, StringSplitOptions.None);
-                            Thread.Sleep(500);
-                            AddTab(recentData[0], true, false, true);
-                        }
-                    }
+                   Render();
+                   _renderer.timeTrack2("---" + " DirectRender");
                 }
             }
         }
@@ -916,12 +918,11 @@ namespace open3mod
         {
             if (!CoreSettings.CoreSettings.Default.Genlock) 
             {
-                lock (_renderer) { invoked = false; }
+                //lock (_renderer) { invoked = false; }
                 return;
             }
-            FrameUpdate();
-            FrameRender();
-            lock (_renderer) { invoked = false; }
+            Render();
+         //   lock (_renderer) { invoked = false; }
         }
 
 
@@ -941,70 +942,68 @@ namespace open3mod
         }
 
 
-        private void FrameRender()
+        private void RenderScreen()
         {
-            _renderer.timeTrack2("FR");
-            lock (_renderer)
-            {
-                _renderer.Draw(_ui.ActiveTab, true);
-              //  _renderer.DrawScreen(_ui.ActiveTab);
-                _renderer.timeTrack("23-EndDraw");
+          //  _renderer.timeTrack2("FR");
+           _renderer.DrawScreen(_ui.ActiveTab);
+           // Thread.Sleep(50);
+            _renderer.timeTrack("23-EndDraw");
                 renderControl1.CopyToOnScreenFramebuffer();
                 _renderer.timeTrack("24-Copied");
                 renderControl1.SwapBuffers();
                 _renderer.timeTrack("25-BuffSwitched");
-                renderControl1.ReleaseRenderTargets();
-            }
             ProcessKeys();
             OpenVRInterface.ProcessAllButtons();
+            screenInvoked = false;
         }
 
-        private void RenderVideoOnly()
+        bool screenInvoked = false;
+        private void Render()
         {
-            _renderer.timeTrack2("VO");
-            lock (_renderer)
+            FrameUpdate();
+            _renderer.DrawVideo(_ui.ActiveTab);
+            MethodInvoker method = () => RenderScreen();
+            if (!screenInvoked)
             {
-                _fps.Update();
-                var delta = _fps.LastFrameDelta;
-
-                foreach (var tab in UiState.Tabs)
+                if (InvokeRequired)
                 {
-                    if (tab.ActiveScene != null)
-                    {
-                        tab.ActiveScene.Update(delta, tab != UiState.ActiveTab);
-                    }
+                    screenInvoked = true;
+                    BeginInvoke(method);
                 }
-                _renderer.Draw(_ui.ActiveTab, false);
-                renderControl1.ReleaseRenderTargets();
-                doingVideoOnly = false;
+                else
+                {
+                    screenInvoked = true;
+                    method();
+                }
             }
-
+            else
+            {
+             //   _renderer.timeTrack2("---" + "         Skipping Screen frame");
+            }
+            if (useIO) _renderer.OutputVideo(0);
+            doingRender = false;
         }
 
-        bool invoked = false;
-        bool doingVideoOnly = false;
+        bool doingRender = false;
+
         public void callFrameLoop(int m_number, IntPtr videoData)
         {
-             MethodInvoker method = () => FrameLoop();
             if (_renderer == null) return;
             _renderer.uploadCameraBuffer(m_number, videoData);
             if (!CoreSettings.CoreSettings.Default.Genlock) return;
             if (m_number == _renderer.syncCamera)
             {
-                _renderer.timeTrack2("-- invoked" + invoked.ToString() + " VOnly " + doingVideoOnly.ToString());
-                if (doingVideoOnly) return;
-                _renderer.timeTrack2("-- continue -");
-                if (!invoked)
+                if (doingRender)
                 {
-                    invoked = true;
-                    BeginInvoke(method);//Returns immediatelly even when UI is locked
+                    _renderer.timeTrack2("---" + " !!! Escaping render - doing Render not finished!!!" );
+                    return;
                 }
-                else
-                {
-                    doingVideoOnly = true;
-                    var th = new Thread(() => RenderVideoOnly());
-                    th.Start();
-                }
+                doingRender = true;
+                var th = new Thread(() => Render());
+                th.Start();
+                //  doingRender = false;
+                //    BeginInvoke(method);
+                // Render();
             }
         }
 
@@ -1702,7 +1701,8 @@ namespace open3mod
 
         public void handleAudio(int m_number, IntPtr audioData)
         {
-            if (m_number == _renderer.syncCamera) outputGenerator.addAudioFrame(audioData);
+          //  Console.WriteLine("AudioFrame" + m_number.ToString());
+                if (m_number == _renderer.syncCamera) outputGenerator.addAudioFrame(audioData);
         }
 
         private void setDynamicSourceToolStripMenuItem_Click(object senderExt, EventArgs e)

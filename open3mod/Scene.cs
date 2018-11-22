@@ -525,6 +525,10 @@ namespace open3mod
             {
                flags |= RenderFlags.ShowLightDirection;
             }
+            if (toVideo == 1)
+            {
+                flags |= RenderFlags.ToVideo;
+            }
 
             flags |= RenderFlags.ShowGhosts;
             flags |= RenderFlags.ForceTwoSidedLighting;

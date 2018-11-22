@@ -35,12 +35,14 @@ namespace open3mod
     /// </summary>
     public class SceneRendererModernGl : SceneRendererShared, ISceneRenderer
     {
-        private RenderMesh[] _meshes;
+        private RenderMesh[] _meshesVideo;
+        private RenderMesh[] _meshesScreen;
 
         internal SceneRendererModernGl(Scene owner, Vector3 initposeMin, Vector3 initposeMax) 
             : base(owner, initposeMin, initposeMax)
         {
-            _meshes = new RenderMesh[owner.Raw.MeshCount];
+            _meshesVideo = new RenderMesh[owner.Raw.MeshCount];
+            _meshesScreen = new RenderMesh[owner.Raw.MeshCount];
         }
 
         /// <summary>
@@ -166,7 +168,10 @@ namespace open3mod
 
         protected override bool InternDrawMesh(Node node, bool animated, bool showGhost, int index, Mesh mesh, RenderFlags flags)
         {
-            if (_meshes[index] == null) {
+            RenderMesh[] _meshes = _meshesScreen;
+            if (flags.HasFlag(RenderFlags.ToVideo)) _meshes = _meshesVideo;
+            if (_meshes[index] == null) 
+            {
                 _meshes[index] = new RenderMesh(mesh);
             }
 

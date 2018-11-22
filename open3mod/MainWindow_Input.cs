@@ -433,12 +433,13 @@ namespace open3mod
 
                 case Keys.F5:
                 case Keys.Escape:
+                    UiForTab(_ui.ActiveTab).GetInspector().Animations.SetTime(0); //reset or replay
                     UiForTab(_ui.ActiveTab).GetInspector().Animations.OnPlay(sender, e);
                     break;
 
                 case Keys.OemPeriod:
-//                    _renderer.activeCamera = 3 - _renderer.activeCamera;
-                    UiForTab(_ui.ActiveTab).GetInspector().Animations.SetTime(0);
+                    _renderer.activeCamera = 3 - _renderer.activeCamera;
+      //              UiForTab(_ui.ActiveTab).GetInspector().Animations.SetTime(0);
                     break;
 
                 case Keys.W:

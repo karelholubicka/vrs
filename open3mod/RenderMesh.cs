@@ -131,7 +131,7 @@ namespace open3mod
         {
             Debug.Assert(_vbo.VertexBufferId != 0);
             Debug.Assert(_vbo.ElementBufferId != 0);
-            GL.BindVertexArray(_vbo.VertexArray);
+            GL.BindVertexArray(_vbo.VertexArray); ///
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vbo.VertexBufferId);
 
             // primitives

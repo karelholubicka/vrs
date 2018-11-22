@@ -55,24 +55,30 @@ namespace open3mod
         int[] renderBuffer = new int[numBuffers];
         int[] depthBuffer = new int[numBuffers];
         int[,] frameBuffer = new int[2,numBuffers];
-        int[] pixelPackBuffer = new int[numBuffers];
-        int[] pixelUnpackBuffer = new int[numBuffers];
         public bool initialized = false;
         Size _videoSize; //size of Video buffers
         public const byte bytePerPixel = 4;
-        GLControl glCore;
+        GLControl glScreenCore;
+        // GLControl glScreenCompat; this = this. is base context
+        // IGraphicsContext screenCompatContext;
+        GLControl glVideoCore;
+        GLControl glVideoCompat;
         int samples = 1; //1 no MSAA, 8 max
-        int isCore = 0;//0 = compat,1= core;
-        IGraphicsContext compatContext;
-        IGraphicsContext coreContext;
+        int isScreenCore = 0;//0 = compat,1= core;
+        int isVideoCore = 0;//0 = compat,1= core;
+        IGraphicsContext videoCompatContext;
+        IGraphicsContext videoCoreContext;
+        IGraphicsContext screenCoreContext;
 
         public RenderControl()
             : base(new GraphicsMode(new ColorFormat(32), 24, 8, GetSampleCount(GraphicsSettings.Default.MultiSampling)))
-        //            : base(new GraphicsMode(new ColorFormat(32), 24, 8, GetSampleCount(GraphicsSettings.Default.MultiSampling)))
         {
             samples = GetSampleCount(GraphicsSettings.Default.MultiSampling);
-            Thread.Sleep(100);
-            glCore = new OpenTK.GLControl(new GraphicsMode(new ColorFormat(32), 24, 8, samples), 4, 5, 0);
+            Thread.Sleep(10);
+            glScreenCore = new OpenTK.GLControl(new GraphicsMode(new ColorFormat(32), 24, 8, samples), 4, 5, 0);
+          //  glScreenCompat = new OpenTK.GLControl(new GraphicsMode(new ColorFormat(32), 24, 8, samples));
+            glVideoCore = new OpenTK.GLControl(new GraphicsMode(new ColorFormat(32), 24, 8, samples), 4, 5, 0);
+            glVideoCompat = new OpenTK.GLControl(new GraphicsMode(new ColorFormat(32), 24, 8, samples));
             //glCompatible GL = 2.1 (2.1.0)
         }
 
@@ -89,23 +95,14 @@ namespace open3mod
             VideoCore = 4,
             VideoSSCompat = 5,
             VideoSSCore = 6,
+            VideoNone = 7,
         }
 
-        /// <summary>
-        /// Binds Renderbuffers to Framebuffer.
-        /// </summary>
-        /// <returns></returns>
-        public void BindBuffers()
+        public void ReBindFrameBuffer(int i)
         {
-            for (int i = 0; i < numBuffers; i++)
-            {
-                ReBindBuffer(i);
-            }
-        }
-
-        public void ReBindBuffer(int i)
-        {
-                GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, frameBuffer[isCore, i]);
+            int isCore =isScreenCore;
+            if (i > 0) isCore = isVideoCore;
+            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, frameBuffer[isCore, i]);
                 GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, frameBuffer[isCore, i]);
                 GL.BindFramebuffer(FramebufferTarget.Framebuffer, frameBuffer[isCore, i]);
                 GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, RenderbufferTarget.Renderbuffer, renderBuffer[i]);
@@ -124,6 +121,7 @@ namespace open3mod
         /// <returns></returns>
         public void InitGlControl(int videoSizeX, int videoSizeY)
         {
+            this.MakeCurrent();
             ErrorCode err = GL.GetError();//nVidia does not like something at real beginning
             RenderControl.GLError("InitializeGLControl");
 
@@ -131,8 +129,6 @@ namespace open3mod
             _videoSize.Height = videoSizeY;
             GL.GenRenderbuffers(numBuffers, renderBuffer);
             GL.GenRenderbuffers(numBuffers, depthBuffer);
-            GL.GenBuffers(numBuffers, pixelPackBuffer);
-            GL.GenBuffers(numBuffers, pixelUnpackBuffer);
 
             GL.Enable(EnableCap.Multisample);
 
@@ -151,41 +147,52 @@ namespace open3mod
             GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, depthBuffer[2]);
             GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer,  RenderbufferStorage.Depth24Stencil8, videoSizeX, videoSizeY);
 
-            this.MakeCurrent();
-            compatContext = GraphicsContext.CurrentContext;
-            GraphicsContext.ShareContexts = true;
-            VSync = false;
-            isCore = 0;
             int[] frameBufferCompat = new int[numBuffers];
             GL.GenFramebuffers(numBuffers, frameBufferCompat);
-            frameBuffer[isCore,0] = frameBufferCompat[0];
-            frameBuffer[isCore, 1] = frameBufferCompat[1];
-            frameBuffer[isCore, 2] = frameBufferCompat[2];
-            BindBuffers();
-            GL.BindBuffer(BufferTarget.PixelPackBuffer, pixelPackBuffer[0]);
-            GL.BufferData(BufferTarget.PixelPackBuffer, (IntPtr)(Width * Height * bytePerPixel), (IntPtr)0, BufferUsageHint.DynamicCopy);
-            GL.BindBuffer(BufferTarget.PixelPackBuffer, 0);
-            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[0]);
-            GL.BufferData(BufferTarget.PixelUnpackBuffer, (IntPtr)(Width * Height * bytePerPixel), (IntPtr)0, BufferUsageHint.DynamicCopy);
-            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
 
-            glCore.MakeCurrent();
-            coreContext = GraphicsContext.CurrentContext;
-            GraphicsContext.ShareContexts = true;
-            glCore.VSync = false;
-            isCore = 1;
+            this.MakeCurrent();
+           // screenCompatContext = GraphicsContext.CurrentContext; 
+           // GraphicsContext.ShareContexts = true;
+            VSync = false;
+            isScreenCore = 0;
+            frameBuffer[isScreenCore, 0] = frameBufferCompat[0];
+            ReBindFrameBuffer(0);
+
+            glVideoCompat.MakeCurrent();
+            videoCompatContext = GraphicsContext.CurrentContext;
+           // GraphicsContext.ShareContexts = true;
+            VSync = false;
+            isVideoCore = 0;
+            frameBuffer[isVideoCore, 1] = frameBufferCompat[1];
+            frameBuffer[isVideoCore, 2] = frameBufferCompat[2];
+            ReBindFrameBuffer(1);
+            ReBindFrameBuffer(2);
+
+            glScreenCore.MakeCurrent();
+            screenCoreContext = GraphicsContext.CurrentContext;
+           // GraphicsContext.ShareContexts = true;
+            glScreenCore.VSync = false;
+            isScreenCore = 1;
             int[] frameBufferCore = new int[numBuffers];
             GL.GenFramebuffers(numBuffers, frameBufferCore);
-            frameBuffer[isCore, 0] = frameBufferCore[0];
-            frameBuffer[isCore, 1] = frameBufferCore[1];
-            frameBuffer[isCore, 2] = frameBufferCore[2];
-            BindBuffers();
-            GL.BindBuffer(BufferTarget.PixelPackBuffer, pixelPackBuffer[1]);
-            GL.BufferData(BufferTarget.PixelPackBuffer, (IntPtr)(videoSizeX * videoSizeY * bytePerPixel), (IntPtr)0, BufferUsageHint.DynamicRead);
-            GL.BindBuffer(BufferTarget.PixelPackBuffer, 0);
-            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[1]);
-            GL.BufferData(BufferTarget.PixelUnpackBuffer, (IntPtr)(videoSizeX * videoSizeY * bytePerPixel), (IntPtr)0, BufferUsageHint.DynamicDraw);
-            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
+            frameBuffer[isScreenCore, 0] = frameBufferCore[0];
+            ReBindFrameBuffer(0);
+
+            glVideoCore.MakeCurrent();
+            videoCoreContext = GraphicsContext.CurrentContext;
+           // GraphicsContext.ShareContexts = true;
+            glVideoCore.VSync = false;
+            isVideoCore = 1;
+            frameBuffer[isVideoCore, 1] = frameBufferCore[1];
+            frameBuffer[isVideoCore, 2] = frameBufferCore[2];
+            ReBindFrameBuffer(1);
+            ReBindFrameBuffer(2);
+
+            videoCoreContext.MakeCurrent(null);
+            this.MakeCurrent();
+            isScreenCore = 0;
+            //detach video, set screen to compat
+
             initialized = true;
             RenderControl.GLError("AfterInit");
 
@@ -206,23 +213,16 @@ namespace open3mod
             Top = _top;
             GL.Viewport(Left, Top, Width, Height);
             SetRenderTarget(RenderTarget.ScreenCore);
-            glCore.Width = _width;
-            glCore.Height = _height;
-            glCore.Left = _left;
-            glCore.Top = _top;
+            glScreenCore.Width = _width;
+            glScreenCore.Height = _height;
+            glScreenCore.Left = _left;
+            glScreenCore.Top = _top;
             GL.Viewport(Left, Top, Width, Height);
             if (!initialized) return;
             GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, renderBuffer[0]);
             GL.RenderbufferStorageMultisample(RenderbufferTarget.Renderbuffer, samples, RenderbufferStorage.Rgba8, Width, Height);
             GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, depthBuffer[0]);
             GL.RenderbufferStorageMultisample(RenderbufferTarget.Renderbuffer, samples, RenderbufferStorage.Depth24Stencil8, Width, Height);
-
-            GL.BindBuffer(BufferTarget.PixelPackBuffer, pixelPackBuffer[0]);
-            GL.BufferData(BufferTarget.PixelPackBuffer, (IntPtr)(Width * Height * bytePerPixel), (IntPtr)0, BufferUsageHint.DynamicCopy);
-            GL.BindBuffer(BufferTarget.PixelPackBuffer, 0);
-            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[0]);
-            GL.BufferData(BufferTarget.PixelUnpackBuffer, (IntPtr)(Width * Height * bytePerPixel), (IntPtr)0, BufferUsageHint.DynamicCopy);
-            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
 
             SetRenderTarget(RenderTarget.ScreenCompat);
             RenderControl.GLError("After Resizing");
@@ -248,57 +248,55 @@ namespace open3mod
             {
                 case RenderTarget.ScreenDirect:
                     this.MakeCurrent();
-                    isCore = 0;
+                    isScreenCore = 0;
                     GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
                     break;
                 case RenderTarget.ScreenCompat:
                     this.MakeCurrent();
-                    isCore = 0;
-                    GL.BindFramebuffer(FramebufferTarget.Framebuffer, frameBuffer[isCore,0]);
+                    isScreenCore = 0;
+                    GL.BindFramebuffer(FramebufferTarget.Framebuffer, frameBuffer[isScreenCore, 0]);
                     break;
                 case RenderTarget.ScreenCore:
-                    glCore.MakeCurrent();
-                    isCore = 1;
-                    GL.BindFramebuffer(FramebufferTarget.Framebuffer, frameBuffer[isCore,0]);
+                    glScreenCore.MakeCurrent();
+                    isScreenCore = 1;
+                    GL.BindFramebuffer(FramebufferTarget.Framebuffer, frameBuffer[isScreenCore, 0]);
                     break;
                 case RenderTarget.VideoCompat:
-                    this.MakeCurrent();
-                    isCore = 0;
-                    GL.BindFramebuffer(FramebufferTarget.Framebuffer, frameBuffer[isCore,1]);
+                    glVideoCompat.MakeCurrent();
+                    isVideoCore = 0;
+                    GL.BindFramebuffer(FramebufferTarget.Framebuffer, frameBuffer[isVideoCore,1]);
                     break;
                 case RenderTarget.VideoCore:
-                    glCore.MakeCurrent();
-                    isCore = 1;
-                    GL.BindFramebuffer(FramebufferTarget.Framebuffer, frameBuffer[isCore,1]);
+                    glVideoCore.MakeCurrent();
+                    isVideoCore = 1;
+                    GL.BindFramebuffer(FramebufferTarget.Framebuffer, frameBuffer[isVideoCore, 1]);
                     break;
                 case RenderTarget.VideoSSCompat:
-                    this.MakeCurrent();
-                    isCore = 0;
-                    GL.BindFramebuffer(FramebufferTarget.Framebuffer, frameBuffer[isCore,2]);
+                    glVideoCompat.MakeCurrent();
+                    isVideoCore = 0;
+                    GL.BindFramebuffer(FramebufferTarget.Framebuffer, frameBuffer[isVideoCore, 2]);
                     break;
                 case RenderTarget.VideoSSCore:
-                    glCore.MakeCurrent();
-                    isCore = 1;
-                    GL.BindFramebuffer(FramebufferTarget.Framebuffer, frameBuffer[isCore,2]);
+                    glVideoCore.MakeCurrent();
+                    isVideoCore = 1;
+                    GL.BindFramebuffer(FramebufferTarget.Framebuffer, frameBuffer[isVideoCore, 2]);
+                    break;
+                case RenderTarget.VideoNone:
+                    if (currentContext != null)
+                    {
+                        GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+                        currentContext.MakeCurrent(null);
+                    }
+                    isVideoCore = -1;
+                    validVp = false;
+                    // now is no context current, co calling GLError does not make sense
                     break;
             }
-            if (validVp) GL.Viewport(CurrentViewport[0], CurrentViewport[1], CurrentViewport[2], CurrentViewport[3]);//We copy viewport to the context we switched to..
-            RenderControl.GLError("AfterTargetChange");
-        }
-
-        /// <summary>
-        /// Releases all contexts, so may be used in another thread.
-        /// </summary>
-        /// <returns></returns>
-        public void ReleaseRenderTargets()
-        {
-            RenderControl.GLError("BeforeReleasingTargets");
-            IGraphicsContext currentContext = GraphicsContext.CurrentContext;
-            if (currentContext == null) return;
-            GL.Finish();
-            if (currentContext == compatContext) compatContext.MakeCurrent(null);
-            if (currentContext == coreContext) coreContext.MakeCurrent(null);
-            // now is no context current, co calling GLError does not make sense
+            if (validVp)
+            {
+                GL.Viewport(CurrentViewport[0], CurrentViewport[1], CurrentViewport[2], CurrentViewport[3]);//We copy viewport to the context we switched to..
+                RenderControl.GLError("AfterTargetChange");
+            }
         }
 
         /// <summary>
@@ -309,26 +307,11 @@ namespace open3mod
         {
             if ((Width != 0) && (Height != 0))
             {
-                GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, frameBuffer[isCore,0]);
+                GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, frameBuffer[isScreenCore,0]);
                 GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
                 GL.DrawBuffer(DrawBufferMode.Back);
                 GL.BlitFramebuffer(Left, Top, Width, Height, Left, Top, Width, Height, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Nearest);
             }
-        }
-
-        /// <summary>
-        /// Copy from video Renderbuffer to screen Renderbuffer.
-        /// </summary>
-        /// <returns></returns>
-        public void CopyVideoToScreenFramebuffer(int Left, int Bottom, int Right, int Top)
-        {
-            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, frameBuffer[isCore,2]);
-            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, frameBuffer[isCore,1]);
-            GL.BlitFramebuffer(0, 0, _videoSize.Width - 1, _videoSize.Height - 1, 0, 0, _videoSize.Width - 1, _videoSize.Height - 1, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
-            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, frameBuffer[isCore, 1]);
-            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
-            GL.BlitFramebuffer(0, 0, _videoSize.Width - 1, _videoSize.Height - 1, 0, 0, _videoSize.Width - 1, _videoSize.Height - 1, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
-            GL.BlitFramebuffer(0, 0, _videoSize.Width-1,_videoSize.Height-1, Left, Bottom, Right, Top, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
         }
 
         /// <summary>
@@ -337,16 +320,16 @@ namespace open3mod
         /// <returns></returns>
         public void CopyVideoFramebuffers(int src, int dest)
         {
-            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, frameBuffer[isCore, src]);
-            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, frameBuffer[isCore, dest]);
+            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, frameBuffer[isVideoCore, src]);
+            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, frameBuffer[isVideoCore, dest]);
             GL.DrawBuffer(DrawBufferMode.ColorAttachment0);
             GL.BlitFramebuffer(0, 0, _videoSize.Width - 1, _videoSize.Height - 1, 0, 0, _videoSize.Width - 1, _videoSize.Height - 1, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
         }
 
-        public Bitmap ReadFramebufferTest()
+        public Bitmap ReadFramebufferTest() //missing check if core/compat is to be read
         {
             Size bmpSize = new Size(Width, Height); ;
-            if (GL.IsFramebuffer(frameBuffer[isCore, 1])) bmpSize = _videoSize;
+            if (GL.IsFramebuffer(frameBuffer[isVideoCore, 1])) bmpSize = _videoSize;
             if ((bmpSize.Height <= 0) || (bmpSize.Width <= 0)) return null;
             Bitmap testBmp = new Bitmap(bmpSize.Width,bmpSize.Height);
             //Graphics gr = Graphics.FromImage(testBmp);
@@ -447,8 +430,6 @@ namespace open3mod
             GL.DeleteFramebuffers(1, frameBufferDel1);
             GL.DeleteRenderbuffers(numBuffers, renderBuffer);
             GL.DeleteRenderbuffers(numBuffers, depthBuffer);
-            GL.DeleteBuffers(numBuffers, pixelPackBuffer);
-            GL.DeleteBuffers(numBuffers, pixelUnpackBuffer);
         }
 
         public static void GLInfo(string ID)

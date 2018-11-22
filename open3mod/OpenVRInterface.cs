@@ -33,7 +33,7 @@ namespace open3mod
         //smer Z se nastavi resetem, po montáži se podle SN nebo jine fix identifikace priradi correct i shiftmatrixy pri loadingu
         private static int countOffsetRequests = 0;
         private static int neededOffsetRequests = 50;
-        private static float maxAdvance = 0.04f;
+        private static float maxAdvance = 0.08f;
 
         public static Matrix4 OpenVRMatrixToOpenTKMatrix(HmdMatrix34_t matrix)
         {

@@ -45,7 +45,7 @@ namespace open3mod
             kOutputSignalPip = 0,
             kOutputSignalDrop = 1
         };
-        const uint m_prerollFrames = 2;
+        const uint m_prerollFrames = 5;
         const uint kAudioWaterlevel = 48000 / 25 * m_prerollFrames;
         private IReadOnlyList<int> kAudioChannels = new List<int> {2, 8, 16};
 
@@ -355,7 +355,7 @@ namespace open3mod
             }
             string str = "|";
             m_selectedDevice.deckLinkOutput.GetBufferedVideoFrameCount(out uint buffered);
-          //  Console.WriteLine(str.PadLeft((int)buffered * 2, ' ') + " ");
+           // Console.WriteLine(str.PadLeft((int)buffered * 2, ' ') + " ");
             if (buffered < m_prerollFrames)
             {
                 m_selectedDevice.deckLinkOutput.ScheduleVideoFrame(m_videoFrame, (m_totalFramesScheduled * m_frameDuration), m_frameDuration, m_frameTimescale);
@@ -383,11 +383,11 @@ namespace open3mod
             // Make sure that playback is still active
             if (m_running == false)
                 return;
-
 	        // Try to maintain the number of audio samples buffered in the API at a specified waterlevel
             m_selectedDevice.deckLinkOutput.GetBufferedAudioSampleFrameCount(out bufferedSamples);
             if (bufferedSamples < kAudioWaterlevel)
             {
+                Console.WriteLine("WriteNextAudioSamplesPERFORMED" + m_totalFramesScheduled.ToString());
                 uint samplesToEndOfBuffer;
                 uint samplesToWrite;
                 uint samplesWritten;
