@@ -45,7 +45,7 @@ namespace open3mod
             kOutputSignalPip = 0,
             kOutputSignalDrop = 1
         };
-        const uint m_prerollFrames = 5;
+        const uint m_prerollFrames = 4;//1 does not work, 2 goes for 12fps, 3 is first which works somehow
         const uint kAudioWaterlevel = 48000 / 25 * m_prerollFrames;
         private IReadOnlyList<int> kAudioChannels = new List<int> {2, 8, 16};
 
@@ -59,11 +59,12 @@ namespace open3mod
         private long m_frameDuration;
         private long m_frameTimescale;
         private uint m_framesPerSecond;
-        private IDeckLinkMutableVideoFrame m_videoFrame;
-        private IDeckLinkMutableVideoFrame m_videoFrameBGRA;
-        private IDeckLinkMutableVideoFrame m_videoFrameBars;
-        private IDeckLinkMutableVideoFrame m_videoFrameBGRABars;
-        private IDeckLinkMutableVideoFrame m_videoFrameARGBBars;
+        public IDeckLinkMutableVideoFrame[] m_videoFrame = new IDeckLinkMutableVideoFrame[m_prerollFrames];
+        public int currentVideoFrame = 0;
+        private IDeckLinkMutableVideoFrame m_videoFrameYUVBars;
+        private IDeckLinkMutableVideoFrame m_videoFrameBGRAARGBBars;
+        private IDeckLinkMutableVideoFrame m_videoFrameARGBBGRABars;
+        private readonly MainWindow m_mainWindow;
 
         //        private IDeckLinkMutableVideoFrame m_videoFrameBGRA;
         private uint m_totalFramesScheduled;
@@ -82,11 +83,12 @@ namespace open3mod
         private _BMDPixelFormat m_pixelFormat;
         private int m_number = 1;
         private bool m_audioBufferAllocated = false;
+        public bool isOutputFresh = false;
 
-        public OutputGenerator()
+        public OutputGenerator(MainWindow mainWindow)
         {
             InitializeComponent();
-            
+            m_mainWindow = mainWindow;
             m_running = false;
 
             m_deckLinkDiscovery = new DeckLinkDeviceDiscovery();
@@ -94,11 +96,13 @@ namespace open3mod
             m_deckLinkDiscovery.DeviceArrived += new DeckLinkDiscoveryHandler((d) => this.Invoke((Action)(() => AddDevice(d))));
             m_deckLinkDiscovery.DeviceRemoved += new DeckLinkDiscoveryHandler((d) => this.Invoke((Action)(() => RemoveDevice(d))));
 
-            m_pixelFormat = _BMDPixelFormat.bmdFormat10BitRGB; //jede, duhové barvy 10bit
+            m_pixelFormat = _BMDPixelFormat.bmdFormat10BitRGB; //jede, GL output zapsaný do frame dá: duhové barvy 10bit
             m_pixelFormat = _BMDPixelFormat.bmdFormat10BitYUV;//jede, pruhy svisle 10bit
             m_pixelFormat = _BMDPixelFormat.bmdFormat8BitYUV;//jede, pruhy...
-            m_pixelFormat = _BMDPixelFormat.bmdFormat8BitBGRA;//správné pořadí, ale nejede...
-            m_pixelFormat = _BMDPixelFormat.bmdFormat8BitARGB;//správné pořadí, OK.
+            m_pixelFormat = _BMDPixelFormat.bmdFormat8BitBGRA;//správné pořadí, OK
+      //    m_pixelFormat = _BMDPixelFormat.bmdFormat8BitARGB;//jiné možné pořadí, OK.
+
+
             m_audioSampleDepth = _BMDAudioSampleType.bmdAudioSampleType16bitInteger;
         }
         IDeckLinkVideoConversion frameConverter = new CDeckLinkVideoConversion();
@@ -173,8 +177,9 @@ namespace open3mod
 
         public void StartRunning()
         {
-
-          //  m_selectedDevice.VideoFrameCompleted += new DeckLinkVideoOutputHandler((b) => this.BeginInvoke((Action)(() => { ScheduleNextFrame(b); })));
+            if (m_running) return;
+                //     m_selectedDevice.VideoFrameCompleted += new DeckLinkVideoOutputHandler((b) => this.BeginInvoke((Action)(() => { ScheduleNextFrame(b); })));
+                m_selectedDevice.VideoFrameCompleted += new DeckLinkVideoOutputHandler((b) =>  ScheduleNextFrame(b));
             m_selectedDevice.AudioOutputRequested += new DeckLinkAudioOutputHandler(() => this.BeginInvoke((Action)(() => { WriteNextAudioSamples(); })));//used only for preroll and when in sync troubles
             m_selectedDevice.PlaybackStopped += new DeckLinkPlaybackStoppedHandler(() => this.BeginInvoke((Action)(() => { DisableOutput(); })));
 
@@ -193,7 +198,6 @@ namespace open3mod
             var mode = videoDisplayMode.GetDisplayMode();
             // Set the video output mode
             m_selectedDevice.deckLinkOutput.EnableVideoOutput(videoDisplayMode.GetDisplayMode(), _BMDVideoOutputFlags.bmdVideoOutputFlagDefault);
-
             // Set the audio output mode
             m_selectedDevice.deckLinkOutput.EnableAudioOutput(m_audioSampleRate, m_audioSampleDepth, m_audioChannelCount, _BMDAudioOutputStreamType.bmdAudioOutputStreamContinuous);
 
@@ -212,16 +216,12 @@ namespace open3mod
                 m_audioBufferReadOffset = 0;
                 m_audioBufferWriteOffset = 0;
             }
-            m_videoFrameARGBBars = CreateOutputVideoFrame(FillBGRAColourBars, _BMDPixelFormat.bmdFormat8BitARGB);
-            m_videoFrame = CreateOutputVideoFrame(FillARGBColourBars, _BMDPixelFormat.bmdFormat8BitARGB);
-            m_videoFrameBars = CreateOutputVideoFrame(FillColourBars);
 
-            m_pixelFormat = _BMDPixelFormat.bmdFormat8BitBGRA;
-            m_videoFrameBGRA = CreateOutputVideoFrame(FillColourBars);
-            m_videoFrameBGRABars = CreateOutputVideoFrame(FillBGRAColourBars, _BMDPixelFormat.bmdFormat8BitBGRA);
-            m_pixelFormat = _BMDPixelFormat.bmdFormat8BitARGB;
+            m_videoFrameYUVBars = CreateOutputVideoFrame(FillYUVColourBars, _BMDPixelFormat.bmdFormat8BitYUV);
+            m_videoFrameBGRAARGBBars = CreateOutputVideoFrame(FillBGRAARGBColourBars, _BMDPixelFormat.bmdFormat8BitBGRA);
+            m_videoFrameARGBBGRABars = CreateOutputVideoFrame(FillARGBBGRAColourBars, _BMDPixelFormat.bmdFormat8BitBGRA);
+            for (int i=0; i<m_prerollFrames;i++) m_videoFrame[i] = CreateOutputVideoFrame(FillYUVColourBars, _BMDPixelFormat.bmdFormat8BitYUV);//last format is filler's format, not video frame's format
 
-            m_running = true;
             buttonStartStop.Text = "Stop";
 
             // Begin video preroll by scheduling a second of frames in hardware
@@ -230,14 +230,17 @@ namespace open3mod
                 ScheduleNextFrame(true);
 
             // Begin audio preroll.  This will begin calling our audio callback, which will then start the DeckLink output stream - StartScheduledPlayback.
-             m_selectedDevice.deckLinkOutput.BeginAudioPreroll();
-           // StopRunning();
+            m_selectedDevice.deckLinkOutput.BeginAudioPreroll();
+            //StopRunning();
+            m_running = true;
+            comboBoxOutputDevice.Enabled = false;
+            comboBoxVideoFormat.Enabled = false;
+
         }
 
         public IntPtr videoFrameBuffer()
         {
-           // m_videoFrameBGRA.GetBytes(out IntPtr buffer);
-            m_videoFrame.GetBytes(out IntPtr buffer);
+            m_videoFrame[currentVideoFrame].GetBytes(out IntPtr buffer);
             return buffer;
         }
 
@@ -261,25 +264,36 @@ namespace open3mod
         public void addAudioFrame(IntPtr audioData)
         {
             if (!m_audioBufferAllocated) return;
+            if (m_running == false) return;
             m_selectedDevice.deckLinkOutput.ScheduleAudioSamples(audioData, audioSamplesPerFrame(), 0, 0, out uint samplesWritten);
-            return;
-            //as we copy audio to BMD output directly, we do not need to maintain audio buffer
+            //as we copy audio to BMD output directly, we do not need to maintain audio buffer, we just create copy of last frame for repeating, if needed. Buffer is always longer...
             lock (m_selectedDevice)
-
             {
-                uint samplesToEndOfBuffer = (m_audioBufferSampleLength - m_audioBufferWriteOffset);
-                if (m_audioSamplesPerFrame <= samplesToEndOfBuffer)
-                {
-                    MainWindow.CopyMemory((IntPtr)((uint)m_audioBuffer + m_audioBufferWriteOffset * audioDataPerSample()), audioData, audioDataPerFrame());
-                    m_audioBufferWriteOffset = m_audioBufferWriteOffset + audioSamplesPerFrame();
-                }
-                else
-                {
-                    MainWindow.CopyMemory((IntPtr)((uint)m_audioBuffer + m_audioBufferWriteOffset * audioDataPerSample()), audioData, samplesToEndOfBuffer * audioDataPerSample());
-                    MainWindow.CopyMemory(m_audioBuffer, (IntPtr)((uint)audioData + samplesToEndOfBuffer * audioDataPerSample()), (audioSamplesPerFrame()-samplesToEndOfBuffer) * audioDataPerSample());
-                    m_audioBufferWriteOffset = audioSamplesPerFrame() - samplesToEndOfBuffer;
-                }
-                Console.WriteLine((m_audioBufferWriteOffset/ audioSamplesPerFrame()).ToString());
+                MainWindow.CopyMemory(m_audioBuffer, audioData, audioDataPerFrame());
+            }
+        }
+
+        public void repeatAudioFrame()
+        {
+            if (!m_audioBufferAllocated) return;
+            if (m_running == false) return;
+            m_selectedDevice.deckLinkOutput.ScheduleAudioSamples(m_audioBuffer, audioSamplesPerFrame(), 0, 0, out uint samplesWritten);
+        }
+
+        void WriteNextAudioSamples()
+        {
+            // Write one frame of audio to the DeckLink API
+            if (!m_audioBufferAllocated) return;
+            // Make sure that playback is still active
+            if (m_running == false) return;
+
+            // Try to maintain the number of audio samples buffered in the API at a specified waterlevel
+            uint bufferedSamples;
+            m_selectedDevice.deckLinkOutput.GetBufferedAudioSampleFrameCount(out bufferedSamples);
+            if (bufferedSamples < kAudioWaterlevel)//this happenes only when addAudioFrame is behind
+            {
+                m_mainWindow.Renderer.syncTrack(true, "RepeatingAudioAtFrm:" + m_totalFramesScheduled.ToString(), 13);
+                m_selectedDevice.deckLinkOutput.ScheduleAudioSamples(m_audioBuffer, audioSamplesPerFrame(), 0, 0, out uint samplesWritten);
             }
         }
 
@@ -288,14 +302,14 @@ namespace open3mod
             return m_running;
         }
 
-        public IDeckLinkMutableVideoFrame CreateUploadVideoFrame()
+        public IDeckLinkMutableVideoFrame CreateUploadVideoFrame(int width, int height, int stride)
         {
             IDeckLinkMutableVideoFrame newFrame = null;
-            m_selectedDevice.deckLinkOutput.CreateVideoFrame(1920, 1080, 1920 * 2, _BMDPixelFormat.bmdFormat8BitYUV, _BMDFrameFlags.bmdFrameFlagDefault, out newFrame);
+            m_selectedDevice.deckLinkOutput.CreateVideoFrame(width, height, stride, _BMDPixelFormat.bmdFormat8BitYUV, _BMDFrameFlags.bmdFrameFlagDefault, out newFrame);
             return newFrame;
         }
 
-            private IDeckLinkMutableVideoFrame CreateOutputVideoFrame(Action<IDeckLinkVideoFrame> fillFrame, _BMDPixelFormat fillerPxFormat = _BMDPixelFormat.bmdFormat8BitYUV)
+        private IDeckLinkMutableVideoFrame CreateOutputVideoFrame(Action<IDeckLinkVideoFrame> fillFrame, _BMDPixelFormat fillerPxFormat = _BMDPixelFormat.bmdFormat8BitYUV)
         {
             IDeckLinkMutableVideoFrame  referenceFrame = null;
             IDeckLinkMutableVideoFrame  scheduleFrame = null;
@@ -330,13 +344,15 @@ namespace open3mod
             long unused;
             m_selectedDevice.deckLinkOutput.StopScheduledPlayback(0, out unused, 1000);
             m_running = false;
+            comboBoxOutputDevice.Enabled = true;
+            comboBoxVideoFormat.Enabled = true;
+
         }
 
         private void DisableOutput()
         {
             m_selectedDevice.deckLinkOutput.DisableAudioOutput();
-            //m_selectedDevice.deckLinkOutput.DisableVideoOutput();
-            //freezes even with audio off, does not freeze when called from Start directly, Output Generator works...??
+            m_selectedDevice.deckLinkOutput.DisableVideoOutput();
             m_selectedDevice.RemoveAllListeners();
 
             // free audio buffer
@@ -345,7 +361,67 @@ namespace open3mod
             buttonStartStop.Text = "Start";
         }
 
+        public long GetTimeInFrame()
+        {
+            if (m_running == false) return 0;
+            m_selectedDevice.deckLinkOutput.GetHardwareReferenceClock(1000, out long hardwareTime, out long timeInFrame, out long ticksPerFrame);
+            return timeInFrame;
+        }
+
+        public void GetHardwareReferenceClock(out long hardwareTime, out long timeInFrame, out long ticksPerFrame)
+        {
+            hardwareTime = 0;
+            timeInFrame = 0;
+            ticksPerFrame = MainWindow.mainTiming;
+            if (m_running == false) return;
+            m_selectedDevice.deckLinkOutput.GetHardwareReferenceClock(1000, out hardwareTime, out timeInFrame, out ticksPerFrame);
+        }
+
+        bool isAlreadyScheduling;
         public void ScheduleNextFrame(bool prerolling)
+        {
+            m_selectedDevice.deckLinkOutput.GetBufferedVideoFrameCount(out uint buffered);
+            string str = buffered.ToString().PadLeft(2);
+            if (prerolling == false)
+            {
+                // If not prerolling, make sure that playback is still active
+                if (m_running == false)  return;
+                // Or if we are not waiting for something
+                if (isAlreadyScheduling)
+                {
+                    m_mainWindow.Renderer.syncTrack(true, "EscapingScheduling, " + str + " bufd", 1);
+                    return;
+                }
+            }
+            isAlreadyScheduling = true;
+            m_mainWindow.Renderer.syncTrack(false, "Scheduling", 1 );
+            lock (m_videoFrame)
+            {
+                if (isOutputFresh == false) m_mainWindow.Renderer.syncTrack(true,"Reusing output frame", 2);
+                isOutputFresh = false;
+                if (buffered < m_prerollFrames)
+                {
+                    m_selectedDevice.deckLinkOutput.ScheduleVideoFrame(m_videoFrame[currentVideoFrame], (m_totalFramesScheduled * m_frameDuration), m_frameDuration, m_frameTimescale);
+                    m_totalFramesScheduled += 1;
+                }
+                if ((buffered < 1) && (!prerolling))
+                {
+                    m_selectedDevice.deckLinkOutput.ScheduleVideoFrame(m_videoFrame[currentVideoFrame], (m_totalFramesScheduled * m_frameDuration), m_frameDuration, m_frameTimescale);
+                    m_totalFramesScheduled += 1;
+                    m_selectedDevice.deckLinkOutput.ScheduleVideoFrame(m_videoFrame[currentVideoFrame], (m_totalFramesScheduled * m_frameDuration), m_frameDuration, m_frameTimescale);
+                    m_totalFramesScheduled += 1;
+                    addAudioFrame(m_audioBuffer);//we need to add an audioframe more to keep sync
+                    m_mainWindow.Renderer.syncTrack(true, "Buffered " +buffered.ToString()+" frames, Upbuffered 2 frames!! , total "+ m_totalFramesScheduled.ToString(), 12);
+
+                }
+            }
+            isAlreadyScheduling = false;
+            currentVideoFrame++;
+            if (currentVideoFrame == m_prerollFrames) currentVideoFrame = 0;
+            m_mainWindow.callRender();//starts rendering loop for a new frame
+        }
+
+        private void ScheduleNextFrameOrig(bool prerolling)
         {
             if (prerolling == false)
             {
@@ -353,66 +429,19 @@ namespace open3mod
                 if (m_running == false)
                     return;
             }
-            string str = "|";
-            m_selectedDevice.deckLinkOutput.GetBufferedVideoFrameCount(out uint buffered);
-           // Console.WriteLine(str.PadLeft((int)buffered * 2, ' ') + " ");
-            if (buffered < m_prerollFrames)
-            {
-                m_selectedDevice.deckLinkOutput.ScheduleVideoFrame(m_videoFrame, (m_totalFramesScheduled * m_frameDuration), m_frameDuration, m_frameTimescale);
-                m_totalFramesScheduled += 1;
-            }
-            if ((buffered < 1) &&(!prerolling))
-            {
-                m_selectedDevice.deckLinkOutput.ScheduleVideoFrame(m_videoFrame, (m_totalFramesScheduled * m_frameDuration), m_frameDuration, m_frameTimescale);
-                m_totalFramesScheduled += 1;
-                m_selectedDevice.deckLinkOutput.ScheduleVideoFrame(m_videoFrame, (m_totalFramesScheduled * m_frameDuration), m_frameDuration, m_frameTimescale);
-                m_totalFramesScheduled += 1;
-                m_selectedDevice.deckLinkOutput.ScheduleVideoFrame(m_videoFrame, (m_totalFramesScheduled * m_frameDuration), m_frameDuration, m_frameTimescale);
-                m_totalFramesScheduled += 1;
-                addAudioFrame(m_audioBuffer);//WriteNextAudioSamples() is almost not used, addAudioFrame schedules directly all incoming audio
-                addAudioFrame(m_audioBuffer);//we need to add two audioframes more to keep sync (??)
-                Console.WriteLine("Buffered {0} frames, Upbuffered 2 frames!! , total {1} ", buffered, m_totalFramesScheduled);
-            }
-        }
 
-        void WriteNextAudioSamples()
-        {
-            if (!m_audioBufferAllocated) return;
-            // Write audio to the DeckLink API, length equivalent to m_prerollFrames
-            uint bufferedSamples;
-            // Make sure that playback is still active
-            if (m_running == false)
-                return;
-	        // Try to maintain the number of audio samples buffered in the API at a specified waterlevel
-            m_selectedDevice.deckLinkOutput.GetBufferedAudioSampleFrameCount(out bufferedSamples);
-            if (bufferedSamples < kAudioWaterlevel)
+            if ((m_totalFramesScheduled % (m_framesPerSecond * 2)) < 15) //first 15 frames from two seconds 
             {
-                Console.WriteLine("WriteNextAudioSamplesPERFORMED" + m_totalFramesScheduled.ToString());
-                uint samplesToEndOfBuffer;
-                uint samplesToWrite;
-                uint samplesWritten;
-
-                lock (m_selectedDevice)
-                {
-
-                    samplesToEndOfBuffer = (m_audioBufferSampleLength - m_audioBufferReadOffset);
-                    samplesToWrite = (kAudioWaterlevel - bufferedSamples);
-                    if (samplesToWrite > samplesToEndOfBuffer)
-                    {
-                        m_selectedDevice.deckLinkOutput.ScheduleAudioSamples(new IntPtr(m_audioBuffer.ToInt64() + (m_audioBufferReadOffset * m_audioChannelCount * (uint)m_audioSampleDepth / 8)),
-                            samplesToEndOfBuffer, 0, 0, out samplesWritten);
-                        m_audioBufferReadOffset = ((m_audioBufferReadOffset + samplesWritten) % m_audioBufferSampleLength);
-                        m_selectedDevice.deckLinkOutput.ScheduleAudioSamples(new IntPtr(m_audioBuffer.ToInt64()), samplesToWrite - samplesWritten, 0, 0, out samplesWritten);
-                        m_audioBufferReadOffset = ((m_audioBufferReadOffset + samplesWritten) % m_audioBufferSampleLength);
-                    }
-                    else
-                    {
-                        m_selectedDevice.deckLinkOutput.ScheduleAudioSamples(new IntPtr(m_audioBuffer.ToInt64() + (m_audioBufferReadOffset * m_audioChannelCount * (uint)m_audioSampleDepth / 8)),
-                            samplesToWrite, 0, 0, out samplesWritten);
-                        m_audioBufferReadOffset = ((m_audioBufferReadOffset + samplesWritten) % m_audioBufferSampleLength);
-                    }
-                }
+                // On each second, schedule a frame of bars
+                m_selectedDevice.deckLinkOutput.ScheduleVideoFrame(m_videoFrameYUVBars, (m_totalFramesScheduled * m_frameDuration), m_frameDuration, m_frameTimescale);
             }
+            else
+            {
+                // Schedule frames of other bars
+                m_selectedDevice.deckLinkOutput.ScheduleVideoFrame(m_videoFrameBGRAARGBBars, (m_totalFramesScheduled * m_frameDuration), m_frameDuration, m_frameTimescale);
+            }
+
+            m_totalFramesScheduled += 1;
         }
 
         private void DisplayModeChanged(IDeckLinkDisplayMode newDisplayMode)
@@ -480,6 +509,7 @@ namespace open3mod
                     case _BMDPixelFormat.bmdFormat8BitARGB:
                     case _BMDPixelFormat.bmdFormat10BitYUV:
                     case _BMDPixelFormat.bmdFormat10BitRGB:
+                    case _BMDPixelFormat.bmdFormat8BitBGRA:
                         bytesPerPixel = 4;
                         break;
                 }
@@ -527,11 +557,11 @@ namespace open3mod
             }
         }
 
-        void FillColourBars(IDeckLinkVideoFrame theFrame)
+        void FillYUVColourBars(IDeckLinkVideoFrame theFrame)
         {
             IntPtr          buffer;
             int             width, height;
-            UInt32[]        bars = {0xEA80EA80, 0xD292D210, 0xA910A9A5, 0x90229035, 0x6ADD6ACA, 0x51EF515A, 0x286D28EF, 0x10801080};
+            UInt32[]        bars = {0xEA80EA80, 0xD292D210, 0xA910A9A5, 0x90229035, 0x6ADD6ACA, 0x51EF515A, 0x286D28EF, 0x10801080}; //Color Bars in YUV color format
             int             index = 0;
 
             theFrame.GetBytes(out buffer);
@@ -549,13 +579,13 @@ namespace open3mod
             }
         }
 
-        void FillARGBColourBars(IDeckLinkVideoFrame theFrame)
+        void FillBGRAARGBColourBars(IDeckLinkVideoFrame theFrame)
         {
             IntPtr buffer;
             int width, height;
-           // UInt32[] bars = { 0xEAEAEAFF, 0x10EAEAFF, 0xEAEA10FF, 0xEA10EAFF, 0x10EA10FF, 0x1010EAFF , 0xEA1010FF, 0x101010FF };
-            //   UInt32[] bars = { 0x101010FF , 0xEA1010FF,  0xEAEA10FF, 0xEA10EAFF, 0x10EA10FF, 0x10EAEAFF, 0x1010EAFF, 0xEAEAEAFF };//reversed
-            UInt32[] bars = { 0xFF101010, 0x10FF1010, 0x1010FF10, 0x101010FF, 0x101010FF, 0x1010FF10, 0x10FF1010, 0xFF101010 };//PruhARGBBGRA
+    //      UInt32[] bars = { 0xFFEAEAEA, 0xFFEAEA10, 0xFF10EAEA, 0xFF10EA10, 0xFFEA10EA, 0xFFEA1010, 0xFF1010EA, 0xFF101010 }; //ColorBars in BGRA color format
+     //       UInt32[] bars = { 0xFFFFFFFF, 0xFFFFFF00, 0xFF00FFFF, 0xFF00FF00, 0xFFFF00FF, 0xFFFF0000, 0xFF0000FF, 0xFF000000 }; //ColorBars in BGRA color format - watch REC601/709 when converting!
+            UInt32[] bars = { 0x101010FF, 0x1010FF10, 0x10FF1010, 0xFF101010, 0xFF101010, 0x10FF1010, 0x1010FF10, 0x101010FF,  };//Bars BGRAARGB in BGRA color format
 
             int index = 0;
 
@@ -574,12 +604,11 @@ namespace open3mod
             }
         }
 
-        void FillBGRAColourBars(IDeckLinkVideoFrame theFrame)
+        void FillARGBBGRAColourBars(IDeckLinkVideoFrame theFrame)
         {
             IntPtr buffer;
             int width, height;
-     //       UInt32[] bars = { 0xFFEAEAEA, 0xFFEAEA10, 0xFF10EAEA, 0xFFEA10EA, 0xFF10EA10, 0xFFEA1010, 0xFF10EA10, 0xFF101010 };
-            UInt32[] bars = { 0xFF101010, 0x10FF1010, 0x1010FF10, 0x101010FF, 0x101010FF, 0x1010FF10, 0x10FF1010, 0xFF101010 };//PruhARGBBGRA
+            UInt32[] bars = { 0xFF101010, 0x10FF1010, 0x1010FF10, 0x101010FF, 0x101010FF, 0x1010FF10, 0x10FF1010, 0xFF101010 };//Bars ARGBBGRA in BGRA color format
 
             int index = 0;
 
@@ -598,7 +627,7 @@ namespace open3mod
             }
         }
 
-        void FillBlack(IDeckLinkVideoFrame theFrame)
+        void FillYUVBlack(IDeckLinkVideoFrame theFrame)
         {
             IntPtr buffer;
             int             width, height;
@@ -637,9 +666,7 @@ namespace open3mod
             public override string ToString()
             {
                 string str;
-
                 displayMode.GetName(out str);
-
                 return str;
             }
         }
@@ -672,7 +699,6 @@ namespace open3mod
                 Hide();
             }
             else StopRunning();
-
         }
     }
 }

@@ -150,6 +150,16 @@ namespace open3mod
             _scenePartMode = value;
         }
 
+        public string GetCameraName()
+        {
+            return OpenVRInterface.deviceName[contIndex];
+        }
+
+        public int GetCameraAddDelay()
+        {
+            return OpenVRInterface.deviceAdditionalDelay[contIndex];
+        }
+
         public void SetVRCameraMode(CameraMode mode)
         {
             Debug.Assert((mode == CameraMode.HMD) || (mode == CameraMode.Cont1) || (mode == CameraMode.Cont2));

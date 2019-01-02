@@ -173,5 +173,11 @@
     <Setting Name="AutoStart" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
+    <Setting Name="AutoConnectNDI" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="AutoSourceNDI" Type="System.String" Scope="User">
+      <Value Profile="(Default)">EDIT (VLC)</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

@@ -77,8 +77,8 @@ namespace open3mod
         {
             Horizontal = 0,
             Vertical,
-            _Max,
-            Both
+            Both,
+            _Max
         }
 
         /// <summary>
@@ -89,9 +89,9 @@ namespace open3mod
         {
             // values pertain to CoreSettings:DefaultViewMode!
             Single = 0,
-            TwoVertical = 1,
+            AAHorizontal = 1,
             Four = 2,
-            TwoHorizontal = 3,
+            BBHorizontal = 3,
         }
 
 
@@ -253,7 +253,7 @@ namespace open3mod
                             new Viewport(new Vector4(0.0f, 0.0f, 1.0f, 1.0f), cameraModes[4],_fovyA[4],_scenePartMode[4])
                         };
                             break;
-                        case ViewMode.TwoVertical://
+                        case ViewMode.AAHorizontal://
                             ActiveViews = new[]
                             {
                             new Viewport(new Vector4(0.0f, 0.5f, 1.0f, 1.0f), cameraModes[0],_fovyA[0],_scenePartMode[0]),
@@ -263,7 +263,7 @@ namespace open3mod
                             new Viewport(new Vector4(0.0f, 0.0f, 0.0f, 0.0f), cameraModes[4],_fovyA[4],_scenePartMode[4])
                         };
                             break;
-                        case ViewMode.TwoHorizontal:
+                        case ViewMode.BBHorizontal:
                             ActiveViews = new[]
                             {
                             new Viewport(new Vector4(0.0f, 0.0f, 0.0f, 0.0f), cameraModes[0],_fovyA[0],_scenePartMode[0]),
@@ -304,7 +304,7 @@ namespace open3mod
                             ActiveViews[4].Bounds = new Vector4(0.0f, 0.0f, 1.0f, 1.0f);
                             ActiveViewIndex = ViewIndex.Index4;
                             break;
-                        case ViewMode.TwoVertical:
+                        case ViewMode.AAHorizontal:
                             ActiveViews[0].Bounds = new Vector4(0.0f, 0.5f, 1.0f, 1.0f);
                             ActiveViews[1].Bounds = new Vector4(0.0f, 0.0f, 1.0f, 0.5f);
                             ActiveViews[2].Bounds = new Vector4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -312,7 +312,7 @@ namespace open3mod
                             ActiveViews[4].Bounds = new Vector4(0.0f, 0.0f, 0.0f, 0.0f);
                             ActiveViewIndex = ViewIndex.Index0;
                             break;
-                        case ViewMode.TwoHorizontal:
+                        case ViewMode.BBHorizontal:
                             ActiveViews[0].Bounds = new Vector4(0.0f, 0.0f, 0.0f, 0.0f);
                             ActiveViews[1].Bounds = new Vector4(0.0f, 0.0f, 0.0f, 0.0f);
                             ActiveViews[2].Bounds = new Vector4(0.0f, 0.5f, 1.0f, 1.0f);
@@ -584,7 +584,7 @@ namespace open3mod
 
             const float threshold = 0.01f;
 
-            if (Math.Abs(x - vp.Bounds.Z) < threshold && _activeViewMode != ViewMode.TwoVertical)
+            if (Math.Abs(x - vp.Bounds.Z) < threshold && (_activeViewMode == ViewMode.Four))
             {
                 if (Math.Abs(y - vp.Bounds.Y) < threshold)
                 {
@@ -592,7 +592,7 @@ namespace open3mod
                 }
                 return ViewSeparator.Vertical;
             }
-            if (Math.Abs(y - vp.Bounds.Y) < threshold && _activeViewMode != ViewMode.TwoHorizontal)
+            if (Math.Abs(y - vp.Bounds.Y) < threshold &&(_activeViewMode == ViewMode.Four))
             {
                 return ViewSeparator.Horizontal;
             }
@@ -686,7 +686,7 @@ namespace open3mod
                 {
                     b.Z = _horizontalSplitPos;
                 }
-                viewport.Bounds = b;
+                if (viewport.Bounds.Length != 0) viewport.Bounds = b;  //We do not touch invisible viewports
             }
             _dirtySplit = false;
         }

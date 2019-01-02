@@ -39,6 +39,8 @@ namespace open3mod
         private int m_number;
         private readonly MainWindow m_mainWindow;
         private bool m_capturing = false;
+        private int m_additionalDelay;
+        public readonly object memLock = new object();
 
         public CapturePreview(MainWindow mainWindow, int numb)
         {
@@ -65,7 +67,7 @@ namespace open3mod
                 comboBoxInputDevice.BeginUpdate();
                 comboBoxInputDevice.Items.Add(new StringObjectPair<DeckLinkInputDevice>(deckLink.deviceName, deckLink));
                 comboBoxInputDevice.EndUpdate();
-                deckLink.SetID(m_mainWindow,m_number);
+                deckLink.SetID(this, m_mainWindow, m_number);
 
 
                 if (comboBoxInputDevice.Items.Count == m_number)
@@ -133,6 +135,14 @@ namespace open3mod
                 StartCapture();
         }
 
+        public void SetAdditionalDelay(int additionalDelay)
+        {
+            m_additionalDelay = additionalDelay;
+            if (m_selectedDevice == null)
+                return;
+            m_selectedDevice.additionalDelay = m_additionalDelay;
+        }
+
         public void StartCapture()
         {
             if (comboBoxVideoFormat.SelectedIndex < 0)
@@ -149,6 +159,7 @@ namespace open3mod
             // Update UI
             buttonStartStop.Text = "Stop Capture";
             EnableInterface(false);
+            SetAdditionalDelay(m_additionalDelay);
             m_capturing = true;
         }
 
@@ -184,6 +195,32 @@ namespace open3mod
         public bool IsCapturing()
         {
             return m_capturing;
+        }
+
+        public void GetNextVideoFrame(out IntPtr videoData, out long dataSize, out IntPtr audioData, out long frameDelay, out bool valid)
+        {
+            valid = true;
+            audioData = (IntPtr)0;
+            videoData = (IntPtr)0;
+            dataSize = 0;
+            m_selectedDevice.getNextFrame(out IDeckLinkVideoInputFrame videoFrame, out IDeckLinkAudioInputPacket audioPacket, out frameDelay, out long difference);
+            if (videoFrame == null)
+            {
+                valid = false;
+            }
+            else
+            {
+                videoFrame.GetBytes(out videoData);
+                dataSize = videoFrame.GetRowBytes() * videoFrame.GetHeight();
+            }
+            if (audioPacket == null) { valid = false; } else { audioPacket.GetBytes(out audioData); }
+          // if (IsCapturing()) m_mainWindow.Renderer.syncTrack(true, "TiF " + frameDelay.ToString("00") + " diff " + difference.ToString(), 5);
+            if (difference < 0) valid = false;
+        }
+
+        public void skipNextFrame()
+        {
+            m_selectedDevice.skipNextFrame();
         }
 
         private void comboBoxInputDevice_SelectedValueChanged(object sender, EventArgs e)

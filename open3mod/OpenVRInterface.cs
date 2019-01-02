@@ -27,6 +27,8 @@ namespace open3mod
         public static bool[] activePositions = new bool[OpenVR.k_unMaxTrackedDeviceCount]; //only active trackers
         public static ETrackedDeviceClass[] deviceClasses = new ETrackedDeviceClass[OpenVR.k_unMaxTrackedDeviceCount]; //what sits at which index
         public static string[] deviceSNs = new string[OpenVR.k_unMaxTrackedDeviceCount];
+        public static string[] deviceName = new string[OpenVR.k_unMaxTrackedDeviceCount];
+        public static int[] deviceAdditionalDelay = new int[OpenVR.k_unMaxTrackedDeviceCount];
         public static uint[] displayOrder = new uint[3]; //controller order - HMD 0, first, second - to be displayed in viewport selector
         public static Matrix4[] lensToGround = new Matrix4[OpenVR.k_unMaxTrackedDeviceCount]; //shift from lens to the ground for each device wanted during reset
         public static Matrix4[] trackerToCamera = new Matrix4[OpenVR.k_unMaxTrackedDeviceCount];
@@ -171,28 +173,42 @@ namespace open3mod
                     deviceClasses[i] = OpenVR.System.GetTrackedDeviceClass(i);
                     if (deviceClasses[i] == ETrackedDeviceClass.Controller)
                     {
-                        if (displayOrder[1] > OpenVR.k_unMaxTrackedDeviceCount)
+                        /* if (displayOrder[1] > OpenVR.k_unMaxTrackedDeviceCount)
+                         {
+                             displayOrder[1] = i;
+                         }
+                         else
+                         {
+                             if (displayOrder[2] > OpenVR.k_unMaxTrackedDeviceCount)
+                             {
+                                 displayOrder[2] = i;
+                                 if (string.Compare(deviceSNs[1], deviceSNs[2]) > 0)
+                                     {
+                                     displayOrder[2] = displayOrder[1];
+                                     displayOrder[1] = i;
+                                 }
+                             }
+                         }*/
+                        //keep SN: broken controller is for Z5, good is for NX100
+                        // "LHR-FFD71D42" je OK,  "LHR-FFEBDB46" je s nefunkčním R talířem
+                        if (deviceSNs[i] == "LHR-FFD71D42")
                         {
+                            deviceName[i] = "NX";
                             displayOrder[1] = i;
                         }
                         else
                         {
-                            if (displayOrder[2] > OpenVR.k_unMaxTrackedDeviceCount)
-                            {
-                                displayOrder[2] = i;
-                                if (string.Compare(deviceSNs[1], deviceSNs[2]) > 0)
-                                    {
-                                    displayOrder[2] = displayOrder[1];
-                                    displayOrder[1] = i;
-                                }
-
-                            }
+                            deviceName[i] = "Z5";
+                            deviceAdditionalDelay[i] = 1;
+                            displayOrder[2] = i;
                         }
-                        //one controller is always #1, two are always in the same order
+
                         lensToGround[i] = Matrix4.CreateTranslation(0, -lensAboveGround , 0);
                         trackerToCamera[i] = Matrix4.CreateTranslation(-trackerAsideOfLens, -trackerAboveLens, trackerBeforeLens); //first we want it NOT to be zero
                         trackerToCamera[i] = Matrix4.CreateRotationX(trackerOffXAxis) * trackerToCamera[i]; //camera moved first from controller, then rotated
                         //trackerToCamera[i] = trackerToCamera[i]* Matrix4.CreateRotationZ(0.5f); //camera turned first, then moved
+
+
                     }
                     if (deviceClasses[i] == ETrackedDeviceClass.HMD)
                     {
@@ -226,7 +242,7 @@ namespace open3mod
             return transMatrix * orientMatrix;
         }
 
-        public static void ScanPositions()//todo - allow scan for one frame less delay (olderFrame)+modify photons for camera n if we know the delay)
+        public static void ScanPositions(long frameDelay)// frame delay positive values subtract from seconds to photons
         {
             var vrMatrix = new HmdMatrix34_t();
             TrackedDevicePose_t[] pTrackedDevicePoseArray = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
@@ -241,7 +257,7 @@ namespace open3mod
             {
                 if (activePositions[i] == true)
                 {
-                    OpenVR.System.GetDeviceToAbsoluteTrackingPose(eOrg, fPredictedSecondsToPhotonsFromNow, pTrackedDevicePoseArray);
+                    OpenVR.System.GetDeviceToAbsoluteTrackingPose(eOrg, fPredictedSecondsToPhotonsFromNow - (float)frameDelay/1000, pTrackedDevicePoseArray);
                     if (pTrackedDevicePoseArray[i].bPoseIsValid)
                     {
                         vrMatrix = pTrackedDevicePoseArray[i].mDeviceToAbsoluteTracking;

@@ -197,7 +197,7 @@ namespace open3mod
                 () =>
                 {
                     UpdateMaterialPreview();
-                    StartUpdateMaterialPreviewLoop();
+                //    StartUpdateMaterialPreviewLoop();//
                 });
         }
 

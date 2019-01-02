@@ -31,6 +31,8 @@
             this.components = new System.ComponentModel.Container();
             this.tabControl = new System.Windows.Forms.TabControl();
             this.tabPageGeneral = new System.Windows.Forms.TabPage();
+            this.autoSourceNDI = new System.Windows.Forms.TextBox();
+            this.autoConnectNDI = new System.Windows.Forms.CheckBox();
             this.autoStartCheckBox = new System.Windows.Forms.CheckBox();
             this.genlockCheckBox = new System.Windows.Forms.CheckBox();
             this.KeepTimingCheckBox = new System.Windows.Forms.CheckBox();
@@ -150,6 +152,8 @@
             // 
             // tabPageGeneral
             // 
+            this.tabPageGeneral.Controls.Add(this.autoSourceNDI);
+            this.tabPageGeneral.Controls.Add(this.autoConnectNDI);
             this.tabPageGeneral.Controls.Add(this.autoStartCheckBox);
             this.tabPageGeneral.Controls.Add(this.genlockCheckBox);
             this.tabPageGeneral.Controls.Add(this.KeepTimingCheckBox);
@@ -165,6 +169,28 @@
             this.tabPageGeneral.Text = "General";
             this.tabPageGeneral.UseVisualStyleBackColor = true;
             // 
+            // autoSourceNDI
+            // 
+            this.autoSourceNDI.DataBindings.Add(new System.Windows.Forms.Binding("Text", global::CoreSettings.CoreSettings.Default, "AutoSourceNDI", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.autoSourceNDI.Location = new System.Drawing.Point(164, 348);
+            this.autoSourceNDI.Name = "autoSourceNDI";
+            this.autoSourceNDI.Size = new System.Drawing.Size(100, 20);
+            this.autoSourceNDI.TabIndex = 9;
+            this.autoSourceNDI.Text = global::CoreSettings.CoreSettings.Default.AutoSourceNDI;
+            // 
+            // autoConnectNDI
+            // 
+            this.autoConnectNDI.AutoSize = true;
+            this.autoConnectNDI.Checked = global::CoreSettings.CoreSettings.Default.AutoConnectNDI;
+            this.autoConnectNDI.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.autoConnectNDI.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "AutoConnectNDI", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.autoConnectNDI.Location = new System.Drawing.Point(21, 350);
+            this.autoConnectNDI.Name = "autoConnectNDI";
+            this.autoConnectNDI.Size = new System.Drawing.Size(124, 17);
+            this.autoConnectNDI.TabIndex = 8;
+            this.autoConnectNDI.Text = "Auto connect NDI to";
+            this.autoConnectNDI.UseVisualStyleBackColor = true;
+            // 
             // autoStartCheckBox
             // 
             this.autoStartCheckBox.AutoSize = true;
@@ -172,9 +198,9 @@
             this.autoStartCheckBox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "AutoStart", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.autoStartCheckBox.Location = new System.Drawing.Point(21, 310);
             this.autoStartCheckBox.Name = "autoStartCheckBox";
-            this.autoStartCheckBox.Size = new System.Drawing.Size(201, 17);
+            this.autoStartCheckBox.Size = new System.Drawing.Size(242, 17);
             this.autoStartCheckBox.TabIndex = 7;
-            this.autoStartCheckBox.Text = "Autostart IN + OUT + Input sync lock";
+            this.autoStartCheckBox.Text = "Autostart IN + OUT + NDI search + Sync lock";
             this.autoStartCheckBox.UseVisualStyleBackColor = true;
             this.autoStartCheckBox.CheckedChanged += new System.EventHandler(this.autoStartCheckBox_CheckedChanged);
             // 
@@ -186,9 +212,9 @@
             this.genlockCheckBox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "Genlock", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.genlockCheckBox.Location = new System.Drawing.Point(21, 230);
             this.genlockCheckBox.Name = "genlockCheckBox";
-            this.genlockCheckBox.Size = new System.Drawing.Size(113, 17);
+            this.genlockCheckBox.Size = new System.Drawing.Size(120, 17);
             this.genlockCheckBox.TabIndex = 6;
-            this.genlockCheckBox.Text = "Lock to input sync";
+            this.genlockCheckBox.Text = "Lock to output sync";
             this.genlockCheckBox.UseVisualStyleBackColor = true;
             // 
             // KeepTimingCheckBox
@@ -209,7 +235,7 @@
             this.SendNDICheckBox.AutoSize = true;
             this.SendNDICheckBox.Checked = global::CoreSettings.CoreSettings.Default.SendNDI;
             this.SendNDICheckBox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "SendNDI", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.SendNDICheckBox.Location = new System.Drawing.Point(21, 190);
+            this.SendNDICheckBox.Location = new System.Drawing.Point(21, 110);
             this.SendNDICheckBox.Name = "SendNDICheckBox";
             this.SendNDICheckBox.Size = new System.Drawing.Size(112, 17);
             this.SendNDICheckBox.TabIndex = 4;
@@ -234,7 +260,7 @@
             this.CheckDroppedFramesCheckbox.AutoSize = true;
             this.CheckDroppedFramesCheckbox.Checked = global::CoreSettings.CoreSettings.Default.CheckDroppedFrames;
             this.CheckDroppedFramesCheckbox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "CheckDroppedFrames", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.CheckDroppedFramesCheckbox.Location = new System.Drawing.Point(21, 150);
+            this.CheckDroppedFramesCheckbox.Location = new System.Drawing.Point(21, 190);
             this.CheckDroppedFramesCheckbox.Name = "CheckDroppedFramesCheckbox";
             this.CheckDroppedFramesCheckbox.Size = new System.Drawing.Size(243, 17);
             this.CheckDroppedFramesCheckbox.TabIndex = 2;
@@ -246,7 +272,7 @@
             this.MarkFramesCheckbox.AutoSize = true;
             this.MarkFramesCheckbox.Checked = global::CoreSettings.CoreSettings.Default.MarkFrames;
             this.MarkFramesCheckbox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "MarkFrames", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.MarkFramesCheckbox.Location = new System.Drawing.Point(21, 110);
+            this.MarkFramesCheckbox.Location = new System.Drawing.Point(21, 150);
             this.MarkFramesCheckbox.Name = "MarkFramesCheckbox";
             this.MarkFramesCheckbox.Size = new System.Drawing.Size(197, 17);
             this.MarkFramesCheckbox.TabIndex = 1;
@@ -320,9 +346,9 @@
             this.label17.AutoSize = true;
             this.label17.Location = new System.Drawing.Point(17, 148);
             this.label17.Name = "label17";
-            this.label17.Size = new System.Drawing.Size(118, 13);
+            this.label17.Size = new System.Drawing.Size(140, 13);
             this.label17.TabIndex = 14;
-            this.label17.Text = "NDI Texture Resolution";
+            this.label17.Text = "Dynamic Texture Resolution";
             // 
             // checkBoxBFCulling
             // 
@@ -1180,5 +1206,7 @@
         private System.Windows.Forms.TrackBar trackBarKeyingSoftness;
         private System.Windows.Forms.ComboBox comboBoxNdiTexResolution;
         private System.Windows.Forms.Label label17;
+        private System.Windows.Forms.CheckBox autoConnectNDI;
+        private System.Windows.Forms.TextBox autoSourceNDI;
     }
 }

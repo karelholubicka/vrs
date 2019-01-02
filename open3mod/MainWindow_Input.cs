@@ -47,7 +47,7 @@ namespace open3mod
         private bool _mouseRightDown;
 
 
-        private void ProcessKeys()
+        private void ProcessKeys() //locked already before called
         {
             var cam = UiState.ActiveTab.ActiveCameraController;
             if (cam == null)
@@ -414,7 +414,10 @@ namespace open3mod
 
         partial void OnKeyDown(object sender, KeyEventArgs e)
         {
-            int index = tabControl1.SelectedIndex;
+            lock (Renderer.renderParameterLock)
+            {
+
+                int index = tabControl1.SelectedIndex;
             switch (e.KeyData)
             {
                 case Keys.PageUp:
@@ -438,7 +441,7 @@ namespace open3mod
                     break;
 
                 case Keys.OemPeriod:
-                    _renderer.activeCamera = 3 - _renderer.activeCamera;
+                    Renderer.SwitchActiveCameras();
       //              UiForTab(_ui.ActiveTab).GetInspector().Animations.SetTime(0);
                     break;
 
@@ -466,17 +469,7 @@ namespace open3mod
                     _downPressed = true;
                     break;
 
-                case Keys.NumPad9:
-                    _fovyUpPressed = true;
-                    break;
-
-                case Keys.NumPad3:
-                    _fovyDownPressed = true;
-                    break;
-
-                case Keys.NumPad4:
-                case Keys.NumPad5:
-                case Keys.NumPad6:
+                case Keys.Multiply:
                     _shiftPressed = true;
                     break;
 
@@ -491,14 +484,12 @@ namespace open3mod
                     break;
 
                 case Keys.Subtract:
-                    timeOffset = timeOffset + 5; ;
-                    if (timeOffset >= mainTiming) timeOffset = 0;
-                    break;
+                        _fovyDownPressed = true;
+                        break;
 
                 case Keys.Add:
-                    timeOffset = timeOffset - 5;
-                    if (timeOffset < 0) timeOffset = mainTiming - 5;
-                    break;
+                        _fovyUpPressed = true;
+                        break;
 
                 case Keys.E:
                     // switch backend
@@ -509,8 +500,12 @@ namespace open3mod
                     // reset NDI streams
                     if (useIO) _renderer.FlushNDI();
                     break;
-                case Keys.B:
-                    if (_renderer.renderIO) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.Background);
+
+                    case Keys.H:
+                        Renderer.SwitchToCamera(0);
+                        break;
+                    case Keys.B:
+                        if (_renderer.renderIO) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.Background);
                     break;
                 case Keys.F:
                     if (_renderer.renderIO) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.Foreground);
@@ -536,11 +531,21 @@ namespace open3mod
                 case Keys.G:
                     if (_renderer.renderIO) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.GreenScreen);
                     break;
-
                 case Keys.Enter:
-                    _renderer.activeCamera = 3-_renderer.activeCamera;
-                    break;
-
+                    Renderer.SwitchActiveCameras();
+                    Renderer.syncTrack(false, "SwitchCameras", 15);
+                        e.Handled = true;
+                        break;
+                    case Keys.NumPad0:
+                        Renderer.SwitchToCamera(0);
+                        break;
+                    case Keys.NumPad1:
+                        Renderer.SwitchToCamera(1);
+                        break;
+                    case Keys.NumPad2:
+                        Renderer.SwitchToCamera(2);
+                        break;
+                }
             }
         }
 
@@ -577,17 +582,15 @@ namespace open3mod
                     _downPressed = false;
                     break;
 
-                case Keys.NumPad9:
+                case Keys.Add:
                     _fovyUpPressed = false;
                     break;
 
-                case Keys.NumPad3:
+                case Keys.Subtract:
                     _fovyDownPressed = false;
                     break;
 
-                case Keys.NumPad4:
-                case Keys.NumPad5:
-                case Keys.NumPad6:
+                case Keys.Multiply:
                     _shiftPressed = false;
                     break;
 

@@ -27,6 +27,7 @@
 using System;
 using DeckLinkAPI;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace open3mod
 {
@@ -39,13 +40,26 @@ namespace open3mod
         private bool                m_applyDetectedInputMode = true;
         private bool                m_currentlyCapturing = false;
         private bool                m_validInputSignal = false;
+        const int                   m_memSize = 30;
+        private int                 m_lastUsedVideoMem = -1;
+        private int                 m_lastUsedAudioMem = -1;
+        private int                 m_additionalDelay = 0;
+        private IDeckLinkVideoInputFrame[]  m_videoMem = new IDeckLinkVideoInputFrame[m_memSize];
+        private IDeckLinkAudioInputPacket[] m_audioMem = new IDeckLinkAudioInputPacket[m_memSize];
+        private long[] m_timeInFrame = new long [m_memSize];
+        private long m_frameNo = -1;
+        private long m_lastFrameNo = -1;
+        private long m_lastFrameDelay = 0;
+
         string m_pxFormat = "Unknown";
         private int m_number = 0;
         private MainWindow m_mainWindow;
+        private CapturePreview  m_capturePreview;
 
-        public void SetID(MainWindow mainWindow, int numb)
+        public void SetID(CapturePreview capturePreview, MainWindow mainWindow, int numb)
         {
             m_number = numb;
+            m_capturePreview = capturePreview;
             m_mainWindow = mainWindow;
         }
 
@@ -88,6 +102,17 @@ namespace open3mod
             }
         }
 
+        public bool isVideoLocked
+        {
+            get
+            {
+                int flag;
+                var deckLinkStatus = (IDeckLinkStatus)m_deckLink;
+                deckLinkStatus.GetFlag(_BMDDeckLinkStatusID.bmdDeckLinkStatusVideoInputSignalLocked, out flag);
+                return flag != 0;
+            }
+        }
+
         public bool supportsFormatDetection
         {
             get
@@ -110,6 +135,70 @@ namespace open3mod
             {
                 return m_pxFormat;
             }
+        }
+
+        public int additionalDelay
+        {
+            get
+            {
+                return m_additionalDelay;
+            }
+            set
+            {
+                m_additionalDelay = value;
+                if (m_additionalDelay > m_memSize - 2) m_additionalDelay = m_memSize - 2;
+                if (m_additionalDelay < 0) m_additionalDelay = 0;
+            }
+        }
+
+        public void getNextFrame(out IDeckLinkVideoInputFrame videoFrame, out IDeckLinkAudioInputPacket audioPacket, out long frameDelay, out long difference )
+        {
+            difference = m_frameNo - m_lastFrameNo;
+            frameDelay = 0;
+            long newTimeInFrame = 0;
+            if (!m_currentlyCapturing)
+            {
+                videoFrame = null;
+                audioPacket = null;
+                difference = -1;
+                return;
+            }
+            switch (difference)
+            {
+                default:// we must skip/reuse frame as we have no new one, or simply any other frame;
+                    videoFrame = m_videoMem[0 + m_additionalDelay];
+                    audioPacket = m_audioMem[0 + m_additionalDelay];
+                    newTimeInFrame = m_timeInFrame[0 + m_additionalDelay];
+                    m_lastFrameNo = m_frameNo;
+                    frameDelay = MainWindow.mainTiming - newTimeInFrame;
+                    break;
+                case 1:
+                    videoFrame = m_videoMem[0 + m_additionalDelay];
+                    audioPacket = m_audioMem[0 + m_additionalDelay];
+                    newTimeInFrame = m_timeInFrame[0 + m_additionalDelay];
+                    m_lastFrameNo = m_frameNo;
+                    frameDelay = MainWindow.mainTiming - newTimeInFrame;
+                    break;
+                case 2:
+                    videoFrame = m_videoMem[1 + m_additionalDelay];
+                    audioPacket = m_audioMem[1 + m_additionalDelay];
+                    newTimeInFrame = m_timeInFrame[1 + m_additionalDelay];
+                    m_lastFrameNo = m_frameNo - 1;
+                    frameDelay = MainWindow.mainTiming + MainWindow.mainTiming - newTimeInFrame;
+                    break;
+                    //both video and audio may happen to be null
+            }
+
+            if (newTimeInFrame < 5) //values between appx 0-4 delay are uncertain/unstable, depend on
+            {
+                frameDelay = m_lastFrameDelay;
+            }
+            m_lastFrameDelay = frameDelay;
+        }
+
+        public void skipNextFrame()
+        {
+            if (m_currentlyCapturing) m_lastFrameNo++;
         }
 
         void IDeckLinkInputCallback.VideoInputFormatChanged(_BMDVideoInputFormatChangedEvents notificationEvents, IDeckLinkDisplayMode newDisplayMode, _BMDDetectedVideoInputFormatFlags detectedSignalFlags)
@@ -154,6 +243,7 @@ namespace open3mod
         {
             IntPtr audioData = (IntPtr)0;
             IntPtr videoData = (IntPtr)0;
+            m_mainWindow.GetHardwareReferenceClock(out long hardwareTime, out long timeInFrame, out long ticksPerFrame);
             if (videoFrame != null)
             {
                 bool inputSignalChange = videoFrame.GetFlags().HasFlag(_BMDFrameFlags.bmdFrameHasNoInputSource);
@@ -164,17 +254,42 @@ namespace open3mod
                 }
                 if (inputSignalChange == false) //i.e. frame is valid
                 {
-                    videoFrame.GetBytes(out videoData);
-                    m_mainWindow.callFrameLoop(m_number, videoData);
+                    lock (m_capturePreview.memLock)
+                    {
+                        if (m_videoMem[m_memSize - 1] != null)
+                        {
+                            System.Runtime.InteropServices.Marshal.ReleaseComObject(m_videoMem[m_memSize - 1]);
+                            m_videoMem[m_memSize - 1] = null;
+                        }
+                        for (int i = m_memSize - 1; i > 0; i--)
+                        {
+                            m_videoMem[i] = m_videoMem[i - 1];
+                            m_timeInFrame[i] = m_timeInFrame[i - 1];
+                        }
+                        m_videoMem[0] = videoFrame;
+                        m_timeInFrame[0] = timeInFrame;
+                        if (m_lastUsedVideoMem < m_memSize - 2) m_lastUsedVideoMem++;
+                        m_frameNo++;
+                    }
                 }
             }
             if (audioPacket != null)
             {
-                audioPacket.GetBytes(out audioData);
-                m_mainWindow.handleAudio(m_number,audioData);
+                lock (m_capturePreview.memLock)
+                {
+                    if (m_audioMem[m_memSize - 1] != null)
+                    {
+                        System.Runtime.InteropServices.Marshal.ReleaseComObject(m_audioMem[m_memSize - 1]);
+                        m_audioMem[m_memSize - 1] = null;
+                    }
+                    for (int i = m_memSize - 1; i > 0; i--)
+                    {
+                        m_audioMem[i] = m_audioMem[i - 1];
+                    }
+                    m_audioMem[0] = audioPacket;
+                    if (m_lastUsedAudioMem < m_memSize - 2) m_lastUsedAudioMem++;
+                }
             }
-            System.Runtime.InteropServices.Marshal.ReleaseComObject(audioPacket);
-            System.Runtime.InteropServices.Marshal.ReleaseComObject(videoFrame);
         }
 
         IEnumerator<IDeckLinkDisplayMode> IEnumerable<IDeckLinkDisplayMode>.GetEnumerator()
@@ -235,6 +350,25 @@ namespace open3mod
             m_deckLinkInput.SetCallback(null);
 
             m_currentlyCapturing = false;
+
+            for (int i = m_memSize - 1; i >= 0; i--)
+            {
+                if (m_videoMem[i] != null)
+                {
+                    System.Runtime.InteropServices.Marshal.ReleaseComObject(m_videoMem[i]);
+                    m_videoMem[i] = null;
+                }
+                if (m_audioMem[i] != null)
+                {
+                    System.Runtime.InteropServices.Marshal.ReleaseComObject(m_audioMem[i]);
+                    m_audioMem[i] = null;
+                }
+            }
+            m_lastUsedVideoMem = -1;
+            m_lastUsedAudioMem = -1;
+            m_frameNo = -1;
+            m_lastFrameNo = -1;
+
         }
 
         void RemoveAllListeners()
@@ -296,6 +430,75 @@ namespace open3mod
             }
         }
 
+        public bool hasGenlock
+        {
+            get
+            {
+                int flag;
+                var deckLinkAttributes = (IDeckLinkAttributes)m_deckLink;
+                deckLinkAttributes.GetFlag(_BMDDeckLinkAttributeID.BMDDeckLinkHasReferenceInput, out flag);
+                return flag != 0;
+            }
+        }
+
+        public bool hasFullGenlockOffset
+        {
+            get
+            {
+                int flag;
+                var deckLinkAttributes = (IDeckLinkAttributes)m_deckLink;
+                deckLinkAttributes.GetFlag(_BMDDeckLinkAttributeID.BMDDeckLinkSupportsFullFrameReferenceInputTimingOffset, out flag);
+                return flag != 0;
+            }
+        }
+
+        public bool isGenlockLocked
+        {
+            get
+            {
+                int flag;
+                var deckLinkStatus = (IDeckLinkStatus)m_deckLink;
+                deckLinkStatus.GetFlag(_BMDDeckLinkStatusID.bmdDeckLinkStatusReferenceSignalLocked, out flag);
+                return flag != 0;
+            }
+        }
+
+        public int getGenlockSignalFlags
+        {
+            get
+            {
+                int flag;
+                var deckLinkStatus = (IDeckLinkStatus)m_deckLink;
+                try
+                {
+                    deckLinkStatus.GetFlag(_BMDDeckLinkStatusID.bmdDeckLinkStatusReferenceSignalFlags, out flag);
+                }
+                catch
+                {
+                    return -1;
+                }
+                return flag;
+            }
+        }
+
+        public int getGenlockSignalMode
+        {
+            get
+            {
+                int flag;
+                var deckLinkStatus = (IDeckLinkStatus)m_deckLink;
+                try
+                {
+                    deckLinkStatus.GetFlag(_BMDDeckLinkStatusID.bmdDeckLinkStatusReferenceSignalMode, out flag);
+                }
+                catch
+                {
+                    return -1;
+                }
+                return flag;
+            }
+        }
+
         public void RemoveAllListeners()
         {
             AudioOutputRequested = null;
@@ -319,6 +522,8 @@ namespace open3mod
         // Explicit implementation of IDeckLinkVideoOutputCallback and IDeckLinkAudioOutputCallback
         void IDeckLinkVideoOutputCallback.ScheduledFrameCompleted(IDeckLinkVideoFrame completedFrame, _BMDOutputFrameCompletionResult result)
         {
+            Thread.CurrentThread.Priority = ThreadPriority.Highest;
+            // m_deckLinkOutput.GetFrameCompletionReferenceTimestamp(completedFrame, 1000, out long timestamp);
             // When a video frame has been completed, generate event to schedule next frame
             VideoFrameCompleted(false);
         }

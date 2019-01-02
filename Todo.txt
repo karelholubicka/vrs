@@ -4,21 +4,13 @@ Newer. Assimp 4.1.216079013 (assimp viewer)
 Moje kompilace #1 : Assimp 4.1.0
 Moje kompilace #2+3 : Assimp 4.1.0 - ale z masteru
 
-Thread high priority???
-thread start 2 pcs? takže 1 frame delay nevadí?
 
-red - znamení že window je focused a ovladaè funguje /opravit!!)
-FOV pøepoèet na camera number-závislost? tabulka?nastavení kamery??
+kontrola zvuku a synce a timingu VR
+FOV pøepoèet na camera number-závislost? tabulka?nastavení kamery??+ nastavování na kontroléru znova(advance už není tøeba-pøidat na keyboard)
 
 
+zmìnit NDISEnderX+Y na nìjaký master.X+Y+settings vs Output generator settings..HD preset fix,a když je device zvoleno, recreate renderer a GL??
 
-ovìøit cukání a sync pøi stávající kombinaci
-pøesunout render screen úplnì extra od render video,
-aby render video vùbec netrpìl ev. zásekem renderscreen
-synchron - reset synchron AV??
-timing II kamera a NDI in
-proè GL kulhá a spraví to player
-proè je ovladaè aktivní jen v oknì-zvýraznit nìjak??
 zmenšit textury VR modelù/png/tga/psd
 
 jak vypadá Janssen nové studio v renderu-vyrobit...f/bg/gr atd
@@ -26,6 +18,16 @@ jak vypadá Janssen nové studio v renderu-vyrobit...f/bg/gr atd
 
 
 INFO:
+Stlaèení posuvníku konzole zablokuje psaní do ní, aplikace se pak zasekne v Console.WriteLine.
+
+AMD System Monitor každou vteøinu zasekává GPU.
+
+Volat Render() z extra threadu se nìkdy nespustí, pak už je lepší volat ho pøímo.
+Pøi záseku se použije buffered videoFrame.
+
+Pokud se zasekne ScreenRender, VideoRender se mùže zaseknout vzájemným lockem, 
+proto se ScreenRender pouští až nakonec.
+
 Model v Blenteru musí mít materiál, jinak crashne import
 Intensity u materiálu nefunguje, musí být 1.0
 RGB 000 nefunguje, musí být aspoò 0.001
@@ -35,6 +37,8 @@ Dodateèná rotace v Blenderu neopraví keyframy animací, proto není vhodná,
 orientace: X+right, Y+up. Z+back
 Export FBX jako Yfront nebo -Zfront funguje obojí, ale do Fusionu je potøeba importovat BEZ CONVERT axis to Yup - takže -Z front
 Svìtla se musí nastavit, jinak mají implicitnì 0,8 color, i když hlásí 1,0
+
+Textury v Blenderu musí mít UV, tj model až po Unwrappingu - jinak UV nemají
 
 fbx shininess strength = intensity shininess / 2,
 diffuse intensity je tam také uloženo nìjak
@@ -48,50 +52,36 @@ ____________
 uklidit modely
 
 POZDÌJI:
+øešit pøepnutí kompenzace zpoždìní kamer o buffered frames døív???
+nastavení a uložení spojení SN kontroléru = jméno kamery =additional delay
+
 https://learnopengl.com/Advanced-Lighting/Normal-Mapping - correct TBN tangent mapping(!transposed matrices!)
 normály a position jako mode switch místo bones atd, dtto blinn/phong
 nastavení jednotlivých svìtel pomocí main brightness(?)
 ndi receiver u každé scény??
 off stream senderu - 
-tøetí výstup-støih shift enter+offset pro èteèku, preset na vektory( 0,1,2
+tøetí výstup+dodat offset pro èteèku+poslat do NDI
 noise filter median na gauss upravit(?)
 audio nejde skrz proè???...jde, kontrola vždy
 
 
-pøepínání a pøiøazení ovladaèù - sna >sn bm
 ??obèas se tracking nespustí..???Nespustí se ovladaèe - reload VR devices
 
-støih do druhé kamery buttonem ovladaèe??
 
-
-load fps+video output sizes z inputu BMD / scalable
 destroy všech kontextù
-
-show fps/info overlay. switch info hned on/off (render prázdný text)
-sample hodnoty plátna pro klíè??
-
-
-
-mìøení rozdílu cam 1a 2 - úprava zpoždìní scanu pøi pøestøihu(!!), 
-sync druhá kamera - poèítání frame kamery#1, k tomu kdy dorazil frame2, v rendereru kontrola stejného èísla+operace, co když ne, 
 
 Settings:
 c:\Users\Studio\AppData\Local\open3mod\open3mod.exe_Url_stpzoig5vx2tayffj4l0jhaydooqznaj\
-Textury v Blenderu musí mít UV, tj až po Unwrappingu - jinak UV nemají
-
 
 
 NDI/BMD výstupy cam1,cam2, static pro 3cam, rezerva?? nebo bez NDI?
-scalable 2 cam/1cam out / In podle poètu výstupù/strojù..???
 
 
 SUMMARY..??
 ----
 monitory odkuk všichni, kameraman?? není-li støižen??, speaker,
-SYNC poøešit 100%, 
 seèíst lidi - kamery, støih, pøepínání studia, èteèka
 objevování textù ve studiu
-
 
 
 

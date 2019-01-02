@@ -32,10 +32,7 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(AnimationInspectionView));
             this.textBoxGoto = new System.Windows.Forms.TextBox();
             this.labelGoto = new System.Windows.Forms.Label();
-            this.buttonFaster = new System.Windows.Forms.Button();
-            this.buttonSlower = new System.Windows.Forms.Button();
             this.checkBoxLoop = new System.Windows.Forms.CheckBox();
-            this.buttonPlay = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.listBoxAnimations = new System.Windows.Forms.ListBox();
             this.panelAnimTools = new System.Windows.Forms.Panel();
@@ -43,10 +40,13 @@
             this.labelSpeedValue = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
             this.labelSpeed = new System.Windows.Forms.Label();
-            this.timeSlideControl = new open3mod.TimeSlideControl();
             this.contextMenuStripAnims = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.renameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.buttonFaster = new System.Windows.Forms.Button();
+            this.buttonSlower = new System.Windows.Forms.Button();
+            this.buttonPlay = new System.Windows.Forms.Button();
+            this.timeSlideControl = new open3mod.TimeSlideControl();
             this.panelAnimTools.SuspendLayout();
             this.panel1.SuspendLayout();
             this.contextMenuStripAnims.SuspendLayout();
@@ -69,34 +69,6 @@
             this.labelGoto.TabIndex = 15;
             this.labelGoto.Text = "Go to";
             // 
-            // buttonFaster
-            // 
-            this.buttonFaster.FlatAppearance.BorderSize = 2;
-            this.buttonFaster.FlatAppearance.MouseDownBackColor = System.Drawing.Color.Gray;
-            this.buttonFaster.FlatAppearance.MouseOverBackColor = System.Drawing.Color.WhiteSmoke;
-            this.buttonFaster.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.buttonFaster.Location = new System.Drawing.Point(163, 18);
-            this.buttonFaster.Name = "buttonFaster";
-            this.buttonFaster.Size = new System.Drawing.Size(60, 40);
-            this.buttonFaster.TabIndex = 14;
-            this.buttonFaster.Text = "Faster";
-            this.buttonFaster.UseVisualStyleBackColor = true;
-            this.buttonFaster.Click += new System.EventHandler(this.OnFaster);
-            // 
-            // buttonSlower
-            // 
-            this.buttonSlower.FlatAppearance.BorderSize = 2;
-            this.buttonSlower.FlatAppearance.MouseDownBackColor = System.Drawing.Color.Gray;
-            this.buttonSlower.FlatAppearance.MouseOverBackColor = System.Drawing.Color.WhiteSmoke;
-            this.buttonSlower.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.buttonSlower.Location = new System.Drawing.Point(16, 18);
-            this.buttonSlower.Name = "buttonSlower";
-            this.buttonSlower.Size = new System.Drawing.Size(60, 40);
-            this.buttonSlower.TabIndex = 13;
-            this.buttonSlower.Text = "Slower";
-            this.buttonSlower.UseVisualStyleBackColor = true;
-            this.buttonSlower.Click += new System.EventHandler(this.OnSlower);
-            // 
             // checkBoxLoop
             // 
             this.checkBoxLoop.AutoSize = true;
@@ -107,20 +79,6 @@
             this.checkBoxLoop.Text = "Loop";
             this.checkBoxLoop.UseVisualStyleBackColor = true;
             this.checkBoxLoop.CheckedChanged += new System.EventHandler(this.OnChangeLooping);
-            // 
-            // buttonPlay
-            // 
-            this.buttonPlay.FlatAppearance.BorderSize = 2;
-            this.buttonPlay.FlatAppearance.MouseDownBackColor = System.Drawing.Color.Gray;
-            this.buttonPlay.FlatAppearance.MouseOverBackColor = System.Drawing.Color.WhiteSmoke;
-            this.buttonPlay.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.buttonPlay.Location = new System.Drawing.Point(82, 3);
-            this.buttonPlay.MaximumSize = new System.Drawing.Size(100, 100);
-            this.buttonPlay.Name = "buttonPlay";
-            this.buttonPlay.Size = new System.Drawing.Size(75, 68);
-            this.buttonPlay.TabIndex = 11;
-            this.buttonPlay.UseVisualStyleBackColor = true;
-            this.buttonPlay.Click += new System.EventHandler(this.OnPlay);
             // 
             // label3
             // 
@@ -200,19 +158,6 @@
             this.labelSpeed.TabIndex = 18;
             this.labelSpeed.Text = "Speed:";
             // 
-            // timeSlideControl
-            // 
-            this.timeSlideControl.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.timeSlideControl.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.timeSlideControl.Location = new System.Drawing.Point(0, 113);
-            this.timeSlideControl.Name = "timeSlideControl";
-            this.timeSlideControl.Position = 0D;
-            this.timeSlideControl.RangeMax = 0D;
-            this.timeSlideControl.RangeMin = 0D;
-            this.timeSlideControl.Size = new System.Drawing.Size(332, 67);
-            this.timeSlideControl.TabIndex = 17;
-            // 
             // contextMenuStripAnims
             // 
             this.contextMenuStripAnims.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -232,9 +177,67 @@
             // renameToolStripMenuItem
             // 
             this.renameToolStripMenuItem.Name = "renameToolStripMenuItem";
-            this.renameToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.renameToolStripMenuItem.Size = new System.Drawing.Size(117, 22);
             this.renameToolStripMenuItem.Text = "Rename";
             this.renameToolStripMenuItem.Click += new System.EventHandler(this.OnRenameAnimation);
+            // 
+            // buttonFaster
+            // 
+            this.buttonFaster.FlatAppearance.BorderSize = 2;
+            this.buttonFaster.FlatAppearance.MouseDownBackColor = System.Drawing.Color.Gray;
+            this.buttonFaster.FlatAppearance.MouseOverBackColor = System.Drawing.Color.WhiteSmoke;
+            this.buttonFaster.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.buttonFaster.Location = new System.Drawing.Point(163, 18);
+            this.buttonFaster.Name = "buttonFaster";
+            this.buttonFaster.Size = new System.Drawing.Size(60, 40);
+            this.buttonFaster.TabIndex = 15;
+            this.buttonFaster.Text = "Faster";
+            this.buttonFaster.UseVisualStyleBackColor = true;
+            this.buttonFaster.Click += new System.EventHandler(this.OnFaster);
+            this.buttonFaster.PreviewKeyDown += new System.Windows.Forms.PreviewKeyDownEventHandler(this.buttonPlay_PreviewKeyDown);
+            // 
+            // buttonSlower
+            // 
+            this.buttonSlower.FlatAppearance.BorderSize = 2;
+            this.buttonSlower.FlatAppearance.MouseDownBackColor = System.Drawing.Color.Gray;
+            this.buttonSlower.FlatAppearance.MouseOverBackColor = System.Drawing.Color.WhiteSmoke;
+            this.buttonSlower.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.buttonSlower.Location = new System.Drawing.Point(17, 18);
+            this.buttonSlower.Name = "buttonSlower";
+            this.buttonSlower.Size = new System.Drawing.Size(60, 40);
+            this.buttonSlower.TabIndex = 13;
+            this.buttonSlower.Text = "Slower";
+            this.buttonSlower.UseVisualStyleBackColor = true;
+            this.buttonSlower.Click += new System.EventHandler(this.OnSlower);
+            this.buttonSlower.PreviewKeyDown += new System.Windows.Forms.PreviewKeyDownEventHandler(this.buttonPlay_PreviewKeyDown);
+            // 
+            // buttonPlay
+            // 
+            this.buttonPlay.FlatAppearance.BorderSize = 2;
+            this.buttonPlay.FlatAppearance.MouseDownBackColor = System.Drawing.Color.Gray;
+            this.buttonPlay.FlatAppearance.MouseOverBackColor = System.Drawing.Color.WhiteSmoke;
+            this.buttonPlay.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.buttonPlay.Location = new System.Drawing.Point(82, 3);
+            this.buttonPlay.MaximumSize = new System.Drawing.Size(100, 100);
+            this.buttonPlay.Name = "buttonPlay";
+            this.buttonPlay.Size = new System.Drawing.Size(75, 68);
+            this.buttonPlay.TabIndex = 14;
+            this.buttonPlay.UseVisualStyleBackColor = true;
+            this.buttonPlay.Click += new System.EventHandler(this.OnPlay);
+            this.buttonPlay.PreviewKeyDown += new System.Windows.Forms.PreviewKeyDownEventHandler(this.buttonPlay_PreviewKeyDown);
+            // 
+            // timeSlideControl
+            // 
+            this.timeSlideControl.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.timeSlideControl.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.timeSlideControl.Location = new System.Drawing.Point(0, 113);
+            this.timeSlideControl.Name = "timeSlideControl";
+            this.timeSlideControl.Position = 0D;
+            this.timeSlideControl.RangeMax = 0D;
+            this.timeSlideControl.RangeMin = 0D;
+            this.timeSlideControl.Size = new System.Drawing.Size(332, 67);
+            this.timeSlideControl.TabIndex = 17;
             // 
             // AnimationInspectionView
             // 
@@ -258,10 +261,7 @@
 
         private System.Windows.Forms.TextBox textBoxGoto;
         private System.Windows.Forms.Label labelGoto;
-        private System.Windows.Forms.Button buttonFaster;
-        private System.Windows.Forms.Button buttonSlower;
         private System.Windows.Forms.CheckBox checkBoxLoop;
-        private System.Windows.Forms.Button buttonPlay;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.ListBox listBoxAnimations;
         private TimeSlideControl timeSlideControl;
@@ -273,6 +273,8 @@
         private System.Windows.Forms.ContextMenuStrip contextMenuStripAnims;
         private System.Windows.Forms.ToolStripMenuItem deleteToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem renameToolStripMenuItem;
-
+        private System.Windows.Forms.Button buttonFaster;
+        private System.Windows.Forms.Button buttonSlower;
+        private System.Windows.Forms.Button buttonPlay;
     }
 }

@@ -95,6 +95,7 @@ namespace open3mod
             this.toolStripSeparator10 = new System.Windows.Forms.ToolStripSeparator();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.showCaptureWindowsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.resetCaptureWindowsPositionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSelectRenderer = new System.Windows.Forms.ToolStrip();
             this.openToolStripButton = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator12 = new System.Windows.Forms.ToolStripSeparator();
@@ -139,7 +140,6 @@ namespace open3mod
             this.linkLabelWebsite = new System.Windows.Forms.LinkLabel();
             this.renderControl1 = new open3mod.RenderControl();
             this.trackBarBrightness = new System.Windows.Forms.TrackBar();
-            this.resetCaptureWindowsPositionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.toolStripSelectRenderer.SuspendLayout();
             this.tabContextMenuStrip.SuspendLayout();
@@ -358,7 +358,7 @@ namespace open3mod
             this.twoViewsAToolStripMenuItem.Name = "twoViewsAToolStripMenuItem";
             this.twoViewsAToolStripMenuItem.Size = new System.Drawing.Size(226, 22);
             this.twoViewsAToolStripMenuItem.Text = "Two 3D Views (A streams)";
-            this.twoViewsAToolStripMenuItem.Click += new System.EventHandler(this.ToggleTwoViews);
+            this.twoViewsAToolStripMenuItem.Click += new System.EventHandler(this.ToggleTwoViewsA);
             // 
             // twoViewsBToolStripMenuItem
             // 
@@ -367,7 +367,7 @@ namespace open3mod
             this.twoViewsBToolStripMenuItem.Name = "twoViewsBToolStripMenuItem";
             this.twoViewsBToolStripMenuItem.Size = new System.Drawing.Size(226, 22);
             this.twoViewsBToolStripMenuItem.Text = "Two 3D Views (B streams)";
-            this.twoViewsBToolStripMenuItem.Click += new System.EventHandler(this.ToggleTwoViewsHorizontal);
+            this.twoViewsBToolStripMenuItem.Click += new System.EventHandler(this.ToggleTwoViewsB);
             // 
             // fourViewsToolStripMenuItem
             // 
@@ -603,6 +603,13 @@ namespace open3mod
             this.showCaptureWindowsToolStripMenuItem.Text = "Show Capture Windows";
             this.showCaptureWindowsToolStripMenuItem.Click += new System.EventHandler(this.ShowCaptureWindows_Click);
             // 
+            // resetCaptureWindowsPositionsToolStripMenuItem
+            // 
+            this.resetCaptureWindowsPositionsToolStripMenuItem.Name = "resetCaptureWindowsPositionsToolStripMenuItem";
+            this.resetCaptureWindowsPositionsToolStripMenuItem.Size = new System.Drawing.Size(250, 22);
+            this.resetCaptureWindowsPositionsToolStripMenuItem.Text = "Reset Capture Windows Positions";
+            this.resetCaptureWindowsPositionsToolStripMenuItem.Click += new System.EventHandler(this.resetCaptureWindowsPositionsToolStripMenuItem_Click);
+            // 
             // toolStripSelectRenderer
             // 
             this.toolStripSelectRenderer.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -700,7 +707,7 @@ namespace open3mod
             this.toolStripButtonTwoViewsA.Size = new System.Drawing.Size(23, 22);
             this.toolStripButtonTwoViewsA.Text = "Two Views";
             this.toolStripButtonTwoViewsA.ToolTipText = "Split into two 3D views showing A streams";
-            this.toolStripButtonTwoViewsA.Click += new System.EventHandler(this.ToggleTwoViews);
+            this.toolStripButtonTwoViewsA.Click += new System.EventHandler(this.ToggleTwoViewsA);
             // 
             // toolStripButtonTwoViewsB
             // 
@@ -711,7 +718,7 @@ namespace open3mod
             this.toolStripButtonTwoViewsB.Size = new System.Drawing.Size(23, 22);
             this.toolStripButtonTwoViewsB.Text = "Two Views";
             this.toolStripButtonTwoViewsB.ToolTipText = "Split into two 3D views showing B streams";
-            this.toolStripButtonTwoViewsB.Click += new System.EventHandler(this.ToggleTwoViewsHorizontal);
+            this.toolStripButtonTwoViewsB.Click += new System.EventHandler(this.ToggleTwoViewsB);
             // 
             // toolStripButtonFourViews
             // 
@@ -1020,8 +1027,6 @@ namespace open3mod
             this.renderControl1.DragDrop += new System.Windows.Forms.DragEventHandler(this.OnDrag);
             this.renderControl1.DragEnter += new System.Windows.Forms.DragEventHandler(this.OnDragEnter);
             this.renderControl1.Paint += new System.Windows.Forms.PaintEventHandler(this.GlPaint);
-            this.renderControl1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnKeyDown);
-            this.renderControl1.KeyUp += new System.Windows.Forms.KeyEventHandler(this.OnKeyUp);
             this.renderControl1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.OnMouseDown);
             this.renderControl1.MouseEnter += new System.EventHandler(this.OnMouseEnter);
             this.renderControl1.MouseLeave += new System.EventHandler(this.OnMouseLeave);
@@ -1043,13 +1048,6 @@ namespace open3mod
             this.trackBarBrightness.TabIndex = 6;
             this.trackBarBrightness.Value = global::open3mod.GraphicsSettings.Default.OutputBrightness;
             this.trackBarBrightness.Scroll += new System.EventHandler(this.trackBarBrightness_Scroll);
-            // 
-            // resetCaptureWindowsPositionsToolStripMenuItem
-            // 
-            this.resetCaptureWindowsPositionsToolStripMenuItem.Name = "resetCaptureWindowsPositionsToolStripMenuItem";
-            this.resetCaptureWindowsPositionsToolStripMenuItem.Size = new System.Drawing.Size(250, 22);
-            this.resetCaptureWindowsPositionsToolStripMenuItem.Text = "Reset Capture Windows Positions";
-            this.resetCaptureWindowsPositionsToolStripMenuItem.Click += new System.EventHandler(this.resetCaptureWindowsPositionsToolStripMenuItem_Click);
             // 
             // MainWindow
             // 
@@ -1077,6 +1075,9 @@ namespace open3mod
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.OnClosing);
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.OnCloseForm);
             this.Load += new System.EventHandler(this.OnLoad);
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnKeyDown);
+            this.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.OnKeyPress);
+            this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.OnKeyUp);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.toolStripSelectRenderer.ResumeLayout(false);

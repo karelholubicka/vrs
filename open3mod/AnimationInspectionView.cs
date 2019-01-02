@@ -255,11 +255,12 @@ namespace open3mod
         private void OnSlower(object sender, EventArgs e)
         {
             Debug.Assert(_speedAdjust > -MaxSpeedAdjustLevels);
+            buttonFaster.Enabled = true;
             if (--_speedAdjust == -MaxSpeedAdjustLevels)
             {
                 buttonSlower.Enabled = false;
+                buttonFaster.Focus();
             }
-            buttonFaster.Enabled = true;
             AnimPlaybackSpeed *= PlaybackSpeedAdjustFactor;            
         }
 
@@ -267,11 +268,12 @@ namespace open3mod
         private void OnFaster(object sender, EventArgs e)
         {
             Debug.Assert(_speedAdjust < MaxSpeedAdjustLevels);
+            buttonSlower.Enabled = true;
             if (++_speedAdjust == MaxSpeedAdjustLevels)
             {
                 buttonFaster.Enabled = false;
+                buttonSlower.Focus();
             }
-            buttonSlower.Enabled = true;
             AnimPlaybackSpeed /= PlaybackSpeedAdjustFactor;
         }
 
@@ -385,6 +387,14 @@ namespace open3mod
             {
                 listBoxAnimations.SelectedIndex = item;
                 contextMenuStripAnims.Show(listBoxAnimations, e.Location);
+            }
+        }
+
+        private void buttonPlay_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.IsInputKey = true;
             }
         }
     }

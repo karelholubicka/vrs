@@ -701,5 +701,29 @@ namespace CoreSettings {
                 this["AutoStart"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool AutoConnectNDI {
+            get {
+                return ((bool)(this["AutoConnectNDI"]));
+            }
+            set {
+                this["AutoConnectNDI"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("EDIT (VLC)")]
+        public string AutoSourceNDI {
+            get {
+                return ((string)(this["AutoSourceNDI"]));
+            }
+            set {
+                this["AutoSourceNDI"] = value;
+            }
+        }
     }
 }

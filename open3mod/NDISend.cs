@@ -111,7 +111,7 @@ namespace open3mod
             }
         }
 
-        public void PrepareFrame(string SenderToUse, long timeCode, int shift = 0, int markHeight = 250)
+        public void PrepareFrame(string SenderToUse, long timeCode, int shift = 0, int markHeight = 0)
         {
             {
                 int exists = senderNameList.IndexOf(SenderToUse);
@@ -159,7 +159,7 @@ namespace open3mod
                             int lineHeight = videoFrame.Height / senderFrameSentList.Count;
                             int a = (int)(senderFrameSentList[exists] * 20) % videoFrame.Width;
                             Point pt1 = new Point(a, (videoFrame.Height - (lineHeight * (exists) + markHeight)));
-                            Point pt2 = new Point(a, videoFrame.Height - lineHeight * (exists));
+                            Point pt2 = new Point(a, videoFrame.Height - lineHeight * (exists+1));
                             Point pt3 = new Point(a, 0);
                             Point pt4 = new Point(a,  videoFrame.Height);
                             graphics.CompositingMode = CompositingMode.SourceCopy;

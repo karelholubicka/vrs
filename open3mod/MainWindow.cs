@@ -43,7 +43,6 @@ using Valve.VR;
 using Leap;
 #endif
 
-
 namespace open3mod
 {
     public partial class MainWindow : Form
@@ -58,8 +57,8 @@ namespace open3mod
         public static NewTek.NDI.Finder NDIFinder;
         NewTek.NDI.Source[] _NDISources;
         NewTek.NDI.Source _selectedNDISource = null;
-        public static int mainTiming = 40;
-        public static int timeOffset = 0;
+        public static long mainTiming = 40;
+        public static long timeOffset = 0;
         public CapturePreview capturePreview1;
         public CapturePreview capturePreview2;
         public OutputGenerator outputGenerator;
@@ -163,25 +162,27 @@ namespace open3mod
             showBoundingBoxesToolStripMenuItem.Checked = toolStripButtonShowBB.Checked = _ui.ShowBBs;
             showAnimationSkeletonToolStripMenuItem.Checked = toolStripButtonShowSkeleton.Checked = _ui.ShowSkeleton;
 
-            GraphicsContext[] graphicsContexts = new GraphicsContext[4];
-            graphicsContexts[0] = (GraphicsContext)GraphicsContext.CurrentContext;
+        //    GraphicsContext[] graphicsContexts = new GraphicsContext[4];
+         //   graphicsContexts[0] = (GraphicsContext)GraphicsContext.CurrentContext;
             if (useIO)
             {
             capturePreview2 = new CapturePreview(this,2);
             capturePreview1 = new CapturePreview(this,1);
             capturePreview1.Location = CoreSettings.CoreSettings.Default.LocationCam1;
             capturePreview2.Location = CoreSettings.CoreSettings.Default.LocationCam2;
-            outputGenerator = new OutputGenerator();
+            outputGenerator = new OutputGenerator(this);
             outputGenerator.Location = CoreSettings.CoreSettings.Default.LocationOutput;
             }
-            graphicsContexts[0] = (GraphicsContext)GraphicsContext.CurrentContext;
-            GraphicsMode gm = new GraphicsMode(new ColorFormat(32), 24, 8, 0);
+       //     graphicsContexts[0] = (GraphicsContext)GraphicsContext.CurrentContext;
+         //   GraphicsMode gm = new GraphicsMode(new ColorFormat(32), 24, 8, 0);
 
             // manually register the MouseWheel handler
             renderControl1.MouseWheel += OnMouseMove;
 
             // intercept all key events sent to children
             KeyPreview = true;
+         //   this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnKeyDown);
+
             if (useIO)
             {
                 NDIFinder = new NewTek.NDI.Finder(true);
@@ -217,7 +218,7 @@ namespace open3mod
             //AddTab(File.Exists(repos) ? repos : installed);
             ProcessPriorityClass Priority = ProcessPriorityClass.High;
             Process MainProcess = Process.GetCurrentProcess();
-             MainProcess.PriorityClass = Priority;
+            MainProcess.PriorityClass = Priority;
 
             _initialized = true;
             CloseTab(_emptyTab);
@@ -293,15 +294,13 @@ namespace open3mod
             {
                 CoreSettings.CoreSettings.Default.Genlock = false;
                 CoreSettings.CoreSettings.Default.KeepTimingRight = false;
-                int delay = 5;
-                DelayExecution(TimeSpan.FromSeconds(delay),
-                    capturePreview1.StartCapture);
-                   DelayExecution(TimeSpan.FromSeconds(delay+1),
-                      capturePreview2.StartCapture);
-                DelayExecution(TimeSpan.FromSeconds(delay+2),
-                    GenlockOn);
-                DelayExecution(TimeSpan.FromSeconds(delay+3),
-                   outputGenerator.StartRunning);
+                int delay = 3000;
+                DelayExecution(TimeSpan.FromMilliseconds(delay),  outputGenerator.StartRunning);
+                DelayExecution(TimeSpan.FromMilliseconds(delay),  GenlockOn);
+                DelayExecution(TimeSpan.FromMilliseconds(delay + 100), capturePreview1.StartCapture);
+                DelayExecution(TimeSpan.FromMilliseconds(delay + 200), capturePreview2.StartCapture);
+                DelayExecution(TimeSpan.FromMilliseconds(delay + 2000), SearchDynamicSources);//we need NDI sources to be already discovered
+                DelayExecution(TimeSpan.FromMilliseconds(delay + 2500), Renderer.SyncTrackEnable);
             }
         }
 
@@ -309,6 +308,11 @@ namespace open3mod
         private static void GenlockOn()
         {
            CoreSettings.CoreSettings.Default.Genlock = true;
+        }
+
+        private void SearchDynamicSources()
+        {
+            setDynamicSourceToolStripMenuItem_Click(this, null);
         }
 
         private static void MaybeShowTipOfTheDay()
@@ -376,9 +380,9 @@ namespace open3mod
         private void ActivateUiTab(TabPage ui)
         {
             ((TabUiSkeleton)ui.Controls[0]).InjectGlControl(renderControl1);
-            if (_renderer != null)
+            if (Renderer != null)
             {
-                _renderer.TextOverlay.Clear();
+                Renderer.TextOverlay.Clear();
             }
 
             // add postfix to main window title
@@ -687,11 +691,11 @@ namespace open3mod
                 ? CheckState.Checked 
                 : CheckState.Unchecked;
             twoViewsAToolStripMenuItem.CheckState = toolStripButtonTwoViewsA.CheckState = 
-                vm == Tab.ViewMode.TwoVertical 
+                vm == Tab.ViewMode.AAHorizontal
                 ? CheckState.Checked 
                 : CheckState.Unchecked;
             twoViewsBToolStripMenuItem.CheckState = toolStripButtonTwoViewsB.CheckState =
-                vm == Tab.ViewMode.TwoHorizontal
+                vm == Tab.ViewMode.BBHorizontal
                 ? CheckState.Checked
                 : CheckState.Unchecked;
             fourViewsToolStripMenuItem.CheckState = toolStripButtonFourViews.CheckState = 
@@ -744,7 +748,7 @@ namespace open3mod
             try
             {
                 if (delayStart) Thread.Sleep(1000);
-                tab.ActiveScene = new Scene(tab.File,_renderer);
+                tab.ActiveScene = new Scene(tab.File,Renderer);
                 CoreSettings.CoreSettings.Default.CountFilesOpened++;
             }
             catch(Exception ex)
@@ -881,7 +885,6 @@ namespace open3mod
             {
                 return;
             }
-            //    if (_renderer.timeTrack) Console.WriteLine("Start AppIdle {0}", _renderer._runsw.Elapsed.TotalMilliseconds);
             if (firstRun)
             {
                 CloseTab(_emptyTab);
@@ -901,37 +904,23 @@ namespace open3mod
             while (renderControl1.IsIdle && !CoreSettings.CoreSettings.Default.Genlock)
 #endif
             {
-                 if  (CoreSettings.CoreSettings.Default.Genlock) Thread.Sleep(50);
-
                 bool InputIsRunning = false;
-                if (_renderer.activeCamera == 1) InputIsRunning = capturePreview1.IsCapturing();
-                if (_renderer.activeCamera == 2) InputIsRunning = capturePreview2.IsCapturing();
+                if (Renderer.ActiveCamera == 1) InputIsRunning = capturePreview1.IsCapturing();
+                if (Renderer.ActiveCamera == 2) InputIsRunning = capturePreview2.IsCapturing();
                 if (!InputIsRunning || !CoreSettings.CoreSettings.Default.Genlock)
                 {
+                   if (CoreSettings.CoreSettings.Default.KeepTimingRight) Renderer.WaitForRightTiming();
                    Render();
-                   _renderer.timeTrack2("---" + " DirectRender");
                 }
             }
         }
-
-        private void FrameLoop()
-        {
-            if (!CoreSettings.CoreSettings.Default.Genlock) 
-            {
-                //lock (_renderer) { invoked = false; }
-                return;
-            }
-            Render();
-         //   lock (_renderer) { invoked = false; }
-        }
-
 
         private void FrameUpdate()
         {
             _fps.Update();
             var delta = _fps.LastFrameDelta;
 
-            _renderer.Update(delta);
+            Renderer.Update(delta);
             foreach(var tab in UiState.Tabs)
             {
                 if (tab.ActiveScene != null)
@@ -944,69 +933,86 @@ namespace open3mod
 
         private void RenderScreen()
         {
-          //  _renderer.timeTrack2("FR");
-           _renderer.DrawScreen(_ui.ActiveTab);
-           // Thread.Sleep(50);
-            _renderer.timeTrack("23-EndDraw");
-                renderControl1.CopyToOnScreenFramebuffer();
-                _renderer.timeTrack("24-Copied");
-                renderControl1.SwapBuffers();
-                _renderer.timeTrack("25-BuffSwitched");
-            ProcessKeys();
-            OpenVRInterface.ProcessAllButtons();
-            screenInvoked = false;
+            Renderer.syncTrack(false, "ScrStrt",8);
+            lock (Renderer.renderParameterLock)
+            {
+                OpenVRInterface.ProcessAllButtons();
+                ProcessKeys();
+            }
+
+            Renderer.DrawScreen(_ui.ActiveTab);
+            Renderer.timeTrack("50-EndDraw");
+            renderControl1.CopyToOnScreenFramebuffer();
+            Renderer.timeTrack("51-Copied");
+            renderControl1.SwapBuffers();
+            Renderer.timeTrack("52-BuffSwitched");
+            screenCalls--;
+            Renderer.syncTrack(false, "ScrEnd ", 9);
+            Renderer.lastRenderScreen = (int)Renderer._runsw.ElapsedMilliseconds;
+            Renderer.lastRenderScreen = (int)outputGenerator.GetTimeInFrame();
         }
 
-        bool screenInvoked = false;
+        int screenCalls = 0;
+
         private void Render()
         {
+            if (Renderer == null) return;
+            if (!Renderer.Initialized) return;
+            Renderer.syncTrack(false, "RendStrt", 4);
             FrameUpdate();
-            _renderer.DrawVideo(_ui.ActiveTab);
+            Renderer.syncTrack(false, "DrawStrt", 5);
+            Renderer.DrawVideo(_ui.ActiveTab);
+            Renderer.syncTrack(false, "Drawed", 5);
+            Renderer.lastVideoDrawed = (int)outputGenerator.GetTimeInFrame();
+            if (useIO) Renderer.OutputVideo(0);
+            Renderer.lastRenderVideo = (int)outputGenerator.GetTimeInFrame();
             MethodInvoker method = () => RenderScreen();
-            if (!screenInvoked)
-            {
-                if (InvokeRequired)
-                {
-                    screenInvoked = true;
-                    BeginInvoke(method);
-                }
-                else
-                {
-                    screenInvoked = true;
-                    method();
-                }
-            }
-            else
-            {
-             //   _renderer.timeTrack2("---" + "         Skipping Screen frame");
-            }
-            if (useIO) _renderer.OutputVideo(0);
-            doingRender = false;
+               if (screenCalls < 1)
+               {
+                   screenCalls++;
+                   if (InvokeRequired)
+                   {
+                       BeginInvoke(method);
+                   }
+                   else
+                   {
+                       method();
+                   }
+               }
+               else
+               {
+                Renderer.syncTrack(true,"SkippingScrFrame, SCalls:" + screenCalls.ToString()+ ",  RCalls:"+ renderCalls.ToString(), 5);
+               }
+            if (renderCalls > 0) renderCalls--;
+            Renderer.syncTrack(false,"RendEnd ", 6);
         }
 
-        bool doingRender = false;
-
-        public void callFrameLoop(int m_number, IntPtr videoData)
+        public void GetHardwareReferenceClock(out long hardwareTime, out long timeInFrame, out long ticksPerFrame)
         {
-            if (_renderer == null) return;
-            _renderer.uploadCameraBuffer(m_number, videoData);
-            if (!CoreSettings.CoreSettings.Default.Genlock) return;
-            if (m_number == _renderer.syncCamera)
-            {
-                if (doingRender)
-                {
-                    _renderer.timeTrack2("---" + " !!! Escaping render - doing Render not finished!!!" );
-                    return;
-                }
-                doingRender = true;
-                var th = new Thread(() => Render());
-                th.Start();
-                //  doingRender = false;
-                //    BeginInvoke(method);
-                // Render();
-            }
+            outputGenerator.GetHardwareReferenceClock(out hardwareTime, out timeInFrame, out ticksPerFrame);
+            MainWindow.mainTiming = ticksPerFrame;
+            return;
         }
 
+        int renderCalls = 0;
+        public void callRender()
+        {
+            Renderer.syncTrack(false, "CallRendStrt", 2);
+            if (!CoreSettings.CoreSettings.Default.Genlock) return;
+            if (renderCalls > 0)
+            {
+                Renderer.MissedRender(renderCalls);
+               // return; //we will not skip, but will stock renderCalls
+            }
+            renderCalls++;
+            Render();
+          /*  var th = new Thread(() => Render());
+            th.Name = "RenderCall" + renderCalls.ToString();
+            th.Priority = ThreadPriority.Highest;
+            th.Start();*/
+            Renderer.syncTrack(false, "CallRendEnd ", 7);
+            if (renderCalls > 0) renderCalls = 0; //Any succesfull render resets renderCalls counter, even when one or more frames fail before
+        }
 
         private void ToggleFps(object sender, EventArgs e)
         {
@@ -1105,34 +1111,31 @@ namespace open3mod
             fullViewToolStripMenuItem.CheckState = CheckState.Checked;
         }
 
-
-        private void ToggleTwoViewsHorizontal(object sender, EventArgs e)
+        private void ToggleTwoViewsA(object sender, EventArgs e)
         {
-            if (UiState.ActiveTab.ActiveViewMode == Tab.ViewMode.TwoHorizontal)
+            if (UiState.ActiveTab.ActiveViewMode == Tab.ViewMode.AAHorizontal)
             {
                 return;
             }
-            UiState.ActiveTab.ActiveViewMode = Tab.ViewMode.TwoHorizontal;
-
-            UncheckViewMode();
-            toolStripButtonTwoViewsB.CheckState = CheckState.Checked;
-            twoViewsBToolStripMenuItem.CheckState = CheckState.Checked;
-        }
-
-
-        private void ToggleTwoViews(object sender, EventArgs e)
-        {
-            if (UiState.ActiveTab.ActiveViewMode == Tab.ViewMode.TwoVertical)
-            {
-                return;
-            }
-            UiState.ActiveTab.ActiveViewMode = Tab.ViewMode.TwoVertical;
+            UiState.ActiveTab.ActiveViewMode = Tab.ViewMode.AAHorizontal;
 
             UncheckViewMode();
             toolStripButtonTwoViewsA.CheckState = CheckState.Checked;
             twoViewsAToolStripMenuItem.CheckState = CheckState.Checked;
         }
 
+        private void ToggleTwoViewsB(object sender, EventArgs e)
+        {
+            if (UiState.ActiveTab.ActiveViewMode == Tab.ViewMode.BBHorizontal)
+            {
+                return;
+            }
+            UiState.ActiveTab.ActiveViewMode = Tab.ViewMode.BBHorizontal;
+
+            UncheckViewMode();
+            toolStripButtonTwoViewsB.CheckState = CheckState.Checked;
+            twoViewsBToolStripMenuItem.CheckState = CheckState.Checked;
+        }
 
         private void ToggleFourViews(object sender, EventArgs e)
         {
@@ -1551,16 +1554,25 @@ namespace open3mod
             // UndoStack if an item is pushed such that Undo or Redo becomes possible.
             // This however introduces a nasty dependency from a (scene-specific) UndoStack
             // back to MainWindow which design-wise I want to avoid.
-            DelayExecution(new TimeSpan(0, 0, 0, 0, 100),
+            // ...so we enable buttons always. If there is nothing to redo/undo, they just do not react.
+            DelayExecution(new TimeSpan(0, 0, 0, 2, 100),
                 () => {
                     UpdateUndoRedoUiState();
-                    StartUndoRedoUiStatePollLoop();
+              //      StartUndoRedoUiStatePollLoop();
                 });
         }
 
         private void UpdateUndoRedoUiState()
         {
             var scene = UiState.ActiveTab.ActiveScene;
+
+            toolStripButtonUndo.Enabled = undoToolStripMenuItem.Enabled = true;
+            toolStripButtonUndo.ToolTipText = undoToolStripMenuItem.Text = "Undo";
+            toolStripButtonRedo.Enabled = redoToolStripMenuItem.Enabled = true;
+            toolStripButtonRedo.ToolTipText = redoToolStripMenuItem.Text = "Redo";
+            return;
+
+
             if (scene == null)
             {
                 toolStripButtonUndo.Enabled = undoToolStripMenuItem.Enabled = false;
@@ -1638,7 +1650,7 @@ namespace open3mod
                 }).Start();
                 */
                 //if we keep the same OpenGLContext We cannot start new thread,
-                    activeTab.ActiveScene = new Scene(activeTab.File, _renderer);
+                    activeTab.ActiveScene = new Scene(activeTab.File, Renderer);
                     BeginInvoke(new Action(() => PopulateInspector(activeTab)));
         }
 
@@ -1699,17 +1711,11 @@ namespace open3mod
         }
         [System.ComponentModel.Browsable(false)]
 
-        public void handleAudio(int m_number, IntPtr audioData)
-        {
-          //  Console.WriteLine("AudioFrame" + m_number.ToString());
-                if (m_number == _renderer.syncCamera) outputGenerator.addAudioFrame(audioData);
-        }
-
         private void setDynamicSourceToolStripMenuItem_Click(object senderExt, EventArgs e)
         {
             if (MainWindow.useIO)
             {
-                setDynamicSourceToolStripMenuItem.Text = "Loooking for Dynamic Sources";
+                setDynamicSourceToolStripMenuItem.Text = "Looking for Dynamic Sources";
                 _NDISources = MainWindow.FindNDISources();
                 if (_NDISources == null) return;
                 setDynamicSourceToolStripMenuItem.DropDownItems.Clear();
@@ -1719,7 +1725,11 @@ namespace open3mod
                     var tool = setDynamicSourceToolStripMenuItem.DropDownItems.Add(Name);
                     tool.Click += (sender, args) => selectDynamicSource(Name);
                 }
-                if (_NDISources.Count() > 0) setDynamicSourceToolStripMenuItem.Text = "Choose Dynamic Source";
+                if (_NDISources.Count() > 0)
+                {
+                    setDynamicSourceToolStripMenuItem.Text = "Choose Dynamic Source";
+                    if (CoreSettings.CoreSettings.Default.AutoConnectNDI) selectDynamicSource(CoreSettings.CoreSettings.Default.AutoSourceNDI);
+                }
                 else setDynamicSourceToolStripMenuItem.Text = "Find Dynamic Sources";
             }
         }
@@ -1732,7 +1742,7 @@ namespace open3mod
                 if (Name == _NDISources[i].Name)
                 {
                     _selectedNDISource = _NDISources[i];
-                    _renderer.ConnectNDI(_NDISources[i]);
+                    Renderer.ConnectNDI(_NDISources[i]);
                 }
             }
         }
@@ -1754,6 +1764,11 @@ namespace open3mod
                 CoreSettings.CoreSettings.Default.LocationOutput = outputGenerator.Location;
                 CoreSettings.CoreSettings.Default.Save();
             }
+        }
+
+        private void OnKeyPress(object sender, System.Windows.Forms.KeyPressEventArgs e)
+        {
+            e.Handled = true;
         }
     }
 

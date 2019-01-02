@@ -195,7 +195,6 @@ namespace open3mod
 
             initialized = true;
             RenderControl.GLError("AfterInit");
-
         }
 
         /// <summary>
@@ -448,7 +447,9 @@ namespace open3mod
 
         public static void GLError(string where)
         {
-            ErrorCode err = GL.GetError();
+            IGraphicsContext currentContext = GraphicsContext.CurrentContext;
+            ErrorCode err = ErrorCode.NoError;
+            if (currentContext != null) err = GL.GetError();
             if (err != ErrorCode.NoError) Console.WriteLine("Error reported at " + where + ":  " + err.ToString());
         }
     }

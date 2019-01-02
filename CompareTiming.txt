@@ -1,0 +1,29 @@
+
+0 - Draw back 0,0002
+10-RendStart 1,3423
+11-GSDrawed 1,877
+12-GSMoved 2,0275
+13-FGDrawed 2,7722
+14-FGMoved 2,8846
+15-Keyed 4,7665
+16 - Composite reread 5,0256
+10-OutStart 5,067
+20-DrawStart 5,0979
+21-DrawVPort 5,2323
+21-DrawVPort 5,4308
+11-BufMoved 6,0401
+
+
+0 - Draw back 0
+10-RendStart 3,6194
+11-GSDrawed 5,0087
+12-GSMoved 6,1903
+13-FGDrawed 7,5774
+14-FGMoved 8,504
+15-Keyed 14,1433
+16 - Composite reread 16,1402
+10-OutStart 16,1877
+20-DrawStart 17,1164
+11-BufMoved 18,02
+21-DrawVPort 18,8161
+

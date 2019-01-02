@@ -18,6 +18,25 @@ namespace open3mod
 {
     class NDIReceiver : IDisposable
     {
+        // a pointer to our unmanaged NDI receiver instance
+        IntPtr _recvInstancePtr = IntPtr.Zero;
+
+        // a thread to receive frames on so that the UI is still functional
+        Thread _receiveThread = null;
+
+        // a way to exit the thread safely
+        bool _exitThread = false;
+
+        // should we send video to Windows or not?
+        private bool _videoEnabled = true;
+
+        const int m_memSize = 2;
+        Bitmap[] m_videoMem = new Bitmap[m_memSize];
+        private int m_frameNo = -1;
+        private int m_lastFrameNo = -1;
+
+        private Bitmap _received;
+
         public NDIReceiver()
         {
             ReceiverLock = new Object();
@@ -182,7 +201,6 @@ namespace open3mod
         // the receive thread runs though this loop until told to exit
         void ReceiveThreadProc()
         {
-            int receivedFrames = 0;
             while (!_exitThread && _recvInstancePtr != IntPtr.Zero)
             {
                 // The descriptors
@@ -204,7 +222,6 @@ namespace open3mod
 
                     // Video data
                     case NDIlib.frame_type_e.frame_type_video:
-                        receivedFrames++;
                         // if not enabled, just discard
                         // this can also occasionally happen when changing sources
                         if (!_videoEnabled || videoFrame.p_data == IntPtr.Zero)
@@ -225,22 +242,33 @@ namespace open3mod
                         int stride = (int)videoFrame.line_stride_in_bytes;
                         int bufferSize = yres * stride;
                         Bitmap tempVideoFrame;
+                        Bitmap finalVideoFrame;
                         lock (ReceiverLock)
                         {
                             tempVideoFrame = new Bitmap(xres, yres, stride, System.Drawing.Imaging.PixelFormat.Format32bppPArgb, videoFrame.p_data);
-                            if (_received != null) _received.Dispose();
                             // apply texture resolution bias? (i.e. low quality textures)
                             if (GraphicsSettings.Default.NdiTexQualityBias > 0)
                             {
-                              _received = ApplyResolutionBias(tempVideoFrame, GraphicsSettings.Default.NdiTexQualityBias);
+                                finalVideoFrame = ApplyResolutionBias(tempVideoFrame, GraphicsSettings.Default.NdiTexQualityBias);
                             }
                             else
                             {
-                              _received = new Bitmap(tempVideoFrame);//we need a copy, so we can free videoframe
+                                finalVideoFrame = new Bitmap(tempVideoFrame);//we need a copy, so we can free videoframe
                             }
                             tempVideoFrame.Dispose();
-                        }
 
+                            if (m_videoMem[m_memSize - 1] != null)
+                            {
+                                m_videoMem[m_memSize - 1].Dispose();
+                                m_videoMem[m_memSize - 1] = null;
+                            }
+                            for (int i = m_memSize - 1; i > 0; i--)
+                            {
+                                m_videoMem[i] = m_videoMem[i - 1];
+                            }
+                            m_videoMem[0] = finalVideoFrame;
+                            m_frameNo++;
+                        }
                         NDIlib.recv_free_video_v2(_recvInstancePtr, ref videoFrame);
                         break;
 
@@ -267,6 +295,32 @@ namespace open3mod
         }
 
 
+        public Bitmap getNextFrame(out bool skipping)
+        {
+            Bitmap videoFrame;
+            skipping = false;
+            lock (ReceiverLock)
+            {
+                switch (m_frameNo - m_lastFrameNo)
+                {
+                    default:// we must skip/reuse frame as we have no new one, or simply any other frame;
+                        skipping = true;
+                        videoFrame = m_videoMem[0];
+                        m_lastFrameNo = m_frameNo;
+                        break;
+                    case 1:
+                        videoFrame = m_videoMem[0];
+                        m_lastFrameNo = m_frameNo;
+                        break;
+                    case 2:
+                        videoFrame = m_videoMem[1];
+                        m_lastFrameNo = m_frameNo - 1;
+                        break;
+                }
+            }
+            return videoFrame;
+        }
+
         private static Bitmap ApplyResolutionBias(Bitmap textureBitmap, int bias)
         {
             var width = textureBitmap.Width >> bias;
@@ -281,28 +335,6 @@ namespace open3mod
 
             return b;
         }
-
-        // a pointer to our unmanaged NDI receiver instance
-        IntPtr _recvInstancePtr = IntPtr.Zero;
-
-        // a thread to receive frames on so that the UI is still functional
-        Thread _receiveThread = null;
-
-        // a way to exit the thread safely
-        bool _exitThread = false;
-
-        // should we send video to Windows or not?
-        private bool _videoEnabled = true;
-
-        private Bitmap _received;
-        /// <summary>
-        /// Host window
-        /// </summary>
-        /*        public MainWindow Window
-                {
-                    get { return _mainWindow; }
-                    set { _mainWindow = Window; }
-                }*/
 
     }
 
