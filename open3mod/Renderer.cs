@@ -111,7 +111,7 @@ namespace open3mod
         private const int _ModernGLTextureSize = 16;
 
         public readonly object renderParameterLock = new object();
-        private readonly object renderTargetLock = new object();
+        public readonly object renderTargetLock = new object();
 
         private Matrix4 _lightRotation = Matrix4.Identity;
         private Shader _shaderChromakey;
@@ -252,6 +252,14 @@ namespace open3mod
             get { return _initialized; }
         }
 
+        public ICameraController cameraController(uint contIndex)
+        {
+            int camera = -1;
+            if (OpenVRInterface.displayOrder[1] == contIndex) camera = 1;//NX
+            if (OpenVRInterface.displayOrder[2] == contIndex) camera = 2;//Z5
+            if (camera == -1) return null;
+            return _cameraController[camera]; 
+        }
 
         /// <summary>
         /// Construct a renderer given a valid and fully loaded MainWindow
@@ -554,20 +562,6 @@ namespace open3mod
             if (isError) label = " _______________________ ERROR: ";
             if (isError)
                 Console.WriteLine(usecs.ToString().PadLeft(4)+" "+ inFrame+label + ID.PadRight(20-order));
-        }
-
-        private void performBufferCopy(ref IDeckLinkMutableVideoFrame uploadFrame, ref IDeckLinkMutableVideoFrame uploadFrameOlder, IntPtr videoData)
-        {
-            {
-                uploadFrame.GetBytes(out IntPtr vF);
-                uint size = (uint)(uploadFrame.GetRowBytes() * uploadFrame.GetHeight());
-                uploadFrameOlder.GetBytes(out IntPtr vFO);
-                lock (uploadFrameOlder)
-                {
-                    MainWindow.CopyMemory(vFO, vF, size);
-                }
-                MainWindow.CopyMemory(vF, videoData, size);
-            }
         }
 
         /// <summary>
@@ -1009,7 +1003,7 @@ namespace open3mod
             {
                 renderControl.SetRenderTarget(RenderControl.RenderTarget.ScreenCompat);//core should work too, we are just cleaning here
                 GL.ActiveTexture(TextureUnit.Texture0);
-                GL.DepthMask(true);
+                GL.DepthMask(true); //ENABLED write into depth buffer
                 GL.ClearColor(BackgroundColor);
                 GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
@@ -1414,6 +1408,13 @@ namespace open3mod
             _textOverlay.Resize();
         }
 
+        private int CameraToDraw(Tab.ViewIndex index)
+        {
+            int drawedCamera = _activeCamera;
+            if ((index == Tab.ViewIndex.Index0) || (index == Tab.ViewIndex.Index1)) drawedCamera = 1;
+            if ((index == Tab.ViewIndex.Index2) || (index == Tab.ViewIndex.Index3)) drawedCamera = 2;
+            return drawedCamera;
+        }
 
         /// <summary>
         /// Draw a scene to a viewport using an ICameraController to specify the camera.
@@ -1439,12 +1440,10 @@ namespace open3mod
                 GL.Viewport((int)(xs * w), (int)(ys * h), vw, vh);
                 if ((view.GetScenePartMode() > ScenePartMode.All)&& renderIO)
                 {
-                    int drawedCamera = _activeCamera;
-                    if ((index == Tab.ViewIndex.Index0) || (index == Tab.ViewIndex.Index1)) drawedCamera = 1;
-                    if ((index == Tab.ViewIndex.Index2) || (index == Tab.ViewIndex.Index3)) drawedCamera = 2;
+                    int drawedCamera = CameraToDraw(index);
                     renderControl.SetRenderTarget(RenderControl.RenderTarget.ScreenCore);
                     DrawChromakey(view, true, drawedCamera, 0);
-                    if ((OpenVRInterface.EVRerror == EVRInitError.None) && (MainWindow.UiState.ShowVRModels)) DrawVRModels(renderingController);
+                    if ((OpenVRInterface.EVRerror == EVRInitError.None) && (MainWindow.UiState.ShowVRModels)) DrawVRModels(_cameraController[drawedCamera]);
                 }
                 else
                 {
@@ -1588,6 +1587,10 @@ namespace open3mod
                     {
                         case ETrackedDeviceClass.HMD:
                             if ((view.GetCameraMode() != CameraMode.HMD) && (_hmd != null)) DrawScene(_hmd, _tracker, toVideo, true); //Do not draw when you see it in front of view
+                            modelPosition = OpenVRInterface.trackerToCamera[i] * OpenVRInterface.trackedPositions[i];
+                            modelView = modelPosition * view.GetViewNoOffset();
+                            _tracker.SetView(modelView);
+                            if (_camera != null) DrawScene(_camera, _tracker, toVideo, true);
                             break;
                         case ETrackedDeviceClass.Controller:
                             if ((OpenVRInterface.displayOrder[1] == i) && (view.GetCameraMode() == CameraMode.Cont1)) break;//Do not draw when you see it in front of view
@@ -1781,6 +1784,34 @@ namespace open3mod
         }
 
 
+        private int FOVtoZoom(float fov, int activeCamera)
+        {
+            float zoom;
+            switch (activeCamera)
+            {
+                case 0:
+                    zoom = (77 - fov) / 25 * 23;
+                    break;
+                case 1: 
+                    zoom = (77 - fov) / 25 * 23;
+                    break;
+                case 2: 
+                    zoom = (82 - fov) / 25 * 23;
+                    break;
+                default: return 0;
+                    /*zoom nx 100
+        00 = fov 77
+        15 = 60
+        23 = 52
+
+        z5
+        zoom 39 = 39*/
+            }
+
+            return (int)zoom;
+
+        }
+
         private void DrawFpsFov(bool enable)
         {
             float DeltaUpdate = 0.3333f;
@@ -1829,20 +1860,30 @@ namespace open3mod
                 var y1 = viewport.Bounds.Y;
                 var x2 = viewport.Bounds.Z;
                 var y2 = viewport.Bounds.W;
-                cam = MainWindow.UiState.ActiveTab.ActiveCameraControllerForView(indexFOV);
+
+                    cam = MainWindow.UiState.ActiveTab.ActiveCameraControllerForView(indexFOV);
                     var rectFOV = new RectangleF(x1 * RenderResolution.Width + 10,
                         (1 - y2) * RenderResolution.Height,
                         (x2 - x1) * RenderResolution.Width + 5,
                         (y2 - y1) * RenderResolution.Height - 7);
                 var formatFOV = new StringFormat { LineAlignment = StringAlignment.Far, Alignment = StringAlignment.Near };
-                int valueFOV = (int)(cam.GetFOV() * 360 / Math.PI);
-                    if ((cam.GetScenePartMode() == ScenePartMode.Camera)|| (cam.GetScenePartMode() == ScenePartMode.Composite))
+                    float valueFOV = (int)(cam.GetFOV() * 360 / Math.PI);
+                    string zoomXfov = "FOV: " + ((int)valueFOV).ToString();
+                    if (cam.GetScenePartMode() == ScenePartMode.Composite)
                     {
-                        valueFOV = (int)(renderingController.GetFOV() * 360 / Math.PI);
+                        valueFOV = (float)(renderingController.GetFOV() * 360 / Math.PI);
+                        zoomXfov = "ZOOM: " + FOVtoZoom(valueFOV, _activeCamera).ToString();
                     }
-                string currStreamName = "";
+                    string currStreamName = "";
                 //    if ((int)indexFOV < streamName.Count()) { currStreamName = streamName[((int)indexFOV)]; } else currStreamName = "";
                  string strScenePartMode = cam.GetScenePartMode().ToString();
+                    if (cam.GetScenePartMode() >= ScenePartMode.Camera) // Camera, CameraCancelColor, Keying
+                    {
+                        int cameraToDraw = CameraToDraw(indexFOV);
+                        strScenePartMode = strScenePartMode + " " + _cameraController[cameraToDraw].GetCameraName();
+                        valueFOV = (float)(_cameraController[cameraToDraw].GetFOV() * 360 / Math.PI);
+                        zoomXfov = "ZOOM: " + FOVtoZoom(valueFOV, cameraToDraw).ToString();
+                    }
                     //Tab.ViewIndex index
                     switch (cam.GetCameraMode())
                     {
@@ -1851,18 +1892,18 @@ namespace open3mod
                         case CameraMode.Y:
                         case CameraMode.Z:
                         case CameraMode.Orbit:
-                            DrawShadowedString(graphics, currStreamName + " FOV: " + valueFOV.ToString() + " | "+strScenePartMode, MainWindow.UiState.DefaultFont16, rectFOV, Color.Black, Color.FromArgb(10, Color.White), formatFOV);
+                            DrawShadowedString(graphics, currStreamName + zoomXfov + " | " +strScenePartMode, MainWindow.UiState.DefaultFont16, rectFOV, Color.Black, Color.FromArgb(10, Color.White), formatFOV);
                             break;
                         case CameraMode.HMD:
                         case CameraMode.Cont1:
                         case CameraMode.Cont2:
                             if (OpenVRInterface.EVRerror == EVRInitError.None)
                             {
-                                DrawShadowedString(graphics, currStreamName + " FOV: " + valueFOV.ToString() + " | " + strScenePartMode, MainWindow.UiState.DefaultFont16, rectFOV, Color.Black, Color.FromArgb(10, Color.White), formatFOV);
+                                DrawShadowedString(graphics, currStreamName + zoomXfov + " | " + strScenePartMode, MainWindow.UiState.DefaultFont16, rectFOV, Color.Black, Color.FromArgb(10, Color.White), formatFOV);
                             }
                             else
                             {
-                                DrawShadowedString(graphics, currStreamName + " Tracking error  | " +  "FOV: " + valueFOV.ToString() + " | " + strScenePartMode, MainWindow.UiState.DefaultFont16, rectFOV, Color.Red, Color.FromArgb(10, Color.White), formatFOV); 
+                                DrawShadowedString(graphics, currStreamName + " Tracking error  | " + zoomXfov+ " | " + strScenePartMode, MainWindow.UiState.DefaultFont16, rectFOV, Color.Red, Color.FromArgb(10, Color.White), formatFOV); 
                             }
 
 

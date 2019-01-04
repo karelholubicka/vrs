@@ -16,6 +16,8 @@ namespace open3mod
         public static EVRInitError EVRerror = EVRInitError.None;
         public static float fPredictedSecondsToPhotonsFromNow = 0f;
         public static Matrix4 viewOffset = Matrix4.Identity;
+        public static Matrix4 viewOffsetShift = Matrix4.Identity;
+        public static Matrix4 hmdRefPos = Matrix4.Identity;
         public static float trackerAboveLens = 0.15f; //height of controller above camera lens center
         public static float trackerBeforeLens = 0.05f; //distance between controller and lens optical cross
         public static float trackerAsideOfLens = 0.013f; //distance between controllers and lens centers
@@ -35,7 +37,7 @@ namespace open3mod
         //smer Z se nastavi resetem, po montáži se podle SN nebo jine fix identifikace priradi correct i shiftmatrixy pri loadingu
         private static int countOffsetRequests = 0;
         private static int neededOffsetRequests = 50;
-        private static float maxAdvance = 0.08f;
+        public static float maxAdvance = 0.08f;
 
         public static Matrix4 OpenVRMatrixToOpenTKMatrix(HmdMatrix34_t matrix)
         {
@@ -206,13 +208,22 @@ namespace open3mod
                         lensToGround[i] = Matrix4.CreateTranslation(0, -lensAboveGround , 0);
                         trackerToCamera[i] = Matrix4.CreateTranslation(-trackerAsideOfLens, -trackerAboveLens, trackerBeforeLens); //first we want it NOT to be zero
                         trackerToCamera[i] = Matrix4.CreateRotationX(trackerOffXAxis) * trackerToCamera[i]; //camera moved first from controller, then rotated
-                        //trackerToCamera[i] = trackerToCamera[i]* Matrix4.CreateRotationZ(0.5f); //camera turned first, then moved
+                           //trackerToCamera[i] = trackerToCamera[i]* Matrix4.CreateRotationZ(0.5f); //camera turned first, then moved
+
+                        viewOffsetShift = lensToGround[i] * trackerToCamera[i]; //this value should be saved with viewOffset
+
 
 
                     }
                     if (deviceClasses[i] == ETrackedDeviceClass.HMD)
                     {
                         if (displayOrder[0] > OpenVR.k_unMaxTrackedDeviceCount) displayOrder[0] = i;
+                        //OpenVRInterface.hmdReference   // načíst z Coresettings;
+                        
+                        lensToGround[i] = Matrix4.CreateTranslation(0, 0, 0);
+                        trackerToCamera[i] = Matrix4.CreateTranslation(-trackerAsideOfLens, -trackerAboveLens, trackerBeforeLens); //first we want it NOT to be zero
+                        trackerToCamera[i] = Matrix4.CreateRotationX(trackerOffXAxis) * trackerToCamera[i]; //camera moved first from HMD, then rotated
+
                     }
                 }
             }
@@ -220,26 +231,45 @@ namespace open3mod
             if (displayOrder[1] > OpenVR.k_unMaxTrackedDeviceCount) displayOrder[1] = 0;
             if (displayOrder[2] > OpenVR.k_unMaxTrackedDeviceCount) displayOrder[2] = 0;
 
-            Matrix4 viewOffsetTest;
-            bool valid = StringToMatrix4(CoreSettings.CoreSettings.Default.ViewOffset, out viewOffsetTest, out string dummyString);
-            if (valid) viewOffset = viewOffsetTest;
+            Matrix4 savedSettingsTest;
+            bool valid = StringToMatrix4(CoreSettings.CoreSettings.Default.ViewOffset, out savedSettingsTest, out string dummyString);
+            if (valid) viewOffset = savedSettingsTest;
+            valid = StringToMatrix4(CoreSettings.CoreSettings.Default.ViewOffsetShift, out savedSettingsTest, out dummyString);
+            if (valid) viewOffsetShift = savedSettingsTest;
+            valid = StringToMatrix4(CoreSettings.CoreSettings.Default.HMDRefPos, out savedSettingsTest, out dummyString);
+            if (valid) hmdRefPos = savedSettingsTest;
 
         }
 
         public static Matrix4 GetViewFromPosition(Matrix4 position)
         {
-            //order: 1.rotate 2.translate: camera rotates
-            //order: 1.translate 2.rotate : model rotates
-            var transMatrix = new Matrix4();
-            var orientMatrix = new Matrix4();
-            transMatrix = Matrix4.Invert(position);
-            //isolate inverted translation
-            transMatrix = Matrix4.CreateTranslation(-position.M41, -position.M42, -position.M43);
-            //subtract translation
-            orientMatrix = position * transMatrix;
-            orientMatrix.Transpose();
-            //and add translation back
-            return transMatrix * orientMatrix;
+            return Matrix4.Invert(position);
+        }
+
+        public static void SaveHMDReference()
+        {
+            uint contIndex = displayOrder[0];
+            hmdRefPos = viewOffset * Matrix4.Invert(viewOffsetShift * trackedPositions[contIndex]) ;
+
+            string saveStr = "HMDRefPos" + MainWindow.recentDataSeparator[0] + Matrix4ToString(hmdRefPos);
+            CoreSettings.CoreSettings.Default.HMDRefPos = saveStr;
+            CoreSettings.CoreSettings.Default.Save();
+        }
+
+        public static void ApplyHMDReference()
+        {
+            uint contIndex = displayOrder[0];
+            //   hmdRefPos = Matrix4.CreateTranslation(-0.5,-0.5,-0.5)// uhne doleva, dolů, dozadu
+            viewOffset = hmdRefPos * viewOffsetShift * trackedPositions[contIndex];
+            string saveStr = "ViewOffset" + MainWindow.recentDataSeparator[0] + Matrix4ToString(viewOffset);
+            CoreSettings.CoreSettings.Default.ViewOffset = saveStr;
+            CoreSettings.CoreSettings.Default.Save();
+        }
+
+        public static void SetCam0Offset(Matrix4 cam0Offset)
+        {
+            trackerToCamera[displayOrder[0]] = cam0Offset;
+            SaveTrackerToCamera(displayOrder[0]);
         }
 
         public static void ScanPositions(long frameDelay)// frame delay positive values subtract from seconds to photons
@@ -271,7 +301,7 @@ namespace open3mod
             }
         }
 
-        public static void RescanAllPositions()
+        public static void ScanAllPositions() //including non-active
         {
             var vrMatrix = new HmdMatrix34_t();
             TrackedDevicePose_t[] pTrackedDevicePoseArray = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
@@ -313,19 +343,19 @@ namespace open3mod
             }
             return angles;
         }
-        public static void ProcessAllButtons()
+        public static void ProcessAllButtons(Renderer renderer)
         {
             if (EVRerror != EVRInitError.None) return;
             for (uint i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; i++)
             {
                 if (deviceClasses[i] == ETrackedDeviceClass.Controller)
                 {
-                    ProcessButtons(i);//Todo: distinguish between controllers somehow?
+                    ProcessButtons(i, renderer);//Todo: distinguish between controllers somehow?
                 }
             }
         }
 
-        public static void ProcessButtons(uint contIndex)
+        public static void ProcessButtons(uint contIndex, Renderer renderer)
         {
             // 4294967296 pad
             // 8589934592 shoot (even just partially)
@@ -341,16 +371,22 @@ namespace open3mod
             {
 
                 {
-                    float step = 1.001f;
+                    var cam = renderer.cameraController(contIndex);
+                    float _fovy = cam.GetFOV();
+                    float step = 1.005f;
                     /*    if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y > 0.5f))
                         if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y < -0.5f))*/
-                    if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y > 0.5f)) fPredictedSecondsToPhotonsFromNow = fPredictedSecondsToPhotonsFromNow + (step - 1) / 1f;
-                    if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y < -0.5f)) fPredictedSecondsToPhotonsFromNow = fPredictedSecondsToPhotonsFromNow - (step - 1) / 1f;
-                    if (fPredictedSecondsToPhotonsFromNow < -maxAdvance) fPredictedSecondsToPhotonsFromNow = -maxAdvance;
-                    if (fPredictedSecondsToPhotonsFromNow > maxAdvance) fPredictedSecondsToPhotonsFromNow = maxAdvance;
+                    if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y > 0.5f)) _fovy = _fovy * step; ;
+                    if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y < -0.5f)) _fovy = _fovy / step; ;
                     CoreSettings.CoreSettings.Default.SecondsToPhotons = fPredictedSecondsToPhotonsFromNow;
-                    // if (_fovy > MathHelper.PiOver2) _fovy = MathHelper.PiOver2;
-                    // if (_fovy < MathHelper.PiOver6 / 2) _fovy = MathHelper.PiOver6 / 2;
+                    if (_fovy > MathHelper.PiOver2) _fovy = MathHelper.PiOver2;
+                    if (_fovy < MathHelper.PiOver6 / 2) _fovy = MathHelper.PiOver6 / 2;
+                    ScenePartMode spm = cam.GetScenePartMode();
+                    CameraMode cm = cam.GetCameraMode();
+                    lock (renderer.renderParameterLock)
+                    {
+                        cam.SetParam(_fovy, spm, cm);
+                    }
                 }
             }
 
@@ -359,13 +395,15 @@ namespace open3mod
                 // reset offset to camera, keeps offset cameraToground 
                 if ((buttons & (ulong)EVRButtonId.k_EButton_DPad_Up) == (ulong)EVRButtonId.k_EButton_DPad_Up)
                 {
-                    var shiftedFromGround = new Matrix4();
-                    shiftedFromGround = lensToGround[contIndex] * trackerToCamera[contIndex] * trackedPositions[contIndex];
-                    viewOffset = Matrix4.Invert(GetViewFromPosition(shiftedFromGround));
+                    viewOffsetShift = lensToGround[contIndex] * trackerToCamera[contIndex];
+                    viewOffset = viewOffsetShift * trackedPositions[contIndex];
+                   // viewOffset = Matrix4.Invert(GetViewFromPosition(viewOffsetPosition));
                     string saveStr = "ViewOffset" + MainWindow.recentDataSeparator[0] + Matrix4ToString(viewOffset);
                     CoreSettings.CoreSettings.Default.ViewOffset = saveStr;
+                    saveStr = "ViewOffsetShift" + MainWindow.recentDataSeparator[0] + Matrix4ToString(viewOffset); //need to save because may be different for different controllers
+                    CoreSettings.CoreSettings.Default.ViewOffsetShift = saveStr;
                     CoreSettings.CoreSettings.Default.Save();
-                }
+                                    }
             }
         }
 
@@ -424,6 +462,35 @@ namespace open3mod
           }
       }
       else*/
+
+        public static void SaveTrackerToCamera(uint contIndex)
+        {
+            //save trackerToCamera for this index
+            string saveStr = deviceSNs[contIndex] + MainWindow.recentDataSeparator[0] + Matrix4ToString(trackerToCamera[contIndex]);
+            var saved = CoreSettings.CoreSettings.Default.TrackerToCamera;
+            if (saved == null)
+            {
+                saved = CoreSettings.CoreSettings.Default.TrackerToCamera = new StringCollection();
+                CoreSettings.CoreSettings.Default.Save();
+            }
+            string[] oldData;
+            int i = 0;
+            if (saved != null)
+            {
+                foreach (var s in saved)
+                {
+                    oldData = s.Split(MainWindow.recentDataSeparator, StringSplitOptions.None);
+                    if (oldData[0] == deviceSNs[contIndex])
+                    {
+                        saved.Remove(s);
+                        break;
+                    }
+                    ++i;
+                }
+                saved.Insert(0, saveStr);
+            }
+            CoreSettings.CoreSettings.Default.Save();
+        }
 
 
         public static string vector4ToString(Vector4 src)

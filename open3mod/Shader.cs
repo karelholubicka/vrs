@@ -290,7 +290,7 @@ namespace open3mod
 
             if (parametry == 1)
             {
-                GL.UseProgram(_program);// Using this program screwes all, even classic GL
+                GL.UseProgram(_program);
                 _programBound = _program;
             }
 

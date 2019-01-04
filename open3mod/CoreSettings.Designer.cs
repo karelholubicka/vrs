@@ -725,5 +725,29 @@ namespace CoreSettings {
                 this["AutoSourceNDI"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string HMDRefPos {
+            get {
+                return ((string)(this["HMDRefPos"]));
+            }
+            set {
+                this["HMDRefPos"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string ViewOffsetShift {
+            get {
+                return ((string)(this["ViewOffsetShift"]));
+            }
+            set {
+                this["ViewOffsetShift"] = value;
+            }
+        }
     }
 }

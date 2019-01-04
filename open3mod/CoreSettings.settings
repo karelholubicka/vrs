@@ -179,5 +179,11 @@
     <Setting Name="AutoSourceNDI" Type="System.String" Scope="User">
       <Value Profile="(Default)">EDIT (VLC)</Value>
     </Setting>
+    <Setting Name="HMDRefPos" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="ViewOffsetShift" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
   </Settings>
 </SettingsFile>

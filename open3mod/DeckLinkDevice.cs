@@ -241,6 +241,7 @@ namespace open3mod
 
         void IDeckLinkInputCallback.VideoInputFrameArrived(IDeckLinkVideoInputFrame videoFrame, IDeckLinkAudioInputPacket audioPacket)
         {
+          //  Thread.CurrentThread.Name = "FrameArrived";
             IntPtr audioData = (IntPtr)0;
             IntPtr videoData = (IntPtr)0;
             m_mainWindow.GetHardwareReferenceClock(out long hardwareTime, out long timeInFrame, out long ticksPerFrame);
@@ -523,6 +524,7 @@ namespace open3mod
         void IDeckLinkVideoOutputCallback.ScheduledFrameCompleted(IDeckLinkVideoFrame completedFrame, _BMDOutputFrameCompletionResult result)
         {
             Thread.CurrentThread.Priority = ThreadPriority.Highest;
+       //     Thread.CurrentThread.Name = "Scheduling+RenderingLoop";
             // m_deckLinkOutput.GetFrameCompletionReferenceTimestamp(completedFrame, 1000, out long timestamp);
             // When a video frame has been completed, generate event to schedule next frame
             VideoFrameCompleted(false);

@@ -64,6 +64,21 @@ namespace open3mod
             _textureCoordinate.W = 0;
         }
 
+        public void SetNormal(Vector3 normal)
+        {
+            _normal.X = normal.X;
+            _normal.Y = normal.Y;
+            _normal.Z = normal.Z;
+            _normal.W = 1;
+        }
+
+        public void SetPosition(Vector3 position)
+        {
+            _position.X = position.X;
+            _position.Y = position.Y;
+            _position.Z = position.Z;
+            _position.W = 1;
+        }
         public void SetColor(Color4D color)
         {
             _color = color;
@@ -141,6 +156,23 @@ namespace open3mod
             RenderControl.GLError("EndModernRender");
         }
 
+        public void SetFloatVec4VertexArrayAttr(int vertexArray, int attrIndex)
+        {
+            int attrSize = 4; //vec4
+            int attrOffset = attrIndex * attrSize * sizeof(float); //attribute contains 4 float numbers
+
+            GL.VertexArrayAttribBinding(vertexArray, attrIndex, 0);
+            GL.EnableVertexArrayAttrib(vertexArray, attrIndex);
+            GL.VertexArrayAttribFormat(
+                vertexArray,
+                attrIndex,                      // attribute index, from the shader location 
+                attrSize,                      // size of attribute, vec4
+                VertexAttribType.Float, // contains floats
+                false,                  // does not need to be normalized as it is already, floats ignore this flag anyway
+                attrOffset);                     // relative offset after a vec4
+        }
+
+
         /// <summary>
         /// Currently only called during construction, this method uploads the input mesh (
         /// the RenderMesh instance is bound to) to a VBO.
@@ -192,65 +224,12 @@ namespace open3mod
             VerifyBufferSize(byteCount);
             GL.BindBuffer(BufferTarget.ArrayBuffer, vboToFill.VertexBufferId);
 
-            GL.VertexArrayAttribBinding(vboToFill.VertexArray, 0, 0);
-            GL.EnableVertexArrayAttrib(vboToFill.VertexArray, 0);
-            GL.VertexArrayAttribFormat(
-                vboToFill.VertexArray,
-                0,                      // attribute index, from the shader location = 0 : Vector4 _position;
-                4,                      // size of attribute, vec4
-                VertexAttribType.Float, // contains floats
-                false,                  // does not need to be normalized as it is already, floats ignore this flag anyway
-                0);                     // relative offsetm first item
-
-            GL.VertexArrayAttribBinding(vboToFill.VertexArray, 1, 0);
-            GL.EnableVertexArrayAttrib(vboToFill.VertexArray, 1);
-            GL.VertexArrayAttribFormat(
-                vboToFill.VertexArray,
-                1,                      // attribute index, from the shader location = 1 : Vector4 _normal
-                4,                      // size of attribute, vec4
-                VertexAttribType.Float, // contains floats
-                false,                  // does not need to be normalized as it is already, floats ignore this flag anyway
-                16);                     // relative offset after a vec4
-
-            GL.VertexArrayAttribBinding(vboToFill.VertexArray, 2, 0);
-            GL.EnableVertexArrayAttrib(vboToFill.VertexArray, 2);
-            GL.VertexArrayAttribFormat(
-                vboToFill.VertexArray,
-                2,                      // attribute index, from the shader location = 2 : Color4D _color;
-                4,                      // size of attribute, vec4
-                VertexAttribType.Float, // contains floats
-                false,                  // does not need to be normalized as it is already, floats ignore this flag anyway
-                32);                     // relative offset after a vec4
-
-            GL.VertexArrayAttribBinding(vboToFill.VertexArray, 3, 0);
-            GL.EnableVertexArrayAttrib(vboToFill.VertexArray, 3);
-            GL.VertexArrayAttribFormat(
-                vboToFill.VertexArray,
-                3,                      // attribute index, from the shader location = 3 : Vector4 _textureCoordinate;
-                4,                      // size of attribute, vec4
-                VertexAttribType.Float, // contains floats
-                false,                  // does not need to be normalized as it is already, floats ignore this flag anyway
-                48);                     // relative offset after a vec4
-
-            GL.VertexArrayAttribBinding(vboToFill.VertexArray, 4, 0);
-            GL.EnableVertexArrayAttrib(vboToFill.VertexArray, 4);
-            GL.VertexArrayAttribFormat(
-                vboToFill.VertexArray,
-                4,                      // attribute index, from the shader location = 4 : Vector4 _tangent;
-                4,                      // size of attribute, vec4
-                VertexAttribType.Float, // contains floats
-                false,                  // does not need to be normalized as it is already, floats ignore this flag anyway
-                64);                     // relative offset after a vec4
-
-            GL.VertexArrayAttribBinding(vboToFill.VertexArray, 5, 0);
-            GL.EnableVertexArrayAttrib(vboToFill.VertexArray, 5);
-            GL.VertexArrayAttribFormat(
-                vboToFill.VertexArray,
-                5,                      // attribute index, from the shader location = 4 : Vector4 _bitangent;
-                4,                      // size of attribute, vec4
-                VertexAttribType.Float, // contains floats
-                false,                  // does not need to be normalized as it is already, floats ignore this flag anyway
-                80);                     // relative offset after a vec4
+            SetFloatVec4VertexArrayAttr(vboToFill.VertexArray, 0); //location = 0 : Vector4 _position;
+            SetFloatVec4VertexArrayAttr(vboToFill.VertexArray, 1); //location = 1 : Vector4 _normal
+            SetFloatVec4VertexArrayAttr(vboToFill.VertexArray, 2); //location = 2 : Color4D _color;
+            SetFloatVec4VertexArrayAttr(vboToFill.VertexArray, 3); //location = 3 : Vector4 _textureCoordinate;
+            SetFloatVec4VertexArrayAttr(vboToFill.VertexArray, 4); //location = 4 : Vector4 _tangent;
+            SetFloatVec4VertexArrayAttr(vboToFill.VertexArray, 5); //location = 5 : Vector4 _bitangent;
 
             GL.VertexArrayVertexBuffer(vboToFill.VertexArray, 0, vboToFill.VertexBufferId, IntPtr.Zero, FullVertex.Size);
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);

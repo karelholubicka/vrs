@@ -299,8 +299,10 @@ namespace open3mod
                 DelayExecution(TimeSpan.FromMilliseconds(delay),  GenlockOn);
                 DelayExecution(TimeSpan.FromMilliseconds(delay + 100), capturePreview1.StartCapture);
                 DelayExecution(TimeSpan.FromMilliseconds(delay + 200), capturePreview2.StartCapture);
-                DelayExecution(TimeSpan.FromMilliseconds(delay + 2000), SearchDynamicSources);//we need NDI sources to be already discovered
-                DelayExecution(TimeSpan.FromMilliseconds(delay + 2500), Renderer.SyncTrackEnable);
+                DelayExecution(TimeSpan.FromMilliseconds(delay + 300), SearchDynamicSources);//we need NDI sources to be already discovered
+                DelayExecution(TimeSpan.FromMilliseconds(delay + 1000), ShowSettings);
+                DelayExecution(TimeSpan.FromMilliseconds(delay + 5000), OpenVRInterface.SetupDevices);//rescan
+                DelayExecution(TimeSpan.FromMilliseconds(delay + 2500), Renderer.SyncTrackEnable);//error logging
             }
         }
 
@@ -314,6 +316,12 @@ namespace open3mod
         {
             setDynamicSourceToolStripMenuItem_Click(this, null);
         }
+
+        private void ShowSettings()
+        {
+            OnShowSettings(this, null);
+        }
+
 
         private static void MaybeShowTipOfTheDay()
         {
@@ -838,6 +846,7 @@ namespace open3mod
 
         private void OnGlLoad(object sender, EventArgs e)
         {
+            // needs lock of   lock (Renderer.renderTargetLock)??
             if (_renderer != null)
             {
                 _renderer.Dispose();
@@ -862,7 +871,7 @@ namespace open3mod
             {
                 return;
             }
-            lock (_renderer)
+            lock (_renderer)  
             {
                 _renderer.Resize();
             }
@@ -936,7 +945,7 @@ namespace open3mod
             Renderer.syncTrack(false, "ScrStrt",8);
             lock (Renderer.renderParameterLock)
             {
-                OpenVRInterface.ProcessAllButtons();
+                OpenVRInterface.ProcessAllButtons(Renderer);
                 ProcessKeys();
             }
 
@@ -1279,7 +1288,7 @@ namespace open3mod
         {
             if (_settings == null || _settings.IsDisposed)
             {
-                _settings = new SettingsDialog {Main = this};
+                _settings = new SettingsDialog {MainWindow = this};
             }
 
             if(!_settings.Visible)
@@ -1642,16 +1651,19 @@ namespace open3mod
             {
                 return;
             }
-            activeTab.ActiveScene = null;
-/*            new Thread(
-                () => {
-                    activeTab.ActiveScene = new Scene(activeTab.File, _renderer);
-                    BeginInvoke(new Action(() => PopulateInspector(activeTab)));
-                }).Start();
-                */
+            lock (Renderer.renderTargetLock) //deadlocking??
+            {
+                activeTab.ActiveScene = null;
+                /*            new Thread(
+                                () => {
+                                    activeTab.ActiveScene = new Scene(activeTab.File, _renderer);
+                                    BeginInvoke(new Action(() => PopulateInspector(activeTab)));
+                                }).Start();
+                                */
                 //if we keep the same OpenGLContext We cannot start new thread,
-                    activeTab.ActiveScene = new Scene(activeTab.File, Renderer);
-                    BeginInvoke(new Action(() => PopulateInspector(activeTab)));
+                activeTab.ActiveScene = new Scene(activeTab.File, Renderer);
+                BeginInvoke(new Action(() => PopulateInspector(activeTab)));
+            }
         }
 
         private void OnGenerateNormals(object sender, EventArgs e)

@@ -46,7 +46,6 @@ namespace open3mod
         private bool _mouseDown;
         private bool _mouseRightDown;
 
-
         private void ProcessKeys() //locked already before called
         {
             var cam = UiState.ActiveTab.ActiveCameraController;
@@ -416,7 +415,7 @@ namespace open3mod
         {
             lock (Renderer.renderParameterLock)
             {
-
+                float step = 1.001f;
                 int index = tabControl1.SelectedIndex;
             switch (e.KeyData)
             {
@@ -493,7 +492,7 @@ namespace open3mod
 
                 case Keys.E:
                     // switch backend
-                    if (_settings == null || _settings.IsDisposed) _settings = new SettingsDialog { Main = this };
+                    if (_settings == null || _settings.IsDisposed) _settings = new SettingsDialog { MainWindow = this };
                     _settings.ChangeRenderingBackend();
                     break;
                 case Keys.V:
@@ -544,6 +543,15 @@ namespace open3mod
                         break;
                     case Keys.NumPad2:
                         Renderer.SwitchToCamera(2);
+                        break;
+                    case Keys.U:
+                        OpenVRInterface.fPredictedSecondsToPhotonsFromNow = OpenVRInterface.fPredictedSecondsToPhotonsFromNow - (step - 1) / 1f;
+                        if (OpenVRInterface.fPredictedSecondsToPhotonsFromNow < -OpenVRInterface.maxAdvance) OpenVRInterface.fPredictedSecondsToPhotonsFromNow = -OpenVRInterface.maxAdvance;
+                        CoreSettings.CoreSettings.Default.SecondsToPhotons = OpenVRInterface.fPredictedSecondsToPhotonsFromNow;
+                        break;
+                    case Keys.I:
+                        OpenVRInterface.fPredictedSecondsToPhotonsFromNow = OpenVRInterface.fPredictedSecondsToPhotonsFromNow + (step - 1) / 1f;
+                        if (OpenVRInterface.fPredictedSecondsToPhotonsFromNow > OpenVRInterface.maxAdvance) OpenVRInterface.fPredictedSecondsToPhotonsFromNow = OpenVRInterface.maxAdvance;
                         break;
                 }
             }

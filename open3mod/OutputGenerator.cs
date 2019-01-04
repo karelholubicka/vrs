@@ -100,9 +100,9 @@ namespace open3mod
             m_pixelFormat = _BMDPixelFormat.bmdFormat10BitYUV;//jede, pruhy svisle 10bit
             m_pixelFormat = _BMDPixelFormat.bmdFormat8BitYUV;//jede, pruhy...
             m_pixelFormat = _BMDPixelFormat.bmdFormat8BitBGRA;//správné pořadí, OK
-      //    m_pixelFormat = _BMDPixelFormat.bmdFormat8BitARGB;//jiné možné pořadí, OK.
+               //    m_pixelFormat = _BMDPixelFormat.bmdFormat8BitARGB;//jiné možné pořadí, OK.
 
-
+            this.ShowInTaskbar = false;
             m_audioSampleDepth = _BMDAudioSampleType.bmdAudioSampleType16bitInteger;
         }
         IDeckLinkVideoConversion frameConverter = new CDeckLinkVideoConversion();

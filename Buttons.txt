@@ -1,0 +1,35 @@
+PageUp,Left: Scenes switch L
+Next, Right: Scenes switch R
+
+F5, Escape: Reset anim+play
+OemPeriod ,Enter: Switch cams 1/2
+H: Switch cam 0
+NumPad0: Switch cam 0
+NumPad1: Switch cam 1
+NumPad2: Switch cam 2
+
+W, A, S, D, Up, Down: movement
+R: Reset camera view immediatelly
+O: Reset offset
+
+Subtract: FOV-
+Add: FOV +
+Multiply: shift FOV speed
+
+E: Switch backend
+V: Reset NDI streams
+
+B: Background
+F:Foreground
+G: GreenScreen
+X:Others
+L:All
+
+M: Composite
+C: Camera
+J: CameraCancelColor
+K: Keying
+
+U: Advance-
+I: Advance+
+

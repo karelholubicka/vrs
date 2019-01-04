@@ -336,20 +336,20 @@ namespace open3mod
 
             foreach (var face in mesh.Faces)
             {
-                BeginMode faceMode;
+                OpenTK.Graphics.OpenGL.PrimitiveType faceMode;
                 switch (face.IndexCount)
                 {
                     case 1:
-                        faceMode = BeginMode.Points;
+                        faceMode = OpenTK.Graphics.OpenGL.PrimitiveType.Points;
                         break;
                     case 2:
-                        faceMode = BeginMode.Lines;
+                        faceMode = OpenTK.Graphics.OpenGL.PrimitiveType.Lines;
                         break;
                     case 3:
-                        faceMode = BeginMode.Triangles;
+                        faceMode = OpenTK.Graphics.OpenGL.PrimitiveType.Triangles;
                         break;
                     default:
-                        faceMode = BeginMode.Polygon;
+                        faceMode = OpenTK.Graphics.OpenGL.PrimitiveType.Polygon;
                         break;
                 }
 

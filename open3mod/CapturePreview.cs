@@ -54,7 +54,7 @@ namespace open3mod
             m_deckLinkDiscovery.DeviceRemoved += new DeckLinkDiscoveryHandler((d) => this.Invoke((Action)(() => RemoveDevice(d))));
             Thread.Sleep(100);
             this.Text = "Camera #" + numb.ToString();
-
+            this.ShowInTaskbar = false;
         }
 
         void AddDevice(IDeckLink decklinkInputDevice)

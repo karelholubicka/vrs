@@ -47,15 +47,15 @@ namespace open3mod
         /// <summary>
         /// Draws a sphere using Gl immediate mode.
         /// 
-        /// Makes no chances to Gl draw/material/matrix/lighting/.. states.
+        /// Makes no changes to Gl draw/material/matrix/lighting/.. states.
         /// </summary>
         /// <param name="sphereVertices">Array of vertices previously obtained
         ///    from a call to CalculateVertices()</param>
         /// <param name="sphereElements">Array of indices previous obtained
         ///    from a call to CalculateElements()</param>
-        public static void Draw(Vertex[] sphereVertices, ushort[] sphereElements)
+        public static void DrawClassicGL(Vertex[] sphereVertices, ushort[] sphereElements)
         {
-            GL.Begin(BeginMode.Triangles);
+            GL.Begin(PrimitiveType.Triangles);
             foreach (var element in sphereElements)
             {
                 var vertex = sphereVertices[element];
@@ -66,15 +66,78 @@ namespace open3mod
             GL.End();
         }
 
-
-        public static Vertex[] CalculateVertices(float radius, float height, byte segments, byte rings)
+        public static void SetFloatVec4VertexArrayAttr(int vertexArray, int attrIndex)
         {
-            var data = new Vertex[segments * rings];
+            int attrSize = 4; //vec4
+            int attrOffset = attrIndex * attrSize * sizeof(float); //attribute contains 4 float numbers
+
+            GL.VertexArrayAttribBinding(vertexArray, attrIndex, 0);
+            GL.EnableVertexArrayAttrib(vertexArray, attrIndex);
+            GL.VertexArrayAttribFormat(
+                vertexArray,
+                attrIndex,                      // attribute index, from the shader location 
+                attrSize,                      // size of attribute, vec4
+                VertexAttribType.Float, // contains floats
+                false,                  // does not need to be normalized as it is already, floats ignore this flag anyway
+                attrOffset);                     // relative offset after a vec4
+        }
+
+        public static void DrawModernGL(FullVertex[] fullSphereVertices, ushort[] sphereElements)
+        {
+            RenderControl.GLError("StartSphereRender");
+            GL.GenBuffers(1, out int ElementBufferId);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ElementBufferId);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(sphereElements.Length*sizeof(ushort)), sphereElements, BufferUsageHint.StaticDraw);
+            int bufferSize;
+            GL.GetBufferParameter(BufferTarget.ElementArrayBuffer, BufferParameterName.BufferSize, out bufferSize);
+            if (sphereElements.Length * sizeof(ushort) != bufferSize)
+            {
+                throw new Exception("Index data array not uploaded correctly - buffer size does not match upload size");
+            }
+
+            int VertexArray;
+            int VertexBufferId;
+            VertexArray = GL.GenVertexArray();
+            GL.BindVertexArray(VertexArray);
+            GL.GenBuffers(1, out VertexBufferId);
+            int byteCount = fullSphereVertices.Length * FullVertex.Size;
+            GL.BindBuffer(BufferTarget.ArrayBuffer, VertexBufferId);
+            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(byteCount), fullSphereVertices, BufferUsageHint.StaticDraw);
+            GL.GetBufferParameter(BufferTarget.ArrayBuffer, BufferParameterName.BufferSize, out bufferSize);
+            if (byteCount != bufferSize)
+            {
+                throw new Exception("Vertex data array not uploaded correctly - buffer size does not match upload size");
+            }
+
+            SetFloatVec4VertexArrayAttr(VertexArray, 0); //location = 0 : Vector4 _position;
+            SetFloatVec4VertexArrayAttr(VertexArray, 1); //location = 1 : Vector4 _normal
+            SetFloatVec4VertexArrayAttr(VertexArray, 2); //location = 2 : Color4D _color;
+            SetFloatVec4VertexArrayAttr(VertexArray, 3); //location = 3 : Vector4 _textureCoordinate;
+            SetFloatVec4VertexArrayAttr(VertexArray, 4); //location = 4 : Vector4 _tangent;
+            SetFloatVec4VertexArrayAttr(VertexArray, 5); //location = 5 : Vector4 _bitangent;
+
+            GL.VertexArrayVertexBuffer(VertexArray, 0, VertexBufferId, IntPtr.Zero, FullVertex.Size);
+
+            /*  GL.BindVertexArray(0);
+              GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+              GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+              GL.BindVertexArray(VertexArray); 
+              GL.BindBuffer(BufferTarget.ArrayBuffer, VertexBufferId);*/
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ElementBufferId); //must be re-bound here...
+            // GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Triangles, 0, fullSphereVertices.Length); //to check vertices separately
+            GL.DrawElements(OpenTK.Graphics.OpenGL.PrimitiveType.Triangles, sphereElements.Length, DrawElementsType.UnsignedShort, IntPtr.Zero);
+            RenderControl.GLError("EndSphereRender");
+        }
+
+        public static void CalculateVertices(float radius, float height, byte segments, byte rings, out Vertex[] data, out FullVertex[] fullData)
+        {
+            data = new Vertex[segments * rings];
+            fullData = new FullVertex[segments * rings];
             var i = 0;
 
             for (double y = 0; y < rings; y++)
             {
-                var phi = (y / (rings - 1)) * Math.PI; //was /2 
+                var phi = (y / (rings - 1)) * Math.PI; 
                 for (double x = 0; x < segments; x++)
                 {
                     var theta = (x / (segments - 1)) * 2 * Math.PI;
@@ -92,23 +155,21 @@ namespace open3mod
                         Y = (float)(y / (rings - 1))
                     };
                     // Using data[i++] causes i to be incremented multiple times in Mono 2.2 (bug #479506).
-                    data[i] = new Vertex() { Position = v, Normal = n, TexCoord = uv };
+                     data[i] = new Vertex() { Position = v, Normal = n, TexCoord = uv };
+                    fullData[i] = new FullVertex();
+                    fullData[i].SetPosition(new Vector3(data[i].Position.X, data[i].Position.Z, -data[i].Position.Y));
+                    fullData[i].SetNormal(n);
+                    fullData[i].SetTextureCoordinate(new Vector2(-data[i].TexCoord.X, data[i].TexCoord.Y));
                     i++;
                 }
-
             }
-
-            return data;
         }
-
 
         public static ushort[] CalculateElements(byte segments, byte rings)
         {
             var numVertices = segments * rings;
             var data = new ushort[numVertices * 6];
-
             ushort i = 0;
-
             for (byte y = 0; y < rings - 1; y++)
             {
                 for (byte x = 0; x < segments - 1; x++)

@@ -27,15 +27,17 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
-
+using OpenTK;
 using System.Windows.Forms;
+using System.Globalization;
 
 namespace open3mod
 {
     public partial class SettingsDialog : Form
     {
         private GraphicsSettings _gSettings;
-        private MainWindow _main;
+        private MainWindow _mainWindow;
+        IFormatProvider _provider = CultureInfo.CreateSpecificCulture("en-US");
 
         public SettingsDialog()
         {
@@ -50,6 +52,8 @@ namespace open3mod
             InitMultiSampling();
             InitLightingQuality();
             InitRenderingBackend();
+            InitCam0Offset();
+            InitHMDOffset();
 
             if (CoreSettings.CoreSettings.Default.AdditionalTextureFolders != null)
             {
@@ -73,21 +77,21 @@ namespace open3mod
         }
 
 
-        public MainWindow Main
+        public MainWindow MainWindow
         {
-            set { _main = value; }
+            set { _mainWindow = value; }
         }
 
 
         private void OnOk(object sender, EventArgs e)
         {
             _gSettings.Save();
-            if (_main == null)
+            if (_mainWindow == null)
             {
                 Close();
                 return;
             }
-            _main.CloseSettingsDialog();
+            _mainWindow.CloseSettingsDialog();
         }
 
 
@@ -141,11 +145,11 @@ namespace open3mod
                     break;
             }
 
-            if(_main == null)
+            if(_mainWindow == null)
             {
                 return;
             }
-            foreach (var scene in _main.UiState.ActiveScenes())
+            foreach (var scene in _mainWindow.UiState.ActiveScenes())
             {
                 scene.RequestReuploadTextures();
             }
@@ -170,7 +174,7 @@ namespace open3mod
                     break;
             }
 
-            if (_main == null)
+            if (_mainWindow == null)
             {
                 return;
             }
@@ -188,11 +192,11 @@ namespace open3mod
             Debug.Assert(comboBoxSetTextureFilter.SelectedIndex <= 3);
             _gSettings.TextureFilter = comboBoxSetTextureFilter.SelectedIndex;
            
-            if (_main == null)
+            if (_mainWindow == null)
             {
                 return;
             }
-            foreach (var scene in _main.UiState.ActiveScenes()) 
+            foreach (var scene in _mainWindow.UiState.ActiveScenes()) 
             {
                 scene.RequestReconfigureTextures();
             }
@@ -201,7 +205,7 @@ namespace open3mod
 
         private void OnChangeMipSettings(object sender, EventArgs e)
         {
-            foreach (var scene in _main.UiState.ActiveScenes())
+            foreach (var scene in _mainWindow.UiState.ActiveScenes())
             {
                 scene.RequestReconfigureTextures();
             }
@@ -248,21 +252,24 @@ namespace open3mod
             Debug.Assert(comboBoxSetBackend.SelectedIndex <= 1);
             _gSettings.RenderingBackend = comboBoxSetBackend.SelectedIndex;
 
-            if (_main == null)
+            if (_mainWindow == null)
             {
                 return;
             }
-            foreach (var scene in _main.UiState.ActiveScenes())
+        //    lock (_mainWindow.Renderer.renderTargetLock)// this is deadlocking !!
             {
-                scene.RecreateRenderingBackend();
+                foreach (var scene in _mainWindow.UiState.ActiveScenes())
+                {
+                    scene.RecreateRenderingBackend();
+                }
+                _mainWindow.Renderer.RecreateRenderingBackend();
             }
-            _main.Renderer.RecreateRenderingBackend();
         }
 
 
         private void checkBoxBFCulling_CheckedChanged(object sender, EventArgs e)
         {
-            foreach (var scene in _main.UiState.ActiveScenes())
+            foreach (var scene in _mainWindow.UiState.ActiveScenes())
             {
                 scene.RequestRenderRefresh();
             }
@@ -306,6 +313,139 @@ namespace open3mod
         private void autoStartCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             labelPleaseRestart.Visible = true;
+        }
+
+        int unit = 100;
+        private void InitCam0Offset()
+        {
+            Matrix4 position = OpenVRInterface.trackerToCamera[OpenVRInterface.displayOrder[0]];
+            cam0offsX.Text = (position.M41 * unit).ToString("0.###", _provider);
+            cam0offsY.Text = (position.M42 * unit).ToString("0.###", _provider);
+            cam0offsZ.Text = (position.M43 * unit).ToString("0.###", _provider);
+            Vector3 angles = OpenVRInterface.FromRotMatToEulerZYXInt(position);
+            cam0offsPitch.Text = (angles.X*180/(float)Math.PI).ToString("0.###", _provider);
+        }
+
+        private void InitHMDOffset()
+        {
+            Matrix4 position = OpenVRInterface.hmdRefPos;
+            hmdRefX.Text = (position.M41 * unit).ToString("0.###", _provider);
+            hmdRefY.Text = (position.M42 * unit).ToString("0.###", _provider);
+            hmdRefZ.Text = (position.M43 * unit).ToString("0.###", _provider);
+            Vector3 angles = OpenVRInterface.FromRotMatToEulerZYXInt(position);
+        }
+
+        bool boxOK;
+        Matrix4 cam0offs;
+        private void cam0box_TextChanged(object sender, EventArgs e)
+        {
+            boxOK = true;
+            float test = readFloat((sender as TextBox).Text);
+            if (!boxOK)
+            {
+                MessageBox.Show("Invalid char entered", "Error", MessageBoxButtons.OK);
+                return;
+            }
+            boxOK = true;
+            Matrix4 transMatrix = Matrix4.CreateTranslation(readFloat(cam0offsX.Text)/unit, readFloat(cam0offsY.Text) / unit, readFloat(cam0offsZ.Text) / unit);
+            Matrix4 orientMatrix = Matrix4.CreateRotationX(readFloat(cam0offsPitch.Text)*(float)Math.PI/180);//degrees??
+            cam0offs = orientMatrix * transMatrix;
+            if (boxOK)
+            {
+              //  labelYR.Text = readFloat(cam0offsX.Text).ToString(_provider) + " " + readFloat(cam0offsY.Text).ToString(_provider) + " " + readFloat(cam0offsZ.Text).ToString(_provider) + " " + readFloat(cam0offsPitch.Text).ToString(_provider);
+            }
+            else
+            {
+                MessageBox.Show("Offset Numbers Not Valid", "Error", MessageBoxButtons.OK);
+            }
+
+        }
+
+        private float readFloat(string text)
+        {
+            if ((text == "-") || (text == ".")) return 0;
+            if ((text == "-.")) return 0;
+            double pos = 0;
+            try
+            {
+                pos = Double.Parse(text, NumberStyles.Float, _provider);
+            }
+            catch (FormatException)
+            {
+                boxOK = false;
+            }
+            return (float)pos;
+        }
+
+        private void numBox_KeyPress(object sender, System.Windows.Forms.KeyPressEventArgs e)
+        {
+            if ((e.KeyChar == 13) && (boxOK = true))
+            {
+                (sender as TextBox).SelectAll();
+                OpenVRInterface.SetCam0Offset(cam0offs);
+                InitCam0Offset();
+                e.Handled = true;
+                return;
+            }
+
+            if (e.KeyChar == ',') e.KeyChar = '.';
+            if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar) && (e.KeyChar != '.') && (e.KeyChar != '-'))
+            {
+                e.Handled = true;
+            }
+            //do not write before '-'
+            if (((sender as TextBox).Text.Length > 0) && ((sender as TextBox).Text.ElementAt(0) == '-') && ((sender as TextBox).SelectionStart == 0)&& ((sender as TextBox).SelectionLength == 0))
+            {
+                e.Handled = true;
+            }
+
+            // only allow one decimal point
+
+            if (e.KeyChar == '.') 
+            {
+                int pointPosition = (sender as TextBox).Text.IndexOf('.');
+                if ((sender as TextBox).Text.IndexOf('.') > -1)
+                {
+                    if (((sender as TextBox).SelectionStart <= pointPosition) && ((sender as TextBox).SelectionStart + (sender as TextBox).SelectionLength > pointPosition)) return;
+                    e.Handled = true;
+                }
+            }
+            // only allow one minus 
+            if (e.KeyChar == '-')
+            {
+                int pointPosition = (sender as TextBox).Text.IndexOf('-');
+                if ((sender as TextBox).Text.IndexOf('-') > -1)
+                {
+                    if (((sender as TextBox).SelectionStart <= pointPosition) && ((sender as TextBox).SelectionStart + (sender as TextBox).SelectionLength > pointPosition)) return;
+                }
+                if ((sender as TextBox).SelectionStart != 0) e.Handled = true;
+            }
+            if (((sender as TextBox).Text.Length > (sender as TextBox).SelectionLength+5)  && (!char.IsControl(e.KeyChar)))
+            {
+                e.Handled = true; // prevents long numbers, but also entering - and .
+            }
+
+        }
+
+        private void resetStudioZeroFromHMDRef_Click(object sender, EventArgs e)
+        {
+            OpenVRInterface.ApplyHMDReference();
+        }
+
+        private void saveHMDRef_Click(object sender, EventArgs e)
+        {
+            OpenVRInterface.SaveHMDReference();
+            InitHMDOffset();
+        }
+
+        private void SelectText(object sender, EventArgs e)
+        {
+            (sender as TextBox).SelectAll();
+        }
+
+        private void rescanVRDevices_Click(object sender, EventArgs e)
+        {
+            OpenVRInterface.SetupDevices();
         }
     }
 }

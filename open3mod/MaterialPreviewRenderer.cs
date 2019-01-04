@@ -45,6 +45,7 @@ namespace open3mod
         private readonly Material _material;
         private readonly uint _width;
         private readonly uint _height;
+        private readonly MainWindow _mainWindow;
 
         public enum CompletionState
         {
@@ -68,6 +69,7 @@ namespace open3mod
         // shared geometry data to draw a sphere
         private static SphereGeometry.Vertex[] _sphereVertices;
         private static ushort[] _sphereElements;
+        private static FullVertex[] _fullSphereVertices;
 
 
         private const float SphereRadius = 0.9f;
@@ -83,9 +85,9 @@ namespace open3mod
         /// <param name="material">Material to render a preview image for</param>
         /// <param name="width">Requested width of the preview image, in pixels</param>
         /// <param name="height">Requested height of the preview image, in pixels</param>
-        public MaterialPreviewRenderer(MainWindow window, Scene scene, Material material, uint width, uint height)
+        public MaterialPreviewRenderer(MainWindow mainWindow, Scene scene, Material material, uint width, uint height)
         {
-            Debug.Assert(window != null);
+            Debug.Assert(mainWindow != null);
             Debug.Assert(material != null);
             Debug.Assert(scene != null);
             Debug.Assert(width >= 1);
@@ -95,12 +97,13 @@ namespace open3mod
             _material = material;
             _width = width;
             _height = height;
-    
+            _mainWindow = mainWindow;
+
             _state = CompletionState.Pending;
 
-            if (window.Renderer != null)
+            if (mainWindow.Renderer != null)
             {
-                window.Renderer.GlExtraDrawJob += (sender) =>
+                mainWindow.Renderer.GlExtraDrawJob += (sender) =>
                 {
                     _state = !RenderPreview() ? CompletionState.Failed : CompletionState.Done;
                     OnPreviewAvailable();
@@ -137,103 +140,123 @@ namespace open3mod
         /// </summary>
         /// <returns>true in case the preview has been successfully generated</returns>
         private bool RenderPreview()
+
         {
-            // based on http://www.opentk.com/doc/graphics/frame-buffer-objects
-            // use a pow2 FBO even if the hardware supports arbitrary sizes
-            var fboWidth = (int)RoundToNextPowerOfTwo(_width);
-            var fboHeight = (int)RoundToNextPowerOfTwo(_height);
-
-            int fboHandle = -1;
-            int colorTexture = -1;
-            int depthRenderbuffer = -1;
-
-            // clear error flags
-            GL.GetError();
-
-            // Create Color Texture
-            GL.GenTextures(1, out colorTexture);
-            GL.BindTexture(TextureTarget.Texture2D, colorTexture);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-            // note! OpenTK.Graphics.OpenGL.TextureWrapMode clashes with Assimp.EmbeddedTextureWrapMode
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Clamp);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Clamp);
-            
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba8, 
-                fboWidth, 
-                fboHeight, 
-                0, 
-                PixelFormat.Rgba, 
-                PixelType.UnsignedByte, 
-                IntPtr.Zero);
-
-            // test for GL Error here (might be unsupported format)
-            var error = GL.GetError();
-            if (error != ErrorCode.NoError)
+            lock (_mainWindow.Renderer.renderTargetLock)
             {
-                EnsureTemporaryResourcesReleased(colorTexture, 
-                    depthRenderbuffer, 
-                    fboHandle);
-                return false;
+
+                lock (_mainWindow.Renderer.renderParameterLock)
+                {
+                    _mainWindow.renderControl.SetRenderTarget((RenderControl.RenderTarget)((int)(RenderControl.RenderTarget.ScreenCompat) + (int)GraphicsSettings.Default.RenderingBackend));
+
+                    // based on http://www.opentk.com/doc/graphics/frame-buffer-objects
+                    // use a pow2 FBO even if the hardware supports arbitrary sizes
+
+                    var fboWidth = (int)RoundToNextPowerOfTwo(_width);
+                    var fboHeight = (int)RoundToNextPowerOfTwo(_height);
+
+                    int fboHandle = -1;
+                    int colorTexture = -1;
+                    int depthRenderbuffer = -1;
+
+                    // clear error flags
+                    var error = GL.GetError();
+                    GL.GetError();
+
+                    // Create Color Texture
+                    GL.GenTextures(1, out colorTexture);
+                    GL.BindTexture(TextureTarget.Texture2D, colorTexture);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)OpenTK.Graphics.OpenGL.TextureWrapMode.Repeat);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)OpenTK.Graphics.OpenGL.TextureWrapMode.Repeat);
+
+                    //            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Clamp);
+                    //          GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Clamp);
+                    error = GL.GetError();
+                    GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba8,
+                        fboWidth,
+                        fboHeight,
+                        0,
+                        PixelFormat.Bgra,
+                        PixelType.UnsignedByte,
+                        IntPtr.Zero);
+
+                    // test for GL Error here (might be unsupported format)
+                    error = GL.GetError();
+                    if (error != ErrorCode.NoError)
+                    {
+                        EnsureTemporaryResourcesReleased(colorTexture,
+                            depthRenderbuffer, fboHandle);
+                        _mainWindow.renderControl.SetRenderTarget(RenderControl.RenderTarget.ScreenCompat);
+                        return false;
+                    }
+
+                    GL.BindTexture(TextureTarget.Texture2D, 0); // prevent feedback, reading and writing to the same image is a bad idea
+
+                    // Create Depth Renderbuffer
+                    GL.Ext.GenRenderbuffers(1, out depthRenderbuffer);
+                    GL.Ext.BindRenderbuffer(RenderbufferTarget.RenderbufferExt, depthRenderbuffer);
+                    GL.Ext.RenderbufferStorage(RenderbufferTarget.RenderbufferExt,
+                        (RenderbufferStorage)All.DepthComponent32, fboWidth, fboHeight);
+
+                    // test for GL Error here (might be unsupported format)
+                    error = GL.GetError();
+                    if (error != ErrorCode.NoError)
+                    {
+                        EnsureTemporaryResourcesReleased(colorTexture,
+                            depthRenderbuffer, fboHandle);
+                        _mainWindow.renderControl.SetRenderTarget(RenderControl.RenderTarget.ScreenCompat);
+                        return false;
+                    }
+
+                    // Create a FBO and attach the textures
+                    GL.Ext.GenFramebuffers(1, out fboHandle);
+                    GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, fboHandle);
+                    GL.Ext.FramebufferTexture2D(FramebufferTarget.FramebufferExt,
+                        FramebufferAttachment.ColorAttachment0Ext,
+                        TextureTarget.Texture2D,
+                        colorTexture, 0);
+                    GL.Ext.FramebufferRenderbuffer(FramebufferTarget.FramebufferExt,
+                        FramebufferAttachment.DepthAttachmentExt,
+                        RenderbufferTarget.RenderbufferExt,
+                        depthRenderbuffer);
+                    error = GL.GetError();
+                    // verify the FBO is complete and ready to use
+                    var status = GL.Ext.CheckFramebufferStatus(FramebufferTarget.FramebufferExt);
+                    if (status != FramebufferErrorCode.FramebufferComplete)
+                    {
+                        EnsureTemporaryResourcesReleased(colorTexture,
+                            depthRenderbuffer, fboHandle);
+                        _mainWindow.renderControl.SetRenderTarget(RenderControl.RenderTarget.ScreenCompat);
+                        return false;
+                    }
+                    error = GL.GetError();
+                    // since there's only 1 Color buffer attached this is not explicitly required
+                    GL.DrawBuffer((DrawBufferMode)FramebufferAttachment.ColorAttachment0Ext);
+
+                    //  GL.PushAttrib(AttribMask.ViewportBit); // stores GL.Viewport() parameters
+                    GL.Viewport(0, 0, (int)_width, (int)_height);
+                    error = GL.GetError();
+
+                    Draw();
+                    CopyToImage();
+
+                    // restores GL.Viewport() parameters
+                    //    GL.PopAttrib();
+                    GL.UseProgram(0); //in case ModernGL Material binds some
+                                      // return to visible framebuffer
+                    _mainWindow.renderControl.SetRenderTarget(RenderControl.RenderTarget.ScreenCompat);
+                    //                GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, 0); 
+                    //     GL.DrawBuffer(DrawBufferMode.Back);
+                    GL.UseProgram(0); //in case ModernGL Material binds some
+
+                    EnsureTemporaryResourcesReleased(colorTexture,
+                        depthRenderbuffer, fboHandle);
+                    return true;
+                }
             }
-
-            GL.BindTexture(TextureTarget.Texture2D, 0); // prevent feedback, reading and writing to the same image is a bad idea
-
-            // Create Depth Renderbuffer
-            GL.Ext.GenRenderbuffers(1, out depthRenderbuffer);
-            GL.Ext.BindRenderbuffer(RenderbufferTarget.RenderbufferExt, depthRenderbuffer);
-            GL.Ext.RenderbufferStorage(RenderbufferTarget.RenderbufferExt, 
-                (RenderbufferStorage)All.DepthComponent32, fboWidth, fboHeight);
-
-            // test for GL Error here (might be unsupported format)
-            error = GL.GetError();
-            if(error != ErrorCode.NoError)
-            {
-                EnsureTemporaryResourcesReleased(colorTexture, 
-                    depthRenderbuffer, fboHandle);
-                return false;
-            }
-
-            // Create a FBO and attach the textures
-            GL.Ext.GenFramebuffers(1, out fboHandle);
-            GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, fboHandle);
-            GL.Ext.FramebufferTexture2D(FramebufferTarget.FramebufferExt, 
-                FramebufferAttachment.ColorAttachment0Ext, 
-                TextureTarget.Texture2D, 
-                colorTexture, 0);
-            GL.Ext.FramebufferRenderbuffer(FramebufferTarget.FramebufferExt, 
-                FramebufferAttachment.DepthAttachmentExt, 
-                RenderbufferTarget.RenderbufferExt, 
-                depthRenderbuffer);
-
-            // verify the FBO is complete and ready to use
-            var status = GL.Ext.CheckFramebufferStatus(FramebufferTarget.FramebufferExt);
-            if (status != FramebufferErrorCode.FramebufferComplete)
-            {
-                EnsureTemporaryResourcesReleased(colorTexture, 
-                    depthRenderbuffer, fboHandle);
-                return false;
-            }
-
-            // since there's only 1 Color buffer attached this is not explicitly required
-            GL.DrawBuffer((DrawBufferMode)FramebufferAttachment.ColorAttachment0Ext);
-
-            GL.PushAttrib(AttribMask.ViewportBit); // stores GL.Viewport() parameters
-            GL.Viewport(0, 0, (int)_width, (int)_height);
-
-            Draw();
-            CopyToImage();
-
-            // restores GL.Viewport() parameters
-            GL.PopAttrib(); 
-            // return to visible framebuffer
-            GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, 0); 
-            GL.DrawBuffer(DrawBufferMode.Back);
-            GL.UseProgram(0); //in case ModernGL Material binds some
-
-            EnsureTemporaryResourcesReleased(colorTexture, 
-                depthRenderbuffer, fboHandle);
-            return true;
         }
 
 
@@ -267,8 +290,9 @@ namespace open3mod
                 {
                     GL.DeleteFramebuffers(1, ref fboHandle);
                 }
+
             }
-            catch(Exception)
+            catch (Exception)
             {
                 // On some older hardware I found that glDeleteRenderbuffers and glDeleteFramebuffers
                 // are not found even though the other APIs (i.e. creating fbs) are.
@@ -283,42 +307,47 @@ namespace open3mod
 
             if (_sphereVertices == null)
             {
-                _sphereVertices = SphereGeometry.CalculateVertices(SphereRadius, SphereRadius, SphereSegments, SphereSegments);
+                SphereGeometry.CalculateVertices(SphereRadius, SphereRadius, SphereSegments, SphereSegments, out _sphereVertices, out _fullSphereVertices);
             }
             if (_sphereElements == null)
             {
                 _sphereElements = SphereGeometry.CalculateElements(SphereSegments, SphereSegments);
             }
-
+            var error = GL.GetError();
             // reset color and alpha blending
-            GL.Color4(Color.White);
             GL.Disable(EnableCap.Blend);
-
-            _scene.MaterialMapper.ApplyMaterial(null, _material, true, true, false);
             // always enable depth writes when rendering material previews
             GL.DepthMask(true);
-
-            GL.MatrixMode(MatrixMode.Modelview);
-            var lookat = Matrix4.LookAt(0, 0, -2.5f, 0, 0, 0, 0, 1, 0);
-            GL.LoadMatrix(ref lookat);
-
-            Matrix4 perspective = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver4, 1.0f, 0.01f, 100.0f);
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.LoadMatrix(ref perspective);
-
             GL.Enable(EnableCap.DepthTest);
-
-            // set fixed-function lighting parameters
-            GL.ShadeModel(ShadingModel.Smooth);
-            GL.Enable(EnableCap.Light0);
-      
-            GL.Light(LightName.Light0, LightParameter.Position, new float[] { 0.5f, -0.6f, -0.8f });
-            GL.Light(LightName.Light0, LightParameter.Diffuse, new float[] { 1, 1, 1, 1 });
-            GL.Light(LightName.Light0, LightParameter.Specular, new float[] { 1, 1, 1, 1 });     
+            var lookat = Matrix4.LookAt(-2.8f, 0, 0f, 0, 0, 0, 0, 0, -1);
+            Matrix4 perspective = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver4, 1.0f, 0.01f, 100.0f);
+            _scene.MaterialMapper.SetMatrices(Matrix4.Identity, lookat, perspective);
+            _scene.MaterialMapper.ApplyMaterial(null, _material, true, true, false);
 
             Debug.Assert(_sphereVertices != null);
             Debug.Assert(_sphereElements != null);
-            SphereGeometry.Draw(_sphereVertices, _sphereElements);
+
+            if (GraphicsSettings.Default.RenderingBackend == 0)
+            {
+                lookat = Matrix4.LookAt(-2.8f, 0, 0f, 0, 0, 0, 0, -1, 0);//well, from "different" side...
+                GL.ShadeModel(ShadingModel.Smooth);
+                GL.MatrixMode(MatrixMode.Modelview);
+                GL.LoadMatrix(ref lookat);
+                GL.MatrixMode(MatrixMode.Projection);
+                GL.LoadMatrix(ref perspective);
+                GL.Color4(Color.White);
+                // set fixed-function lighting parameters
+                GL.Enable(EnableCap.Light0);
+                GL.Light(LightName.Light0, LightParameter.Position, new float[] { 0.5f, -0.6f, -0.8f });
+                GL.Light(LightName.Light0, LightParameter.Diffuse, new float[] { 1, 1, 1, 1 });
+                GL.Light(LightName.Light0, LightParameter.Specular, new float[] { 1, 1, 1, 1 });
+                error = GL.GetError();
+                SphereGeometry.DrawClassicGL(_sphereVertices, _sphereElements);
+            }
+            else
+            {
+                SphereGeometry.DrawModernGL(_fullSphereVertices, _sphereElements);
+            }
             GL.Disable(EnableCap.DepthTest); //added to compensate + switch
         }
 

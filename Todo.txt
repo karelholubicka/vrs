@@ -5,12 +5,11 @@ Moje kompilace #1 : Assimp 4.1.0
 Moje kompilace #2+3 : Assimp 4.1.0 - ale z masteru
 
 
+FOV pøepoèet na camera number-zpøesnit, pro každý typ kamery,
 kontrola zvuku a synce a timingu VR
-FOV pøepoèet na camera number-závislost? tabulka?nastavení kamery??+ nastavování na kontroléru znova(advance už není tøeba-pøidat na keyboard)
 
 
 zmìnit NDISEnderX+Y na nìjaký master.X+Y+settings vs Output generator settings..HD preset fix,a když je device zvoleno, recreate renderer a GL??
-
 zmenšit textury VR modelù/png/tga/psd
 
 jak vypadá Janssen nové studio v renderu-vyrobit...f/bg/gr atd
@@ -52,6 +51,7 @@ ____________
 uklidit modely
 
 POZDÌJI:
+zakázat standby hmd nálepkou
 øešit pøepnutí kompenzace zpoždìní kamer o buffered frames døív???
 nastavení a uložení spojení SN kontroléru = jméno kamery =additional delay
 
@@ -62,10 +62,7 @@ ndi receiver u každé scény??
 off stream senderu - 
 tøetí výstup+dodat offset pro èteèku+poslat do NDI
 noise filter median na gauss upravit(?)
-audio nejde skrz proè???...jde, kontrola vždy
-
-
-??obèas se tracking nespustí..???Nespustí se ovladaèe - reload VR devices
+audio kontrola
 
 
 destroy všech kontextù
@@ -79,7 +76,7 @@ NDI/BMD výstupy cam1,cam2, static pro 3cam, rezerva?? nebo bez NDI?
 
 SUMMARY..??
 ----
-monitory odkuk všichni, kameraman?? není-li støižen??, speaker,
+monitory odkuk všichni, kameraman?? není-li støižen?? - na 4x screenu;ZOOM (pak vìtší??) speaker,
 seèíst lidi - kamery, støih, pøepínání studia, èteèka
 objevování textù ve studiu
 

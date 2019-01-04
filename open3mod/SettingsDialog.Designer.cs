@@ -30,6 +30,27 @@
         {
             this.components = new System.ComponentModel.Container();
             this.tabControl = new System.Windows.Forms.TabControl();
+            this.tabPageTracking = new System.Windows.Forms.TabPage();
+            this.rescanVRDevices = new System.Windows.Forms.Button();
+            this.groupBox6 = new System.Windows.Forms.GroupBox();
+            this.resetStudioZeroFromHMDRef = new System.Windows.Forms.Button();
+            this.saveHMDRef = new System.Windows.Forms.Button();
+            this.hmdRefX = new System.Windows.Forms.TextBox();
+            this.label19 = new System.Windows.Forms.Label();
+            this.hmdRefY = new System.Windows.Forms.TextBox();
+            this.hmdRefZ = new System.Windows.Forms.TextBox();
+            this.label20 = new System.Windows.Forms.Label();
+            this.label21 = new System.Windows.Forms.Label();
+            this.groupBox5 = new System.Windows.Forms.GroupBox();
+            this.labelYR = new System.Windows.Forms.Label();
+            this.label24 = new System.Windows.Forms.Label();
+            this.cam0offsX = new System.Windows.Forms.TextBox();
+            this.label26 = new System.Windows.Forms.Label();
+            this.cam0offsY = new System.Windows.Forms.TextBox();
+            this.cam0offsPitch = new System.Windows.Forms.TextBox();
+            this.cam0offsZ = new System.Windows.Forms.TextBox();
+            this.label22 = new System.Windows.Forms.Label();
+            this.label23 = new System.Windows.Forms.Label();
             this.tabPageGeneral = new System.Windows.Forms.TabPage();
             this.autoSourceNDI = new System.Windows.Forms.TextBox();
             this.autoConnectNDI = new System.Windows.Forms.CheckBox();
@@ -109,6 +130,9 @@
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.labelPleaseRestart = new System.Windows.Forms.Label();
             this.tabControl.SuspendLayout();
+            this.tabPageTracking.SuspendLayout();
+            this.groupBox6.SuspendLayout();
+            this.groupBox5.SuspendLayout();
             this.tabPageGeneral.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -137,6 +161,7 @@
             this.tabControl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.tabControl.Controls.Add(this.tabPageTracking);
             this.tabControl.Controls.Add(this.tabPageGeneral);
             this.tabControl.Controls.Add(this.tabPage1);
             this.tabControl.Controls.Add(this.tabPage2);
@@ -147,8 +172,238 @@
             this.tabControl.Location = new System.Drawing.Point(1, 4);
             this.tabControl.Name = "tabControl";
             this.tabControl.SelectedIndex = 0;
-            this.tabControl.Size = new System.Drawing.Size(540, 407);
+            this.tabControl.Size = new System.Drawing.Size(540, 418);
             this.tabControl.TabIndex = 0;
+            // 
+            // tabPageTracking
+            // 
+            this.tabPageTracking.Controls.Add(this.rescanVRDevices);
+            this.tabPageTracking.Controls.Add(this.groupBox6);
+            this.tabPageTracking.Controls.Add(this.groupBox5);
+            this.tabPageTracking.Location = new System.Drawing.Point(4, 22);
+            this.tabPageTracking.Name = "tabPageTracking";
+            this.tabPageTracking.Size = new System.Drawing.Size(532, 392);
+            this.tabPageTracking.TabIndex = 6;
+            this.tabPageTracking.Text = "Tracking";
+            this.tabPageTracking.UseVisualStyleBackColor = true;
+            // 
+            // rescanVRDevices
+            // 
+            this.rescanVRDevices.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.rescanVRDevices.DialogResult = System.Windows.Forms.DialogResult.OK;
+            this.rescanVRDevices.Location = new System.Drawing.Point(41, 238);
+            this.rescanVRDevices.Name = "rescanVRDevices";
+            this.rescanVRDevices.Size = new System.Drawing.Size(150, 23);
+            this.rescanVRDevices.TabIndex = 19;
+            this.rescanVRDevices.Text = "Rescan VR devices";
+            this.rescanVRDevices.UseVisualStyleBackColor = true;
+            this.rescanVRDevices.Click += new System.EventHandler(this.rescanVRDevices_Click);
+            // 
+            // groupBox6
+            // 
+            this.groupBox6.Controls.Add(this.resetStudioZeroFromHMDRef);
+            this.groupBox6.Controls.Add(this.saveHMDRef);
+            this.groupBox6.Controls.Add(this.hmdRefX);
+            this.groupBox6.Controls.Add(this.label19);
+            this.groupBox6.Controls.Add(this.hmdRefY);
+            this.groupBox6.Controls.Add(this.hmdRefZ);
+            this.groupBox6.Controls.Add(this.label20);
+            this.groupBox6.Controls.Add(this.label21);
+            this.groupBox6.Location = new System.Drawing.Point(28, 28);
+            this.groupBox6.Name = "groupBox6";
+            this.groupBox6.Size = new System.Drawing.Size(477, 89);
+            this.groupBox6.TabIndex = 18;
+            this.groupBox6.TabStop = false;
+            this.groupBox6.Text = "HMD Reference Position (in centimetres; angles not shown)";
+            // 
+            // resetStudioZeroFromHMDRef
+            // 
+            this.resetStudioZeroFromHMDRef.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.resetStudioZeroFromHMDRef.DialogResult = System.Windows.Forms.DialogResult.OK;
+            this.resetStudioZeroFromHMDRef.Location = new System.Drawing.Point(229, 53);
+            this.resetStudioZeroFromHMDRef.Name = "resetStudioZeroFromHMDRef";
+            this.resetStudioZeroFromHMDRef.Size = new System.Drawing.Size(199, 23);
+            this.resetStudioZeroFromHMDRef.TabIndex = 17;
+            this.resetStudioZeroFromHMDRef.Text = "Use HMD Reference Position";
+            this.resetStudioZeroFromHMDRef.UseVisualStyleBackColor = true;
+            this.resetStudioZeroFromHMDRef.Click += new System.EventHandler(this.resetStudioZeroFromHMDRef_Click);
+            // 
+            // saveHMDRef
+            // 
+            this.saveHMDRef.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.saveHMDRef.DialogResult = System.Windows.Forms.DialogResult.OK;
+            this.saveHMDRef.Location = new System.Drawing.Point(229, 21);
+            this.saveHMDRef.Name = "saveHMDRef";
+            this.saveHMDRef.Size = new System.Drawing.Size(199, 23);
+            this.saveHMDRef.TabIndex = 16;
+            this.saveHMDRef.Text = "Mark HMD Reference Position";
+            this.saveHMDRef.UseVisualStyleBackColor = true;
+            this.saveHMDRef.Click += new System.EventHandler(this.saveHMDRef_Click);
+            // 
+            // hmdRefX
+            // 
+            this.hmdRefX.Enabled = false;
+            this.hmdRefX.Location = new System.Drawing.Point(11, 39);
+            this.hmdRefX.Name = "hmdRefX";
+            this.hmdRefX.Size = new System.Drawing.Size(38, 20);
+            this.hmdRefX.TabIndex = 0;
+            this.hmdRefX.Text = "0";
+            // 
+            // label19
+            // 
+            this.label19.AutoSize = true;
+            this.label19.Location = new System.Drawing.Point(8, 18);
+            this.label19.Name = "label19";
+            this.label19.Size = new System.Drawing.Size(51, 13);
+            this.label19.TabIndex = 2;
+            this.label19.Text = "X (L-/R+)";
+            // 
+            // hmdRefY
+            // 
+            this.hmdRefY.Enabled = false;
+            this.hmdRefY.Location = new System.Drawing.Point(68, 39);
+            this.hmdRefY.Name = "hmdRefY";
+            this.hmdRefY.Size = new System.Drawing.Size(38, 20);
+            this.hmdRefY.TabIndex = 3;
+            this.hmdRefY.Text = "0";
+            // 
+            // hmdRefZ
+            // 
+            this.hmdRefZ.Enabled = false;
+            this.hmdRefZ.Location = new System.Drawing.Point(125, 39);
+            this.hmdRefZ.Name = "hmdRefZ";
+            this.hmdRefZ.Size = new System.Drawing.Size(38, 20);
+            this.hmdRefZ.TabIndex = 4;
+            this.hmdRefZ.Text = "0";
+            // 
+            // label20
+            // 
+            this.label20.AutoSize = true;
+            this.label20.Location = new System.Drawing.Point(66, 18);
+            this.label20.Name = "label20";
+            this.label20.Size = new System.Drawing.Size(50, 13);
+            this.label20.TabIndex = 5;
+            this.label20.Text = "Y(U+/D-)";
+            // 
+            // label21
+            // 
+            this.label21.AutoSize = true;
+            this.label21.Location = new System.Drawing.Point(122, 18);
+            this.label21.Name = "label21";
+            this.label21.Size = new System.Drawing.Size(48, 13);
+            this.label21.TabIndex = 6;
+            this.label21.Text = "Z(R+/F-)";
+            // 
+            // groupBox5
+            // 
+            this.groupBox5.Controls.Add(this.labelYR);
+            this.groupBox5.Controls.Add(this.label24);
+            this.groupBox5.Controls.Add(this.cam0offsX);
+            this.groupBox5.Controls.Add(this.label26);
+            this.groupBox5.Controls.Add(this.cam0offsY);
+            this.groupBox5.Controls.Add(this.cam0offsPitch);
+            this.groupBox5.Controls.Add(this.cam0offsZ);
+            this.groupBox5.Controls.Add(this.label22);
+            this.groupBox5.Controls.Add(this.label23);
+            this.groupBox5.Location = new System.Drawing.Point(28, 126);
+            this.groupBox5.Name = "groupBox5";
+            this.groupBox5.Size = new System.Drawing.Size(477, 89);
+            this.groupBox5.TabIndex = 17;
+            this.groupBox5.TabStop = false;
+            this.groupBox5.Text = "Camera 0 Relative Position vs. HMD in centimetres";
+            // 
+            // labelYR
+            // 
+            this.labelYR.AutoSize = true;
+            this.labelYR.Location = new System.Drawing.Point(257, 25);
+            this.labelYR.Name = "labelYR";
+            this.labelYR.Size = new System.Drawing.Size(143, 13);
+            this.labelYR.TabIndex = 16;
+            this.labelYR.Text = "Yaw + Roll Fixed at 0 degree";
+            // 
+            // label24
+            // 
+            this.label24.AutoSize = true;
+            this.label24.Location = new System.Drawing.Point(6, 25);
+            this.label24.Name = "label24";
+            this.label24.Size = new System.Drawing.Size(51, 13);
+            this.label24.TabIndex = 9;
+            this.label24.Text = "X (L-/R+)";
+            // 
+            // cam0offsX
+            // 
+            this.cam0offsX.Location = new System.Drawing.Point(9, 46);
+            this.cam0offsX.Name = "cam0offsX";
+            this.cam0offsX.Size = new System.Drawing.Size(51, 20);
+            this.cam0offsX.TabIndex = 7;
+            this.cam0offsX.Text = "0";
+            this.cam0offsX.Click += new System.EventHandler(this.SelectText);
+            this.cam0offsX.TextChanged += new System.EventHandler(this.cam0box_TextChanged);
+            this.cam0offsX.Enter += new System.EventHandler(this.SelectText);
+            this.cam0offsX.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.numBox_KeyPress);
+            // 
+            // label26
+            // 
+            this.label26.AutoSize = true;
+            this.label26.Location = new System.Drawing.Point(185, 25);
+            this.label26.Name = "label26";
+            this.label26.Size = new System.Drawing.Size(58, 13);
+            this.label26.TabIndex = 15;
+            this.label26.Text = "Pitch (deg)";
+            // 
+            // cam0offsY
+            // 
+            this.cam0offsY.Location = new System.Drawing.Point(66, 46);
+            this.cam0offsY.Name = "cam0offsY";
+            this.cam0offsY.Size = new System.Drawing.Size(51, 20);
+            this.cam0offsY.TabIndex = 10;
+            this.cam0offsY.Text = "-0.2";
+            this.cam0offsY.Click += new System.EventHandler(this.SelectText);
+            this.cam0offsY.TextChanged += new System.EventHandler(this.cam0box_TextChanged);
+            this.cam0offsY.Enter += new System.EventHandler(this.SelectText);
+            this.cam0offsY.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.numBox_KeyPress);
+            // 
+            // cam0offsPitch
+            // 
+            this.cam0offsPitch.Location = new System.Drawing.Point(188, 46);
+            this.cam0offsPitch.Name = "cam0offsPitch";
+            this.cam0offsPitch.Size = new System.Drawing.Size(51, 20);
+            this.cam0offsPitch.TabIndex = 14;
+            this.cam0offsPitch.Text = "0";
+            this.cam0offsPitch.Click += new System.EventHandler(this.SelectText);
+            this.cam0offsPitch.TextChanged += new System.EventHandler(this.cam0box_TextChanged);
+            this.cam0offsPitch.Enter += new System.EventHandler(this.SelectText);
+            this.cam0offsPitch.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.numBox_KeyPress);
+            // 
+            // cam0offsZ
+            // 
+            this.cam0offsZ.Location = new System.Drawing.Point(123, 46);
+            this.cam0offsZ.Name = "cam0offsZ";
+            this.cam0offsZ.Size = new System.Drawing.Size(51, 20);
+            this.cam0offsZ.TabIndex = 11;
+            this.cam0offsZ.Text = "-0.8";
+            this.cam0offsZ.Click += new System.EventHandler(this.SelectText);
+            this.cam0offsZ.TextChanged += new System.EventHandler(this.cam0box_TextChanged);
+            this.cam0offsZ.Enter += new System.EventHandler(this.SelectText);
+            this.cam0offsZ.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.numBox_KeyPress);
+            // 
+            // label22
+            // 
+            this.label22.AutoSize = true;
+            this.label22.Location = new System.Drawing.Point(120, 25);
+            this.label22.Name = "label22";
+            this.label22.Size = new System.Drawing.Size(48, 13);
+            this.label22.TabIndex = 13;
+            this.label22.Text = "Z(R+/F-)";
+            // 
+            // label23
+            // 
+            this.label23.AutoSize = true;
+            this.label23.Location = new System.Drawing.Point(64, 25);
+            this.label23.Name = "label23";
+            this.label23.Size = new System.Drawing.Size(50, 13);
+            this.label23.TabIndex = 12;
+            this.label23.Text = "Y(U+/D-)";
             // 
             // tabPageGeneral
             // 
@@ -164,7 +419,7 @@
             this.tabPageGeneral.Controls.Add(this.ExitAppCheckbox);
             this.tabPageGeneral.Location = new System.Drawing.Point(4, 22);
             this.tabPageGeneral.Name = "tabPageGeneral";
-            this.tabPageGeneral.Size = new System.Drawing.Size(532, 381);
+            this.tabPageGeneral.Size = new System.Drawing.Size(532, 392);
             this.tabPageGeneral.TabIndex = 4;
             this.tabPageGeneral.Text = "General";
             this.tabPageGeneral.UseVisualStyleBackColor = true;
@@ -297,7 +552,7 @@
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(532, 381);
+            this.tabPage1.Size = new System.Drawing.Size(532, 392);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Rendering";
             this.tabPage1.UseVisualStyleBackColor = true;
@@ -521,7 +776,7 @@
             this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(532, 381);
+            this.tabPage2.Size = new System.Drawing.Size(532, 392);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Import";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -658,7 +913,7 @@
             this.tabPage3.Location = new System.Drawing.Point(4, 22);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(532, 381);
+            this.tabPage3.Size = new System.Drawing.Size(532, 392);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "Animation";
             this.tabPage3.UseVisualStyleBackColor = true;
@@ -681,7 +936,7 @@
             this.tabPageTextures.Location = new System.Drawing.Point(4, 22);
             this.tabPageTextures.Name = "tabPageTextures";
             this.tabPageTextures.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageTextures.Size = new System.Drawing.Size(532, 381);
+            this.tabPageTextures.Size = new System.Drawing.Size(532, 392);
             this.tabPageTextures.TabIndex = 3;
             this.tabPageTextures.Text = "Textures";
             this.tabPageTextures.UseVisualStyleBackColor = true;
@@ -723,7 +978,7 @@
             this.tabPageLeapMotion.Controls.Add(this.SmoothingGroup);
             this.tabPageLeapMotion.Location = new System.Drawing.Point(4, 22);
             this.tabPageLeapMotion.Name = "tabPageLeapMotion";
-            this.tabPageLeapMotion.Size = new System.Drawing.Size(532, 381);
+            this.tabPageLeapMotion.Size = new System.Drawing.Size(532, 392);
             this.tabPageLeapMotion.TabIndex = 4;
             this.tabPageLeapMotion.Text = "Leap Motion";
             this.tabPageLeapMotion.UseVisualStyleBackColor = true;
@@ -850,7 +1105,7 @@
             this.tabPageKeying.Location = new System.Drawing.Point(4, 22);
             this.tabPageKeying.Name = "tabPageKeying";
             this.tabPageKeying.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageKeying.Size = new System.Drawing.Size(532, 381);
+            this.tabPageKeying.Size = new System.Drawing.Size(532, 392);
             this.tabPageKeying.TabIndex = 5;
             this.tabPageKeying.Text = "Keying";
             this.tabPageKeying.UseVisualStyleBackColor = true;
@@ -858,7 +1113,7 @@
             // label16
             // 
             this.label16.AutoSize = true;
-            this.label16.Location = new System.Drawing.Point(293, 142);
+            this.label16.Location = new System.Drawing.Point(293, 149);
             this.label16.Name = "label16";
             this.label16.Size = new System.Drawing.Size(96, 13);
             this.label16.TabIndex = 25;
@@ -868,7 +1123,7 @@
             // 
             this.trackBarKeyingMatteBlur.BackColor = System.Drawing.Color.White;
             this.trackBarKeyingMatteBlur.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::open3mod.GraphicsSettings.Default, "KeyingMatteBlur", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.trackBarKeyingMatteBlur.Location = new System.Drawing.Point(295, 162);
+            this.trackBarKeyingMatteBlur.Location = new System.Drawing.Point(295, 169);
             this.trackBarKeyingMatteBlur.Maximum = 100;
             this.trackBarKeyingMatteBlur.Name = "trackBarKeyingMatteBlur";
             this.trackBarKeyingMatteBlur.Size = new System.Drawing.Size(211, 45);
@@ -880,7 +1135,7 @@
             this.checkBoxCancelColorRange.Checked = true;
             this.checkBoxCancelColorRange.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkBoxCancelColorRange.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::open3mod.GraphicsSettings.Default, "CancelColorRange", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.checkBoxCancelColorRange.Location = new System.Drawing.Point(137, 285);
+            this.checkBoxCancelColorRange.Location = new System.Drawing.Point(137, 292);
             this.checkBoxCancelColorRange.Name = "checkBoxCancelColorRange";
             this.checkBoxCancelColorRange.Size = new System.Drawing.Size(76, 17);
             this.checkBoxCancelColorRange.TabIndex = 24;
@@ -891,7 +1146,7 @@
             // 
             this.trackBarKeyingVSensitivity.BackColor = System.Drawing.Color.White;
             this.trackBarKeyingVSensitivity.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::open3mod.GraphicsSettings.Default, "KeyingVSensitivity", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.trackBarKeyingVSensitivity.Location = new System.Drawing.Point(24, 235);
+            this.trackBarKeyingVSensitivity.Location = new System.Drawing.Point(24, 242);
             this.trackBarKeyingVSensitivity.Maximum = 100;
             this.trackBarKeyingVSensitivity.Name = "trackBarKeyingVSensitivity";
             this.trackBarKeyingVSensitivity.Size = new System.Drawing.Size(482, 45);
@@ -901,7 +1156,7 @@
             // label15
             // 
             this.label15.AutoSize = true;
-            this.label15.Location = new System.Drawing.Point(293, 73);
+            this.label15.Location = new System.Drawing.Point(293, 80);
             this.label15.Name = "label15";
             this.label15.Size = new System.Drawing.Size(89, 13);
             this.label15.TabIndex = 13;
@@ -910,7 +1165,7 @@
             // label14
             // 
             this.label14.AutoSize = true;
-            this.label14.Location = new System.Drawing.Point(293, 8);
+            this.label14.Location = new System.Drawing.Point(293, 15);
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(89, 13);
             this.label14.TabIndex = 22;
@@ -919,7 +1174,7 @@
             // labelV
             // 
             this.labelV.AutoSize = true;
-            this.labelV.Location = new System.Drawing.Point(233, 121);
+            this.labelV.Location = new System.Drawing.Point(233, 128);
             this.labelV.Name = "labelV";
             this.labelV.Size = new System.Drawing.Size(29, 13);
             this.labelV.TabIndex = 21;
@@ -928,7 +1183,7 @@
             // labelS
             // 
             this.labelS.AutoSize = true;
-            this.labelS.Location = new System.Drawing.Point(233, 73);
+            this.labelS.Location = new System.Drawing.Point(233, 80);
             this.labelS.Name = "labelS";
             this.labelS.Size = new System.Drawing.Size(29, 13);
             this.labelS.TabIndex = 20;
@@ -937,7 +1192,7 @@
             // labelH
             // 
             this.labelH.AutoSize = true;
-            this.labelH.Location = new System.Drawing.Point(233, 27);
+            this.labelH.Location = new System.Drawing.Point(233, 34);
             this.labelH.Name = "labelH";
             this.labelH.Size = new System.Drawing.Size(36, 13);
             this.labelH.TabIndex = 19;
@@ -947,7 +1202,7 @@
             // 
             this.trackBarKeyingTreshold.BackColor = System.Drawing.Color.White;
             this.trackBarKeyingTreshold.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::open3mod.GraphicsSettings.Default, "KeyingTreshold", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.trackBarKeyingTreshold.Location = new System.Drawing.Point(295, 26);
+            this.trackBarKeyingTreshold.Location = new System.Drawing.Point(295, 33);
             this.trackBarKeyingTreshold.Maximum = 100;
             this.trackBarKeyingTreshold.Name = "trackBarKeyingTreshold";
             this.trackBarKeyingTreshold.Size = new System.Drawing.Size(211, 45);
@@ -958,7 +1213,7 @@
             // 
             this.trackBarKeyingSoftness.BackColor = System.Drawing.Color.White;
             this.trackBarKeyingSoftness.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::open3mod.GraphicsSettings.Default, "KeyingSoftness", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.trackBarKeyingSoftness.Location = new System.Drawing.Point(295, 93);
+            this.trackBarKeyingSoftness.Location = new System.Drawing.Point(295, 100);
             this.trackBarKeyingSoftness.Maximum = 100;
             this.trackBarKeyingSoftness.Name = "trackBarKeyingSoftness";
             this.trackBarKeyingSoftness.Size = new System.Drawing.Size(211, 45);
@@ -969,7 +1224,7 @@
             // 
             this.trackBarCancelColorPower.BackColor = System.Drawing.Color.White;
             this.trackBarCancelColorPower.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::open3mod.GraphicsSettings.Default, "CancelColorPower", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.trackBarCancelColorPower.Location = new System.Drawing.Point(21, 326);
+            this.trackBarCancelColorPower.Location = new System.Drawing.Point(21, 333);
             this.trackBarCancelColorPower.Maximum = 100;
             this.trackBarCancelColorPower.Name = "trackBarCancelColorPower";
             this.trackBarCancelColorPower.Size = new System.Drawing.Size(485, 45);
@@ -979,7 +1234,7 @@
             // label13
             // 
             this.label13.AutoSize = true;
-            this.label13.Location = new System.Drawing.Point(21, 309);
+            this.label13.Location = new System.Drawing.Point(21, 316);
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(105, 13);
             this.label13.TabIndex = 14;
@@ -988,7 +1243,7 @@
             // label12
             // 
             this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(21, 286);
+            this.label12.Location = new System.Drawing.Point(21, 293);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(110, 13);
             this.label12.TabIndex = 13;
@@ -997,7 +1252,7 @@
             // label11
             // 
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(21, 219);
+            this.label11.Location = new System.Drawing.Point(21, 226);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(103, 13);
             this.label11.TabIndex = 12;
@@ -1006,7 +1261,7 @@
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(21, 8);
+            this.label10.Location = new System.Drawing.Point(21, 15);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(188, 13);
             this.label10.TabIndex = 11;
@@ -1016,7 +1271,7 @@
             // 
             this.trackBarKeyingColorV.BackColor = System.Drawing.Color.White;
             this.trackBarKeyingColorV.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::open3mod.GraphicsSettings.Default, "KeyingColorV", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.trackBarKeyingColorV.Location = new System.Drawing.Point(21, 121);
+            this.trackBarKeyingColorV.Location = new System.Drawing.Point(21, 128);
             this.trackBarKeyingColorV.Maximum = 100;
             this.trackBarKeyingColorV.Name = "trackBarKeyingColorV";
             this.trackBarKeyingColorV.Size = new System.Drawing.Size(211, 45);
@@ -1028,7 +1283,7 @@
             // 
             this.trackBarKeyingColorS.BackColor = System.Drawing.Color.White;
             this.trackBarKeyingColorS.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::open3mod.GraphicsSettings.Default, "KeyingColorS", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.trackBarKeyingColorS.Location = new System.Drawing.Point(21, 73);
+            this.trackBarKeyingColorS.Location = new System.Drawing.Point(21, 80);
             this.trackBarKeyingColorS.Maximum = 100;
             this.trackBarKeyingColorS.Name = "trackBarKeyingColorS";
             this.trackBarKeyingColorS.Size = new System.Drawing.Size(211, 45);
@@ -1040,7 +1295,7 @@
             // 
             this.trackBarKeyingColorH.BackColor = System.Drawing.Color.White;
             this.trackBarKeyingColorH.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::open3mod.GraphicsSettings.Default, "KeyingColorH", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.trackBarKeyingColorH.Location = new System.Drawing.Point(21, 25);
+            this.trackBarKeyingColorH.Location = new System.Drawing.Point(21, 32);
             this.trackBarKeyingColorH.Maximum = 360;
             this.trackBarKeyingColorH.Name = "trackBarKeyingColorH";
             this.trackBarKeyingColorH.Size = new System.Drawing.Size(211, 45);
@@ -1052,7 +1307,7 @@
             // 
             this.button1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.button1.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.button1.Location = new System.Drawing.Point(430, 434);
+            this.button1.Location = new System.Drawing.Point(430, 445);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(97, 23);
             this.button1.TabIndex = 1;
@@ -1081,7 +1336,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(539, 465);
+            this.ClientSize = new System.Drawing.Size(539, 476);
             this.Controls.Add(this.labelPleaseRestart);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.tabControl);
@@ -1091,6 +1346,11 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "open3mod Settings";
             this.tabControl.ResumeLayout(false);
+            this.tabPageTracking.ResumeLayout(false);
+            this.groupBox6.ResumeLayout(false);
+            this.groupBox6.PerformLayout();
+            this.groupBox5.ResumeLayout(false);
+            this.groupBox5.PerformLayout();
             this.tabPageGeneral.ResumeLayout(false);
             this.tabPageGeneral.PerformLayout();
             this.tabPage1.ResumeLayout(false);
@@ -1208,5 +1468,26 @@
         private System.Windows.Forms.Label label17;
         private System.Windows.Forms.CheckBox autoConnectNDI;
         private System.Windows.Forms.TextBox autoSourceNDI;
+        private System.Windows.Forms.TabPage tabPageTracking;
+        private System.Windows.Forms.Label label26;
+        private System.Windows.Forms.TextBox cam0offsPitch;
+        private System.Windows.Forms.Label label22;
+        private System.Windows.Forms.Label label23;
+        private System.Windows.Forms.TextBox cam0offsZ;
+        private System.Windows.Forms.TextBox cam0offsY;
+        private System.Windows.Forms.Label label24;
+        private System.Windows.Forms.TextBox cam0offsX;
+        private System.Windows.Forms.Label label21;
+        private System.Windows.Forms.Label label20;
+        private System.Windows.Forms.TextBox hmdRefZ;
+        private System.Windows.Forms.TextBox hmdRefY;
+        private System.Windows.Forms.Label label19;
+        private System.Windows.Forms.TextBox hmdRefX;
+        private System.Windows.Forms.GroupBox groupBox6;
+        private System.Windows.Forms.Button saveHMDRef;
+        private System.Windows.Forms.GroupBox groupBox5;
+        private System.Windows.Forms.Button resetStudioZeroFromHMDRef;
+        private System.Windows.Forms.Label labelYR;
+        private System.Windows.Forms.Button rescanVRDevices;
     }
 }
