@@ -56,7 +56,7 @@ namespace open3mod
         Others = 3,
         All = 4, //No camera overlay
         //these modes require special handling in renderer
-        Composite = 5,// Regular output = Bkgd + Canvas textured with Camera + Foreground
+        Output = 5,// Regular output = Bkgd + Canvas textured with Camera + Foreground
         Camera = 6,
         CameraCancelColor = 7,
         Keying = 8,

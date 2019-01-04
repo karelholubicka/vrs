@@ -70,26 +70,6 @@ namespace open3mod
             _scenePartMode = scenePartMode;
             SetVRCameraMode(camMode);
 
-            var saved = CoreSettings.CoreSettings.Default.TrackerToCamera;
-            string[] savedData;
-            string SN = OpenVRInterface.deviceSNs[contIndex];
-            Matrix4 outMatrix;
-            if (saved != null)
-            {
-                foreach (var s in saved)
-                {
-                    savedData = s.Split(MainWindow.recentDataSeparator, StringSplitOptions.None);
-                    if (savedData[0] == SN)
-                    {
-                        bool valid = OpenVRInterface.StringToMatrix4(s, out outMatrix, out SN);
-                        if (valid)
-                        {
-                            OpenVRInterface.trackerToCamera[contIndex] = outMatrix;
-                            break;
-                        }
-                    }
-                }
-            }
             UpdateViewMatrix();
         }
 

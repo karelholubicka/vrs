@@ -252,14 +252,22 @@ namespace open3mod
             get { return _initialized; }
         }
 
-        public ICameraController cameraController(uint contIndex)
+        public int cameraAtContIndex(uint contIndex)
         {
             int camera = -1;
+            if (OpenVRInterface.displayOrder[1] == contIndex) camera = 0;//Generic
             if (OpenVRInterface.displayOrder[1] == contIndex) camera = 1;//NX
             if (OpenVRInterface.displayOrder[2] == contIndex) camera = 2;//Z5
+            return camera;
+        }
+
+        public ICameraController cameraController(uint contIndex)
+        {
+            int camera = cameraAtContIndex(contIndex);
             if (camera == -1) return null;
             return _cameraController[camera]; 
         }
+
 
         /// <summary>
         /// Construct a renderer given a valid and fully loaded MainWindow
@@ -326,18 +334,18 @@ namespace open3mod
             GL.GenTextures(modernGLUsedTextureTypeCount, modernGLTextureType);
             UploadModernGLTextures();
 
-            _cameraController[0] = new PickingCameraController(CameraMode.HMD, MathHelper.PiOver4 * 80 / 90, ScenePartMode.Composite);
+            _cameraController[0] = new PickingCameraController(CameraMode.HMD, MathHelper.PiOver4 * 80 / 90, ScenePartMode.Output);
 
             float Fov = CoreSettings.CoreSettings.Default.FovCam1;
             if (Fov > MathHelper.PiOver4 * 150 / 90) Fov = MathHelper.PiOver4 * 80 / 90;
             if (Fov < MathHelper.PiOver4 * 30 / 90) Fov = MathHelper.PiOver4 * 80 / 90;
-            _cameraController[1] = new PickingCameraController(CameraMode.Cont1, Fov, ScenePartMode.Composite);
+            _cameraController[1] = new PickingCameraController(CameraMode.Cont1, Fov, ScenePartMode.Output);
             MainWindow.capturePreview1.SetAdditionalDelay(_cameraController[1].GetCameraAddDelay());
 
             Fov = CoreSettings.CoreSettings.Default.FovCam2;
             if (Fov > MathHelper.PiOver4 * 150 / 90) Fov = MathHelper.PiOver4 * 80 / 90;
             if (Fov < MathHelper.PiOver4 * 30 / 90) Fov = MathHelper.PiOver4 * 80 / 90;
-            _cameraController[2] = new PickingCameraController(CameraMode.Cont2, Fov, ScenePartMode.Composite);
+            _cameraController[2] = new PickingCameraController(CameraMode.Cont2, Fov, ScenePartMode.Output);
             MainWindow.capturePreview2.SetAdditionalDelay(_cameraController[2].GetCameraAddDelay());
 
 
@@ -891,7 +899,7 @@ namespace open3mod
             }
 
             // and chromakey+fgd over
-            renderingController.SetScenePartMode(ScenePartMode.Composite);
+            renderingController.SetScenePartMode(ScenePartMode.Output);
             renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoSSCore);
             GL.Viewport(0, 0, NDISender.videoSizeX, NDISender.videoSizeY);
             timeTrack("16-BFChroma");
@@ -1441,6 +1449,7 @@ namespace open3mod
                 if ((view.GetScenePartMode() > ScenePartMode.All)&& renderIO)
                 {
                     int drawedCamera = CameraToDraw(index);
+                    if (view.GetScenePartMode() == ScenePartMode.Output) drawedCamera = ActiveCamera;
                     renderControl.SetRenderTarget(RenderControl.RenderTarget.ScreenCore);
                     DrawChromakey(view, true, drawedCamera, 0);
                     if ((OpenVRInterface.EVRerror == EVRInitError.None) && (MainWindow.UiState.ShowVRModels)) DrawVRModels(_cameraController[drawedCamera]);
@@ -1479,7 +1488,7 @@ namespace open3mod
                 case ScenePartMode.Camera: md = 3; break;
                 case ScenePartMode.CameraCancelColor: md = 2; break;
                 case ScenePartMode.Keying: md = 1; break; 
-                case ScenePartMode.Composite:
+                case ScenePartMode.Output:
                     md = 0;
                     if (useCompositeTexture)
                     { //replace foreground with composite - it overlays full viewport
@@ -1784,28 +1793,36 @@ namespace open3mod
         }
 
 
-        private int FOVtoZoom(float fov, int activeCamera)
+        public int FOVtoZoom(float fov, int activeCamera)
         {
             float zoom;
+            float corr;
             switch (activeCamera)
             {
                 case 0:
-                    zoom = (77 - fov) / 25 * 23;
+                    zoom = (88 - fov) / 25 * 23;
                     break;
-                case 1: 
-                    zoom = (77 - fov) / 25 * 23;
+                case 1: //NX
+                    zoom = (91 - fov) / 27 * 23;
+                    corr = Math.Abs(zoom-20);
+                    corr = 20 - corr;
+                    if (corr < 0) corr = 0;
+                    zoom = zoom - (corr / 8);
+
+                    corr = (zoom - 40);//correction at the far
+                    if (corr < 0) corr = 0;
+                    zoom = zoom + (corr / 2);
                     break;
-                case 2: 
-                    zoom = (82 - fov) / 25 * 23;
+                case 2:  //Z5
+                    zoom = (88 - fov) / 58 * 55;
+                    corr = (zoom / 20);
+                    if (corr > 1) corr = 1;
+                    zoom = zoom - 4 * corr;
+                    corr = (zoom - 30);
+                    if (corr < 0) corr = 0;
+                    zoom = zoom + (corr / 5);
                     break;
                 default: return 0;
-                    /*zoom nx 100
-        00 = fov 77
-        15 = 60
-        23 = 52
-
-        z5
-        zoom 39 = 39*/
             }
 
             return (int)zoom;
@@ -1869,20 +1886,23 @@ namespace open3mod
                 var formatFOV = new StringFormat { LineAlignment = StringAlignment.Far, Alignment = StringAlignment.Near };
                     float valueFOV = (int)(cam.GetFOV() * 360 / Math.PI);
                     string zoomXfov = "FOV: " + ((int)valueFOV).ToString();
-                    if (cam.GetScenePartMode() == ScenePartMode.Composite)
+                    string strScenePartMode = cam.GetScenePartMode().ToString();
+
+                    if (cam.GetScenePartMode() == ScenePartMode.Output)
                     {
                         valueFOV = (float)(renderingController.GetFOV() * 360 / Math.PI);
                         zoomXfov = "ZOOM: " + FOVtoZoom(valueFOV, _activeCamera).ToString();
+                        strScenePartMode = strScenePartMode + " " + _cameraController[_activeCamera].GetCameraName();
                     }
                     string currStreamName = "";
                 //    if ((int)indexFOV < streamName.Count()) { currStreamName = streamName[((int)indexFOV)]; } else currStreamName = "";
-                 string strScenePartMode = cam.GetScenePartMode().ToString();
                     if (cam.GetScenePartMode() >= ScenePartMode.Camera) // Camera, CameraCancelColor, Keying
                     {
                         int cameraToDraw = CameraToDraw(indexFOV);
                         strScenePartMode = strScenePartMode + " " + _cameraController[cameraToDraw].GetCameraName();
                         valueFOV = (float)(_cameraController[cameraToDraw].GetFOV() * 360 / Math.PI);
-                        zoomXfov = "ZOOM: " + FOVtoZoom(valueFOV, cameraToDraw).ToString();
+                        zoomXfov = "";//"FOV: " + ((int)valueFOV).ToString(); //checking FOV-Zoom ratio
+                        zoomXfov = zoomXfov + " " + "ZOOM: " + FOVtoZoom(valueFOV, cameraToDraw).ToString();
                     }
                     //Tab.ViewIndex index
                     switch (cam.GetCameraMode())

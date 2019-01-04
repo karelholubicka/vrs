@@ -522,7 +522,7 @@ namespace open3mod
                     if (_renderer.renderIO) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.CameraCancelColor);
                     break;
                 case Keys.M:
-                    if (_renderer.renderIO) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.Composite);
+                    if (_renderer.renderIO) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.Output);
                     break;
                 case Keys.K:
                     if (_renderer.renderIO) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.Keying);

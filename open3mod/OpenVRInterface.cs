@@ -208,22 +208,20 @@ namespace open3mod
                         lensToGround[i] = Matrix4.CreateTranslation(0, -lensAboveGround , 0);
                         trackerToCamera[i] = Matrix4.CreateTranslation(-trackerAsideOfLens, -trackerAboveLens, trackerBeforeLens); //first we want it NOT to be zero
                         trackerToCamera[i] = Matrix4.CreateRotationX(trackerOffXAxis) * trackerToCamera[i]; //camera moved first from controller, then rotated
-                           //trackerToCamera[i] = trackerToCamera[i]* Matrix4.CreateRotationZ(0.5f); //camera turned first, then moved
-
+                                                                                                            //trackerToCamera[i] = trackerToCamera[i]* Matrix4.CreateRotationZ(0.5f); //camera turned first, then moved
+                        if (displayOrder[1] == i)  trackerToCamera[i] = Matrix4.CreateRotationY(0.02f) * trackerToCamera[i] ; //NX need slight shift
                         viewOffsetShift = lensToGround[i] * trackerToCamera[i]; //this value should be saved with viewOffset
-
-
+                        // LoadTrackerToCamera(i);we use just preset values here
 
                     }
                     if (deviceClasses[i] == ETrackedDeviceClass.HMD)
                     {
+                        deviceName[i] = "EXT";
                         if (displayOrder[0] > OpenVR.k_unMaxTrackedDeviceCount) displayOrder[0] = i;
-                        //OpenVRInterface.hmdReference   // načíst z Coresettings;
-                        
                         lensToGround[i] = Matrix4.CreateTranslation(0, 0, 0);
-                        trackerToCamera[i] = Matrix4.CreateTranslation(-trackerAsideOfLens, -trackerAboveLens, trackerBeforeLens); //first we want it NOT to be zero
+                        trackerToCamera[i] = Matrix4.CreateTranslation(-trackerAsideOfLens, -trackerAboveLens, trackerBeforeLens); 
                         trackerToCamera[i] = Matrix4.CreateRotationX(trackerOffXAxis) * trackerToCamera[i]; //camera moved first from HMD, then rotated
-
+                        LoadTrackerToCamera(i);//overwrites preset
                     }
                 }
             }
@@ -372,20 +370,29 @@ namespace open3mod
 
                 {
                     var cam = renderer.cameraController(contIndex);
-                    float _fovy = cam.GetFOV();
-                    float step = 1.005f;
-                    /*    if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y > 0.5f))
-                        if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y < -0.5f))*/
-                    if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y > 0.5f)) _fovy = _fovy * step; ;
-                    if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y < -0.5f)) _fovy = _fovy / step; ;
-                    CoreSettings.CoreSettings.Default.SecondsToPhotons = fPredictedSecondsToPhotonsFromNow;
-                    if (_fovy > MathHelper.PiOver2) _fovy = MathHelper.PiOver2;
-                    if (_fovy < MathHelper.PiOver6 / 2) _fovy = MathHelper.PiOver6 / 2;
-                    ScenePartMode spm = cam.GetScenePartMode();
-                    CameraMode cm = cam.GetCameraMode();
-                    lock (renderer.renderParameterLock)
+                    if (cam != null)
                     {
-                        cam.SetParam(_fovy, spm, cm);
+                        float _fovy = cam.GetFOV();
+                        float step = 1.01f;
+                        /*    if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y > 0.5f))
+                            if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y < -0.5f))*/
+                        //   if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y > 0.5f)) _fovy = _fovy / step; ;
+                        //  if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y < -0.5f)) _fovy = _fovy * step; ;
+                        if ((controllerState.rAxis0.y > 0.5f)) _fovy = _fovy / step; ;
+                        if ((controllerState.rAxis0.y < -0.5f)) _fovy = _fovy * step; ;
+                        CoreSettings.CoreSettings.Default.SecondsToPhotons = fPredictedSecondsToPhotonsFromNow;
+                        if (_fovy > MathHelper.PiOver2) _fovy = MathHelper.PiOver2;
+                        if (_fovy < MathHelper.PiOver6 / 4) _fovy = MathHelper.PiOver6 / 4;
+                        int zoom = renderer.FOVtoZoom((float)(_fovy * 360 / Math.PI), renderer.cameraAtContIndex(contIndex));
+                         if (zoom < 0) _fovy = _fovy / step;//returning back changes
+                        if (zoom > 60) _fovy = _fovy * step;//returning back changes
+
+                        ScenePartMode spm = cam.GetScenePartMode();
+                        CameraMode cm = cam.GetCameraMode();
+                        lock (renderer.renderParameterLock)
+                        {
+                            cam.SetParam(_fovy, spm, cm);
+                        }
                     }
                 }
             }
@@ -492,7 +499,29 @@ namespace open3mod
             CoreSettings.CoreSettings.Default.Save();
         }
 
-
+        public static void LoadTrackerToCamera(uint contIndex)
+        {
+            var saved = CoreSettings.CoreSettings.Default.TrackerToCamera;
+            string[] savedData;
+            string SN = OpenVRInterface.deviceSNs[contIndex];
+            Matrix4 outMatrix;
+            if (saved != null)
+            {
+                foreach (var s in saved)
+                {
+                    savedData = s.Split(MainWindow.recentDataSeparator, StringSplitOptions.None);
+                    if (savedData[0] == SN)
+                    {
+                        bool valid = OpenVRInterface.StringToMatrix4(s, out outMatrix, out SN);
+                        if (valid)
+                        {
+                            OpenVRInterface.trackerToCamera[contIndex] = outMatrix;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
         public static string vector4ToString(Vector4 src)
         {
             string outStr = src.X.ToString(System.Globalization.CultureInfo.InvariantCulture);

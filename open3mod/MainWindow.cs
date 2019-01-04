@@ -300,7 +300,7 @@ namespace open3mod
                 DelayExecution(TimeSpan.FromMilliseconds(delay + 100), capturePreview1.StartCapture);
                 DelayExecution(TimeSpan.FromMilliseconds(delay + 200), capturePreview2.StartCapture);
                 DelayExecution(TimeSpan.FromMilliseconds(delay + 300), SearchDynamicSources);//we need NDI sources to be already discovered
-                DelayExecution(TimeSpan.FromMilliseconds(delay + 1000), ShowSettings);
+              //  DelayExecution(TimeSpan.FromMilliseconds(delay + 1000), ShowSettings);
                 DelayExecution(TimeSpan.FromMilliseconds(delay + 5000), OpenVRInterface.SetupDevices);//rescan
                 DelayExecution(TimeSpan.FromMilliseconds(delay + 2500), Renderer.SyncTrackEnable);//error logging
             }

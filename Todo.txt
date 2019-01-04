@@ -5,15 +5,12 @@ Moje kompilace #1 : Assimp 4.1.0
 Moje kompilace #2+3 : Assimp 4.1.0 - ale z masteru
 
 
-FOV pøepoèet na camera number-zpøesnit, pro každý typ kamery,
 kontrola zvuku a synce a timingu VR
+jak vypadá Janssen nové studio v renderu-vyrobit...f/bg/gr atd
 
 
 zmìnit NDISEnderX+Y na nìjaký master.X+Y+settings vs Output generator settings..HD preset fix,a když je device zvoleno, recreate renderer a GL??
 zmenšit textury VR modelù/png/tga/psd
-
-jak vypadá Janssen nové studio v renderu-vyrobit...f/bg/gr atd
-
 
 
 INFO:
