@@ -46,7 +46,7 @@ namespace open3mod
         private bool _mouseDown;
         private bool _mouseRightDown;
 
-        private void ProcessKeys() //locked already before called
+        private void ProcessKeys() //locked already before called, renderer already exists
         {
             var cam = UiState.ActiveTab.ActiveCameraController;
             if (cam == null)
@@ -200,6 +200,7 @@ namespace open3mod
 
         partial void OnMouseDown(object sender, MouseEventArgs e)
         {
+            if (_renderer == null) return;
             UpdateActiveViewIfNeeded(e);
 
             _previousMousePosX = e.X;
@@ -244,7 +245,7 @@ namespace open3mod
             {
                 var view = UiState.ActiveTab.ActiveViews[(int)index];
                 Debug.Assert(view != null);
-               if (_renderer != null) _renderer.OnMouseClick(e, view.Bounds, index);
+                _renderer.OnMouseClick(e, view.Bounds, index);
             }           
         }
 
@@ -327,8 +328,8 @@ namespace open3mod
                 UiState.ActiveTab.ActiveCameraController.Scroll(e.Delta);
             }
 
-
             // hack: the renderer handles the input for the HUD, so forward the event
+            if (_renderer == null) return;
             var index = MousePosToViewportIndex(e.X, e.Y);
             if (index == Tab.ViewIndex._Max)
             {
@@ -336,7 +337,7 @@ namespace open3mod
             }
             var view = UiState.ActiveTab.ActiveViews[(int)index];
             Debug.Assert(view != null);
-            if (_renderer != null) _renderer.OnMouseMove(e, view.Bounds, index);
+            _renderer.OnMouseMove(e, view.Bounds, index);
 
             if (!_mouseDown && !_mouseRightDown)
             {
@@ -413,6 +414,7 @@ namespace open3mod
 
         partial void OnKeyDown(object sender, KeyEventArgs e)
         {
+            if (Renderer == null) return;
             lock (Renderer.renderParameterLock)
             {
                 float step = 1.001f;
@@ -531,7 +533,7 @@ namespace open3mod
                     if (_renderer.renderIO) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.GreenScreen);
                     break;
                 case Keys.Enter:
-                    Renderer.SwitchActiveCameras();
+                        Renderer.SwitchActiveCameras();
                     Renderer.syncTrack(false, "SwitchCameras", 15);
                         e.Handled = true;
                         break;
@@ -543,6 +545,12 @@ namespace open3mod
                         break;
                     case Keys.NumPad2:
                         Renderer.SwitchToCamera(2);
+                        break;
+                    case Keys.NumPad3:
+                        Renderer.SwitchToCamera(3);
+                        break;
+                    case Keys.NumPad4:
+                        Renderer.SwitchToCamera(4);
                         break;
                     case Keys.U:
                         OpenVRInterface.fPredictedSecondsToPhotonsFromNow = OpenVRInterface.fPredictedSecondsToPhotonsFromNow - (step - 1) / 1f;

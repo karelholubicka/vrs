@@ -16,17 +16,8 @@ namespace open3mod
         static bool doCheckDroppedFrames = true;
         public VideoFrame videoFrame;
         public AudioFrame audioFrame;
-        static int fps = 25;
         static int audioSamplesPerSec = 48000;
-        static int audioNumSamples = audioSamplesPerSec / fps; //48000/25;
-        static int scale = 10;
-        public static int videoSizeX = 192*scale;
-        public static int videoSizeY = 108*scale;
-        public static int byteDepth = 4;
-        public static int stride = videoSizeX * byteDepth;
         static float videoAR = 16f / 9f;
-        public VideoFrame[] nullVideoFrame = new VideoFrame[10];
-        public static int NDIchannels = 4; //useful channels
         List<Sender> senderList = new List<Sender>();
         List<String> senderNameList = new List<String>();
         List<long> senderFrameSentList = new List<long>();
@@ -70,7 +61,7 @@ namespace open3mod
             }
         }
 
-        public void InitSender(string Name)
+        public void InitSender(string Name, int videoSizeX, int videoSizeY, int frameRateNumerator, int frameRateDenominator)
         {
             bool first =false; 
          if (senderNameList.Count == 0) first = true;
@@ -80,7 +71,9 @@ namespace open3mod
                 // We are going to create a 1920x1080 16:9 frame at 25.00Hz, progressive (default).
                 // We are also going to create an audio frame 
                 // 48khz, stereo in the example.
-                videoFrame = new VideoFrame(videoSizeX, videoSizeY, videoAR, fps * 1000, 1000);
+                
+                int audioNumSamples = audioSamplesPerSec / (frameRateNumerator / frameRateDenominator); //48000/ (25000/1000);
+                videoFrame = new VideoFrame(videoSizeX, videoSizeY, videoAR, frameRateNumerator, frameRateDenominator);
                 videoFrame.TimeCode = 0; // std je NDIlib_send_timecode_synthesize;
                 audioFrame = new AudioFrame(audioNumSamples, audioSamplesPerSec, 2);
                 audioFrame.NumSamples = audioNumSamples;
@@ -90,7 +83,7 @@ namespace open3mod
                 senderNameList.Add(Name);
                 senderFrameSentList.Add(0);
                 senderVideoFrameList.Add(videoFrame);
-                videoFrame = new VideoFrame(videoSizeX, videoSizeY, videoAR, fps * 1000, 1000);
+                videoFrame = new VideoFrame(videoSizeX, videoSizeY, videoAR, frameRateNumerator, frameRateDenominator);
                 senderVideoFrameList.Add(videoFrame);//so we added two frames, at positions 2* and 2*+1
                 textFormat.Alignment = StringAlignment.Center;
                 textFormat.LineAlignment = StringAlignment.Center;

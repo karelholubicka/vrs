@@ -350,7 +350,7 @@ namespace open3mod
 
         public Bitmap ReadVideoTextureTest()
         {
-            Bitmap testBmp = new Bitmap(NDISender.videoSizeX, NDISender.videoSizeY);
+            Bitmap testBmp = new Bitmap(_videoSize.Width, _videoSize.Height);
             Graphics gr = Graphics.FromImage(testBmp);
             gr.Clear(Color.Beige);
             var testData = testBmp.LockBits(new Rectangle(0, 0, testBmp.Width, testBmp.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);

@@ -24,19 +24,31 @@ namespace open3mod
         public static float trackerOffXAxis = 0.1f; //radians - angle between controllers and lens Z axis 
         public static float lensAboveGround = 0.06f; //height of camera lens center above ground
         public static int maxPositionsBuffer = 5;
-        public static Matrix4[,] allPositions = new Matrix4[maxPositionsBuffer, OpenVR.k_unMaxTrackedDeviceCount]; 
-        public static Matrix4[] trackedPositions = new Matrix4[OpenVR.k_unMaxTrackedDeviceCount]; 
-        public static bool[] activePositions = new bool[OpenVR.k_unMaxTrackedDeviceCount]; //only active trackers
-        public static ETrackedDeviceClass[] deviceClasses = new ETrackedDeviceClass[OpenVR.k_unMaxTrackedDeviceCount]; //what sits at which index
-        public static string[] deviceSNs = new string[OpenVR.k_unMaxTrackedDeviceCount];
-        public static string[] deviceName = new string[OpenVR.k_unMaxTrackedDeviceCount];
-        public static int[] deviceAdditionalDelay = new int[OpenVR.k_unMaxTrackedDeviceCount];
-        public static uint[] displayOrder = new uint[3]; //controller order - HMD 0, first, second - to be displayed in viewport selector
-        public static Matrix4[] lensToGround = new Matrix4[OpenVR.k_unMaxTrackedDeviceCount]; //shift from lens to the ground for each device wanted during reset
-        public static Matrix4[] trackerToCamera = new Matrix4[OpenVR.k_unMaxTrackedDeviceCount];
+        public static uint virtualDevices = 1;
+        public static uint totalDevices = OpenVR.k_unMaxTrackedDeviceCount + virtualDevices;
+        public static Matrix4[,] allPositions = new Matrix4[maxPositionsBuffer, OpenVR.k_unMaxTrackedDeviceCount];//memory buffer only for real devices
+
+        public static Matrix4[] trackedPositions = new Matrix4[totalDevices]; 
+        public static bool[] activePositions = new bool[totalDevices]; //only active trackers
+        public static Matrix4[] lensToGround = new Matrix4[totalDevices]; //shift from lens to the ground for each device wanted during reset
+        public static Matrix4[] trackerToCamera = new Matrix4[totalDevices];
+
+        public static ETrackedDeviceClass[] deviceClasses = new ETrackedDeviceClass[totalDevices]; //what sits at which index
+        public static string[] deviceSNs = new string[totalDevices];
+        public static string[] deviceName = new string[totalDevices];
+        public static int[] deviceAdditionalDelay = new int[totalDevices];
+
+        public static uint[] indexOfDevice = new uint[MainWindow.inputs];
+        //existing devices:
+        // HMD = 0, Cont1 = 1, Cont2 = 2, Virtual = 3;
+        // Mapping:
+        // A/ Video inputs to Camera Numbers(0..inputs-1) ...now automatic in Camera Preview
+        // B/ Camera Numbers to Devices( + other devices may exists - trackers, and some Devices are virtual) .. now here in Setup devices
+        // C/ Devices to ContIndexes
+        // D/ Camera Numbers to Audio Pairs
+        // Other Mapping exists for Device to CameraMode... this gives Camera to CameraMode
+
         //smer Z se nastavi resetem, po montáži se podle SN nebo jine fix identifikace priradi correct i shiftmatrixy pri loadingu
-        private static int countOffsetRequests = 0;
-        private static int neededOffsetRequests = 50;
         public static float maxAdvance = 0.08f;
 
         public static Matrix4 OpenVRMatrixToOpenTKMatrix(HmdMatrix34_t matrix)
@@ -114,7 +126,7 @@ namespace open3mod
         {
             index = 0;
             bool result = false;
-            for (uint i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; i++)
+            for (uint i = 0; i < deviceSNs.Length; i++)
             {
                 if (deviceSNs[i] == SN)
                 {
@@ -142,9 +154,7 @@ namespace open3mod
         {
             var vrMatrix = new HmdMatrix34_t();
             TrackedDevicePose_t[] pTrackedDevicePoseArray = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
-            displayOrder[0] = OpenVR.k_unMaxTrackedDeviceCount + 1;
-            displayOrder[1] = OpenVR.k_unMaxTrackedDeviceCount + 1;
-            displayOrder[2] = OpenVR.k_unMaxTrackedDeviceCount + 1;
+            for (uint i = 0; i < indexOfDevice.Length; i++) indexOfDevice[i] = totalDevices + 1;
             for (uint j = 0; j < maxPositionsBuffer; j++)
             {
                 for (uint i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; i++)
@@ -152,7 +162,7 @@ namespace open3mod
                     allPositions[j, i] = Matrix4.Identity;
                 }
             }
-            for (uint i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; i++)
+            for (uint i = 0; i < trackedPositions.Length;  i++)
             {
                 trackedPositions[i] = Matrix4.Identity;
                 activePositions[i] = false;
@@ -196,20 +206,20 @@ namespace open3mod
                         if (deviceSNs[i] == "LHR-FFD71D42")
                         {
                             deviceName[i] = "NX";
-                            displayOrder[1] = i;
+                            indexOfDevice[1] = i;
                         }
                         else
                         {
                             deviceName[i] = "Z5";
                             deviceAdditionalDelay[i] = 1;
-                            displayOrder[2] = i;
+                            indexOfDevice[2] = i;
                         }
 
                         lensToGround[i] = Matrix4.CreateTranslation(0, -lensAboveGround , 0);
                         trackerToCamera[i] = Matrix4.CreateTranslation(-trackerAsideOfLens, -trackerAboveLens, trackerBeforeLens); //first we want it NOT to be zero
                         trackerToCamera[i] = Matrix4.CreateRotationX(trackerOffXAxis) * trackerToCamera[i]; //camera moved first from controller, then rotated
                                                                                                             //trackerToCamera[i] = trackerToCamera[i]* Matrix4.CreateRotationZ(0.5f); //camera turned first, then moved
-                        if (displayOrder[1] == i)  trackerToCamera[i] = Matrix4.CreateRotationY(0.02f) * trackerToCamera[i] ; //NX need slight shift
+                        if (indexOfDevice[1] == i)  trackerToCamera[i] = Matrix4.CreateRotationY(0.02f) * trackerToCamera[i] ; //NX need slight shift
                         viewOffsetShift = lensToGround[i] * trackerToCamera[i]; //this value should be saved with viewOffset
                         // LoadTrackerToCamera(i);we use just preset values here
 
@@ -217,7 +227,7 @@ namespace open3mod
                     if (deviceClasses[i] == ETrackedDeviceClass.HMD)
                     {
                         deviceName[i] = "EXT";
-                        if (displayOrder[0] > OpenVR.k_unMaxTrackedDeviceCount) displayOrder[0] = i;
+                        if (indexOfDevice[0] > totalDevices) indexOfDevice[0] = i;
                         lensToGround[i] = Matrix4.CreateTranslation(0, 0, 0);
                         trackerToCamera[i] = Matrix4.CreateTranslation(-trackerAsideOfLens, -trackerAboveLens, trackerBeforeLens); 
                         trackerToCamera[i] = Matrix4.CreateRotationX(trackerOffXAxis) * trackerToCamera[i]; //camera moved first from HMD, then rotated
@@ -225,9 +235,16 @@ namespace open3mod
                     }
                 }
             }
-            if (displayOrder[0] > OpenVR.k_unMaxTrackedDeviceCount) displayOrder[0] = 0; //need to find better way how to handle off - controllers
-            if (displayOrder[1] > OpenVR.k_unMaxTrackedDeviceCount) displayOrder[1] = 0;
-            if (displayOrder[2] > OpenVR.k_unMaxTrackedDeviceCount) displayOrder[2] = 0;
+            //    if (displayOrder[0] > OpenVR.k_unMaxTrackedDeviceCount) displayOrder[0] = 0; //need to find better way how to handle off - controllers
+            //    if (displayOrder[1] > OpenVR.k_unMaxTrackedDeviceCount) displayOrder[1] = 0;
+            //    if (displayOrder[2] > OpenVR.k_unMaxTrackedDeviceCount) displayOrder[2] = 0;
+
+            //setup 1 virtual camera here
+            uint index = OpenVR.k_unMaxTrackedDeviceCount + 0;
+            deviceClasses[index] = ETrackedDeviceClass.DisplayRedirect;//kinda hack
+            deviceSNs[index] = "VTCAM0";
+            deviceName[index] = "Virt";
+            indexOfDevice[3] = index;
 
             Matrix4 savedSettingsTest;
             bool valid = StringToMatrix4(CoreSettings.CoreSettings.Default.ViewOffset, out savedSettingsTest, out string dummyString);
@@ -246,7 +263,8 @@ namespace open3mod
 
         public static void SaveHMDReference()
         {
-            uint contIndex = displayOrder[0];
+            uint contIndex = indexOfDevice[0];
+            if (contIndex >= trackedPositions.Length) return;
             hmdRefPos = viewOffset * Matrix4.Invert(viewOffsetShift * trackedPositions[contIndex]) ;
 
             string saveStr = "HMDRefPos" + MainWindow.recentDataSeparator[0] + Matrix4ToString(hmdRefPos);
@@ -256,7 +274,8 @@ namespace open3mod
 
         public static void ApplyHMDReference()
         {
-            uint contIndex = displayOrder[0];
+            uint contIndex = indexOfDevice[0];
+            if (contIndex >= trackedPositions.Length) return;
             //   hmdRefPos = Matrix4.CreateTranslation(-0.5,-0.5,-0.5)// uhne doleva, dolů, dozadu
             viewOffset = hmdRefPos * viewOffsetShift * trackedPositions[contIndex];
             string saveStr = "ViewOffset" + MainWindow.recentDataSeparator[0] + Matrix4ToString(viewOffset);
@@ -266,8 +285,16 @@ namespace open3mod
 
         public static void SetCam0Offset(Matrix4 cam0Offset)
         {
-            trackerToCamera[displayOrder[0]] = cam0Offset;
-            SaveTrackerToCamera(displayOrder[0]);
+            if (indexOfDevice[0] >= trackerToCamera.Length) return;
+            trackerToCamera[indexOfDevice[0]] = cam0Offset;
+            SaveTrackerToCamera(indexOfDevice[0]);
+        }
+
+        public static void GrabCamToVirt()
+        {
+            if (indexOfDevice[1] >= trackedPositions.Length) return;
+           // if (indexOfDevice[3] >= trackedPositions.Length) return; //this shoulf be always OK, camera exists
+            trackedPositions[indexOfDevice[3]] = trackedPositions[indexOfDevice[1]];
         }
 
         public static void ScanPositions(long frameDelay)// frame delay positive values subtract from seconds to photons
@@ -293,7 +320,7 @@ namespace open3mod
                     }
                 }
             }
-            for (uint i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; i++)
+            for (uint i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; i++)//no virtual positions
             {
                 trackedPositions[i] = allPositions[maxPositionsBuffer-1, i];
             }
@@ -303,7 +330,7 @@ namespace open3mod
         {
             var vrMatrix = new HmdMatrix34_t();
             TrackedDevicePose_t[] pTrackedDevicePoseArray = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
-            for (uint i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; i++) 
+            for (uint i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; i++) //only real positions
             {
                 OpenVR.System.GetDeviceToAbsoluteTrackingPose(eOrg, fPredictedSecondsToPhotonsFromNow, pTrackedDevicePoseArray);
                 if (pTrackedDevicePoseArray[i].bPoseIsValid)
@@ -344,7 +371,7 @@ namespace open3mod
         public static void ProcessAllButtons(Renderer renderer)
         {
             if (EVRerror != EVRInitError.None) return;
-            for (uint i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; i++)
+            for (uint i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; i++)//no virtual buttons
             {
                 if (deviceClasses[i] == ETrackedDeviceClass.Controller)
                 {
@@ -407,7 +434,7 @@ namespace open3mod
                    // viewOffset = Matrix4.Invert(GetViewFromPosition(viewOffsetPosition));
                     string saveStr = "ViewOffset" + MainWindow.recentDataSeparator[0] + Matrix4ToString(viewOffset);
                     CoreSettings.CoreSettings.Default.ViewOffset = saveStr;
-                    saveStr = "ViewOffsetShift" + MainWindow.recentDataSeparator[0] + Matrix4ToString(viewOffset); //need to save because may be different for different controllers
+                    saveStr = "ViewOffsetShift" + MainWindow.recentDataSeparator[0] + Matrix4ToString(viewOffsetShift); //need to save because may be different for different controllers
                     CoreSettings.CoreSettings.Default.ViewOffsetShift = saveStr;
                     CoreSettings.CoreSettings.Default.Save();
                                     }

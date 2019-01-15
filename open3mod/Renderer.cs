@@ -66,23 +66,22 @@ namespace open3mod
         private float _hoverFadeInTime;
         private NDISender _NDISender = new NDISender();
         private long _NDITimeCode;
-        static int numBuffers = NDISender.NDIchannels * 2; //4 = 0-3; ale index 0 není buffer[0], pozor
-        int[] pixelPackBuffer = new int[numBuffers];
-        int[] pixelUnpackBuffer = new int[numBuffers + 2];//2 na dynamic in loop
+        static int numPackBuffers = MainWindow.outputs * 2; //
+        int[] pixelPackBuffer = new int[numPackBuffers];
         int shift = 0; //0 - first buffer, 1-second buffer
         public Stopwatch _runsw = new Stopwatch();
         public Stopwatch _renderClock = new Stopwatch();
         public double lastRenderTime;
-        public static string[] streamName = { "Composite", "HMD Composite", "HMD Background", "HMD Foreground"};
         private Scene _controller;
         private Scene _lighthouse;
         private Scene _hmd;
         private Scene _camera;
         private VRModelCameraController _tracker;
-        static private int _maxCameras = 2;//0 = NoCamera/HMD, 1+2 Cameras with Controllers 1+2;
-        static private int _maxCamArray = _maxCameras + 1;
-        private int[] _cameraTexture = new int[_maxCamArray];
-        public PickingCameraController[] _cameraController = new PickingCameraController[_maxCamArray];
+        static int numUnpackBuffers = MainWindow.inputs * 2 + 2;//další 2 na NDI; composite texture buffer nepotøebuje - dìláme ji direct
+        int[] pixelUnpackBuffer = new int[numUnpackBuffers];
+        static private int _maxCameras = MainWindow.inputs;
+        private int[] _cameraTexture = new int[_maxCameras];
+        public PickingCameraController[] _cameraController = new PickingCameraController[_maxCameras];
         private int _canvasTexture;
         private int _foregroundTexture;
         private int _compositeTexture;
@@ -109,6 +108,12 @@ namespace open3mod
         public const int usedModernGLTextureTypeCount = 6;  //TextureType 1..6
         public static int[] modernGLTextureType = new int[usedModernGLTextureTypeCount];
         private const int _ModernGLTextureSize = 16;
+        private int videoSizeX = 1920;
+        private int videoSizeY = 1080;
+        private int byteDepth = 4;
+        private int stride = 1920 * 4;
+        int YUVwidth = 1920 / 2;
+        uint YUVstride = (uint)1920 * 4 / 2;
 
         public readonly object renderParameterLock = new object();
         public readonly object renderTargetLock = new object();
@@ -255,9 +260,14 @@ namespace open3mod
         public int cameraAtContIndex(uint contIndex)
         {
             int camera = -1;
-            if (OpenVRInterface.displayOrder[1] == contIndex) camera = 0;//Generic
-            if (OpenVRInterface.displayOrder[1] == contIndex) camera = 1;//NX
-            if (OpenVRInterface.displayOrder[2] == contIndex) camera = 2;//Z5
+            for (int i = 0; i < _maxCameras; i++)
+            {
+                if (OpenVRInterface.indexOfDevice[i] == contIndex)
+                {
+                    camera = i;
+                    break;
+                }
+            }
             return camera;
         }
 
@@ -278,10 +288,15 @@ namespace open3mod
         {
             renderIO = MainWindow.useIO || renderIO;
             _mainWindow = mainWindow;
+            videoSizeX = MainWindow.videoSize.Width;
+            videoSizeY = MainWindow.videoSize.Height;
+            stride = videoSizeX * byteDepth;
+            YUVwidth = videoSizeX / 2;
+            YUVstride = (uint)stride / 2;
             LoadHudImages();
             _textOverlay = new TextOverlay(this);
 
-            renderControl.InitGlControl(NDISender.videoSizeX, NDISender.videoSizeY);
+            renderControl.InitGlControl(videoSizeX, videoSizeY);
             renderControl.SetRenderTarget(RenderControl.RenderTarget.ScreenCompat);
             RenderControl.GLInfo("ScreenCompat");
 
@@ -305,23 +320,25 @@ namespace open3mod
 
             if (MainWindow.useIO)
             {
-                MainWindow.capturePreview1.Show();
-                MainWindow.capturePreview2.Show();
+                for (int i = 0; i < MainWindow.inputs; i++)
+                {
+                    MainWindow.capturePreview[i].Show();
+                }
+
                 MainWindow.outputGenerator.Show();
             }
 
-            Bitmap testBmp = new Bitmap(NDISender.videoSizeX, NDISender.videoSizeY);
+            Bitmap testBmp = new Bitmap(videoSizeX, videoSizeY);
             Graphics gr = Graphics.FromImage(testBmp);
-            gr.Clear(Color.Beige);
+//            gr.Clear(Color.Beige);
+            gr.Clear(Color.FromArgb(0x85, 0x60, 0x85, 0x60));//keying green
             var testData = testBmp.LockBits(new Rectangle(0, 0, testBmp.Width, testBmp.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            GL.GenTextures(_maxCamArray, _cameraTexture);
+            GL.GenTextures(_maxCameras, _cameraTexture);
             GL.GenTextures(1, out _canvasTexture);
             GL.GenTextures(1, out _foregroundTexture);
             GL.GenTextures(1, out _compositeTexture);
 
-            InitializeVideoTexture(_cameraTexture[0], testData.Scan0);
-            InitializeVideoTexture(_cameraTexture[1], testData.Scan0);
-            InitializeVideoTexture(_cameraTexture[2], testData.Scan0);
+            for (int i = 0; i < _maxCameras; i++) InitializeVideoTexture(_cameraTexture[i], testData.Scan0);
             InitializeVideoTexture(_canvasTexture, testData.Scan0);
             InitializeVideoTexture(_foregroundTexture, testData.Scan0);
             InitializeVideoTexture(_compositeTexture, testData.Scan0);
@@ -334,20 +351,14 @@ namespace open3mod
             GL.GenTextures(modernGLUsedTextureTypeCount, modernGLTextureType);
             UploadModernGLTextures();
 
-            _cameraController[0] = new PickingCameraController(CameraMode.HMD, MathHelper.PiOver4 * 80 / 90, ScenePartMode.Output);
-
-            float Fov = CoreSettings.CoreSettings.Default.FovCam1;
-            if (Fov > MathHelper.PiOver4 * 150 / 90) Fov = MathHelper.PiOver4 * 80 / 90;
-            if (Fov < MathHelper.PiOver4 * 30 / 90) Fov = MathHelper.PiOver4 * 80 / 90;
-            _cameraController[1] = new PickingCameraController(CameraMode.Cont1, Fov, ScenePartMode.Output);
-            MainWindow.capturePreview1.SetAdditionalDelay(_cameraController[1].GetCameraAddDelay());
-
-            Fov = CoreSettings.CoreSettings.Default.FovCam2;
-            if (Fov > MathHelper.PiOver4 * 150 / 90) Fov = MathHelper.PiOver4 * 80 / 90;
-            if (Fov < MathHelper.PiOver4 * 30 / 90) Fov = MathHelper.PiOver4 * 80 / 90;
-            _cameraController[2] = new PickingCameraController(CameraMode.Cont2, Fov, ScenePartMode.Output);
-            MainWindow.capturePreview2.SetAdditionalDelay(_cameraController[2].GetCameraAddDelay());
-
+            _cameraController[0] = new PickingCameraController(CameraMode.HMD, MainWindow.LoadFov(0), ScenePartMode.Output);
+            _cameraController[1] = new PickingCameraController(CameraMode.Cont1, MainWindow.LoadFov(1), ScenePartMode.Output);
+            _cameraController[2] = new PickingCameraController(CameraMode.Cont2, MainWindow.LoadFov(2), ScenePartMode.Output);
+            _cameraController[3] = new PickingCameraController(CameraMode.Virtual, MainWindow.LoadFov(3), ScenePartMode.Output);
+            for (int i = 0; i < MainWindow.inputs; i++)
+            {
+                MainWindow.capturePreview[i].SetAdditionalDelay(_cameraController[i].GetCameraAddDelay());
+            }
 
             renderControl.SetRenderTarget(RenderControl.RenderTarget.ScreenCore);
             RenderControl.GLInfo("ScreenCore");
@@ -431,7 +442,7 @@ namespace open3mod
         private void InitializeVideoTexture(int Texture, IntPtr data)
         {
             GL.BindTexture(TextureTarget.Texture2D, Texture);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba8, NDISender.videoSizeX, NDISender.videoSizeY, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, data);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba8, videoSizeX, videoSizeY, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, data);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMinFilter.Linear); //Does not allow LinearMipmapLinear
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMagFilter.Linear);
             //GL.GenerateMipmap(GenerateMipmapTarget.Texture2D); Video textures are not moved at all, except composite, do not need MipMaps
@@ -455,35 +466,35 @@ namespace open3mod
             if (MainWindow.useIO)
             {
                 _NDITimeCode = 0;
-                for (int i = 0; i < NDISender.NDIchannels; i++)
+                for (int i = 0; i < MainWindow.NDIchannels; i++)//must be one after another, otherwise share buffer, we do not want this
                 {
-                    _NDISender.InitSender(streamName[i]); //must be one after another, otherwise share buffer, we do not want this
+                    _NDISender.InitSender(MainWindow.streamName[i], videoSizeX, videoSizeY, (int)MainWindow.timeScale, (int)MainWindow.frameDuration); //scale/duration = fps = fpsN/fpsD
                 }
-                for (int i = 0; i < NDISender.NDIchannels; i++)
+                for (int i = 0; i < MainWindow.NDIchannels; i++)
                 {
-                    _NDISender.PrepareFrame(streamName[i],_NDITimeCode); 
+                    _NDISender.PrepareFrame(MainWindow.streamName[i],_NDITimeCode); 
                 }
                 _NDISender.FlushSenders();
             }
             else
             {
                 string[] inactiveStreamName = { "", "" };
-                streamName = inactiveStreamName;
+                MainWindow.streamName = inactiveStreamName;
             }
 
-            GL.GenBuffers(numBuffers, pixelPackBuffer);
-            for (int i = 0; i < numBuffers; i++)
+            GL.GenBuffers(numPackBuffers, pixelPackBuffer);
+            for (int i = 0; i < numPackBuffers; i++)
             {
                 GL.BindBuffer(BufferTarget.PixelPackBuffer, pixelPackBuffer[i]);
-                GL.BufferData(BufferTarget.PixelPackBuffer, (IntPtr)(NDISender.videoSizeY * NDISender.stride), (IntPtr)0, BufferUsageHint.StreamRead);
+                GL.BufferData(BufferTarget.PixelPackBuffer, (IntPtr)(videoSizeY * stride), (IntPtr)0, BufferUsageHint.StreamRead);
             }
             GL.BindBuffer(BufferTarget.PixelPackBuffer, 0);
 
-            GL.GenBuffers(numBuffers, pixelUnpackBuffer);
-            for (int i = 0; i < numBuffers; i++)
+            GL.GenBuffers(numUnpackBuffers, pixelUnpackBuffer);
+            for (int i = 0; i < numUnpackBuffers; i++)
             {
                 GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[i]);
-                GL.BufferData(BufferTarget.PixelUnpackBuffer, (IntPtr)(NDISender.videoSizeY * NDISender.stride), (IntPtr)0, BufferUsageHint.StreamDraw);
+                GL.BufferData(BufferTarget.PixelUnpackBuffer, (IntPtr)(videoSizeY * stride), (IntPtr)0, BufferUsageHint.StreamDraw);
             }
             GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
 
@@ -504,14 +515,14 @@ namespace open3mod
             }
             if (MainWindow.useIO)
             {
-                for (int i = 0; i < NDISender.NDIchannels; i++)
+                for (int i = 0; i < MainWindow.NDIchannels; i++)
                 {
-                    _NDISender.DisposeSender(streamName[i]);
+                    _NDISender.DisposeSender(MainWindow.streamName[i]);
                 }
             }
             renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoCompat);
-            GL.DeleteBuffers(numBuffers, pixelPackBuffer);
-            GL.DeleteBuffers(numBuffers, pixelUnpackBuffer);
+            GL.DeleteBuffers(numPackBuffers, pixelPackBuffer);
+            GL.DeleteBuffers(numUnpackBuffers, pixelUnpackBuffer);
             renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoNone);
         }
 
@@ -527,6 +538,7 @@ namespace open3mod
 
         public void SwitchToCamera(int camera)
         {
+            if ((camera >= _maxCameras) || (camera < 0)) return;
             _activeCamera = camera;
         }
 
@@ -690,7 +702,7 @@ namespace open3mod
         /// </summary>
         private void DrawSync(IntPtr videoData, long sentFrames)
         {
-            Bitmap bmp = new Bitmap(NDISender.videoSizeX, NDISender.videoSizeY, NDISender.stride, System.Drawing.Imaging.PixelFormat.Format32bppPArgb, videoData);
+            Bitmap bmp = new Bitmap(videoSizeX, videoSizeY, stride, System.Drawing.Imaging.PixelFormat.Format32bppPArgb, videoData);
             Graphics graphics = Graphics.FromImage(bmp);
             graphics.SmoothingMode = SmoothingMode.AntiAlias;
             Pen lineOutlinePen = new Pen(Color.White, 10.0f);
@@ -711,12 +723,12 @@ namespace open3mod
                     lineOutlinePen = new Pen(Color.Yellow, 10.0f);
                     break;
             };
-            int lineHeight = NDISender.videoSizeY / 4;
-            int a = (int)(sentFrames * 20) % NDISender.videoSizeX;
-            Point pt1 = new Point(a, (NDISender.videoSizeY - (lineHeight * (exists - 1))));
-            Point pt2 = new Point(a, NDISender.videoSizeY - lineHeight * (exists));
+            int lineHeight = videoSizeY / 4;
+            int a = (int)(sentFrames * 20) % videoSizeX;
+            Point pt1 = new Point(a, (videoSizeY - (lineHeight * (exists - 1))));
+            Point pt2 = new Point(a, videoSizeY - lineHeight * (exists));
             Point pt3 = new Point(a, 0);
-            Point pt4 = new Point(a, NDISender.videoSizeY);
+            Point pt4 = new Point(a, videoSizeY);
             graphics.CompositingMode = CompositingMode.SourceCopy;
             graphics.DrawLine(transparentlineOutlinePen, pt3, pt4);
             graphics.DrawLine(lineOutlinePen, pt1, pt2);
@@ -730,8 +742,44 @@ namespace open3mod
             syncTrack(true, "RenderCalls Stacking:" + renderCalls.ToString(), 2);
             return;
             syncTrack(true, "Escaping renderCall-RCalls:"+renderCalls.ToString(), 2);
-            MainWindow.capturePreview1.skipNextFrame();
-            MainWindow.capturePreview2.skipNextFrame();
+            for (int i = 0; i < MainWindow.inputs; i++)
+            {
+                MainWindow.capturePreview[i].skipNextFrame();
+            }
+        }
+
+        public void UploadCameraFromBufferToGL(int camera, int shift)
+        {
+            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[2* camera + 1 - shift]);
+            GL.BindTexture(TextureTarget.Texture2D, _cameraTexture[camera]);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba8, YUVwidth, videoSizeY, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedInt8888Reversed, (IntPtr)0);
+            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
+        }
+
+        public void UploadCameraFromVideoFrameToBuffer(int camera, int shift)
+        {
+            //upload camera from videoframe to buffer. Whole uploading takes only 1-2 ms, so we go for older frames only when timeFrame was in 0-5ms ahead
+            //       MainWindow.outputGenerator.GetHardwareReferenceClock(out long hardwareTime, out long timeInFrame, out long ticksPerFrame);
+            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[2 * camera + shift]);
+            lock (MainWindow.capturePreview[camera].memLock)
+            {
+                MainWindow.capturePreview[camera].GetNextVideoFrame(out IntPtr videoData, out long dataSize, out IntPtr audioData, out long frameDelay, out bool valid);
+                if (valid)
+                {
+                    if (dataSize > (int)YUVstride * videoSizeY) dataSize = (int)YUVstride * videoSizeY;
+                    GL.BufferData(BufferTarget.PixelUnpackBuffer, (int)dataSize, videoData, BufferUsageHint.DynamicDraw);
+                    //  MainWindow.outputGenerator.addAudioFrame(audioData);
+                    MainWindow.outputGenerator.copyAudioFrameChannelPair(audioData, 0, (uint)camera*2);
+                    if (ActiveCamera == camera) actualFrameDelay = frameDelay;
+                }
+                else
+                {
+                    MainWindow.outputGenerator.addBufferedAudioFrame(); //later use the later one...
+                    if (MainWindow.capturePreview[camera].IsCapturing()) syncTrack(true, "UploadFr"+camera.ToString(), 5);
+                }
+            }
+            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
         }
 
         /// <summary>
@@ -739,73 +787,23 @@ namespace open3mod
         /// </summary>
         private void UploadVideoTextures(Scene scene)
         {
-            int YUVwidth = NDISender.videoSizeX / 2;
-            uint YUVstride = (uint)NDISender.stride / 2;
-
-            //upload camera 1 from buffer to GL
-            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[1 - shift]);
-            GL.BindTexture(TextureTarget.Texture2D, _cameraTexture[1]);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba8, YUVwidth, NDISender.videoSizeY, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedInt8888Reversed, (IntPtr)0);
-            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
-            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
-
-            //upload camera 2 from buffer to GL
-            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[3 - shift]);
-            GL.BindTexture(TextureTarget.Texture2D, _cameraTexture[2]);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba8, YUVwidth, NDISender.videoSizeY, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedInt8888Reversed, (IntPtr)0);
-            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
-            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
+            for (int i = 0; i > _maxCameras; i++) UploadCameraFromBufferToGL(i, shift);
 
             //upload dynamic texture from buffer to GL
             if ((scene.dynamicTexture != null) && (_NDIReceiver.ConnectedSource != null) && (dynTextureSize.Width != 0))
             {
                 dynTexture = scene.dynamicTexture.Gl;//upload from buffer to texture
-                GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[5 - shift]);
+                GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[_maxCameras + 1 - shift]);
                 GL.BindTexture(TextureTarget.Texture2D, dynTexture);
                 GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba8, dynTextureSize.Width, dynTextureSize.Height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, (IntPtr)0);
                 GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
             }
 
-            //upload camera 1 from videoframe to buffer. Whole uploading takes only 1-2 ms, so we go for older frames only when timeFrame was in 0-5ms
-            //       MainWindow.outputGenerator.GetHardwareReferenceClock(out long hardwareTime, out long timeInFrame, out long ticksPerFrame);
-            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[shift]);
+            for (int i = 0; i > _maxCameras; i++) UploadCameraFromVideoFrameToBuffer(i, shift);
 
-            lock (MainWindow.capturePreview1.memLock)
-            {
-                MainWindow.capturePreview1.GetNextVideoFrame(out IntPtr videoData, out long dataSize, out IntPtr audioData, out long frameDelay1, out bool valid);
-                if (valid)
-                {
-                    if (dataSize > (int)YUVstride * NDISender.videoSizeY) dataSize = (int)YUVstride * NDISender.videoSizeY;
-                    GL.BufferData(BufferTarget.PixelUnpackBuffer, (int)YUVstride * NDISender.videoSizeY, videoData, BufferUsageHint.DynamicDraw);
-                    MainWindow.outputGenerator.addAudioFrame(audioData);
-                    if (ActiveCamera == 1) actualFrameDelay = frameDelay1;
-                }
-                else
-                {
-                    MainWindow.outputGenerator.repeatAudioFrame();
-                    if (MainWindow.capturePreview1.IsCapturing()) syncTrack(true, "UploadFr1", 5);
-                }
-            }
-            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
 
-            //upload camera 2 from videoframe or older frame) to buffer
-            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[2 + shift]);
-            lock (MainWindow.capturePreview2.memLock)
-            {
-                MainWindow.capturePreview2.GetNextVideoFrame(out IntPtr videoData, out long dataSize, out IntPtr audioData, out long frameDelay2, out bool valid);
-                if (valid)
-                {
-                    if (dataSize > (int)YUVstride * NDISender.videoSizeY) dataSize = (int)YUVstride * NDISender.videoSizeY;
-                    GL.BufferData(BufferTarget.PixelUnpackBuffer, (int)YUVstride * NDISender.videoSizeY, videoData, BufferUsageHint.DynamicDraw);
-                    if (ActiveCamera == 2) actualFrameDelay = frameDelay2;
-                    //                    MainWindow.outputGenerator.addAudioFrame(audioData);
-                }
-                else
-                {
-                    if (MainWindow.capturePreview2.IsCapturing()) syncTrack(true, "UploadFr2", 5);
-                }
-            }
-            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
+            UploadCameraFromVideoFrameToBuffer(1, shift);
+            UploadCameraFromVideoFrameToBuffer(2, shift);
 
             //upload dynamic texture from receiver bitmap to buffer
             if ((scene.dynamicTexture != null) && (_NDIReceiver.ConnectedSource != null))
@@ -816,7 +814,7 @@ namespace open3mod
                     if (NDIReceived != null)
                     {
                         var recdData = NDIReceived.LockBits(new Rectangle(0, 0, NDIReceived.Width, NDIReceived.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-                        GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[4 + shift]);
+                        GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[_maxCameras + shift]);
                         GL.BufferData(BufferTarget.PixelUnpackBuffer, NDIReceived.Width * NDIReceived.Height * 4, recdData.Scan0, BufferUsageHint.DynamicDraw);
                         GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
                         NDIReceived.UnlockBits(recdData);
@@ -825,7 +823,6 @@ namespace open3mod
                     }
                 }
             }
-            GL.BindBuffer(BufferTarget.PixelPackBuffer, 0);
             GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
         }
 
@@ -836,7 +833,7 @@ namespace open3mod
         {
             timeTrack("10-RendComposStart");
             if (activeTab.ActiveScene == null) return;
-                GL.Viewport(0, 0, NDISender.videoSizeX, NDISender.videoSizeY);
+                GL.Viewport(0, 0, videoSizeX, videoSizeY);
             //render canvas to FBO #2, move to SS#3 and move to texture
             renderingController.SetScenePartMode(ScenePartMode.GreenScreen);
             //            return;
@@ -861,15 +858,6 @@ namespace open3mod
             renderControl.CopyVideoFramebuffers(1, 2);//from MS to SS
             renderControl.ReBindFrameBuffer(2);
             timeTrack("14-FGMoved");
-            if (_activeCamera == 0)
-            {
-                renderControl.CopyVideoFramebuffers(1, 2);//from MS to SS
-                renderControl.SetRenderTarget((RenderControl.RenderTarget)((int)(RenderControl.RenderTarget.VideoSSCompat) + (int)GraphicsSettings.Default.RenderingBackend));
-                GL.BindBuffer(BufferTarget.PixelPackBuffer, pixelPackBuffer[2 * 3 + 1 - shift]);
-                GL.ReadPixels(0, 0, NDISender.videoSizeX, NDISender.videoSizeY, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, (IntPtr)0);
-                GL.BindBuffer(BufferTarget.PixelPackBuffer, 0);
-                renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoSSCompat);
-            }
 
             /*                  Bitmap compare = (Bitmap)Image.FromFile("e:\\vr-software\\REC\\10bit.bmp");
                               //  Bitmap compare = (Bitmap)Image.FromFile("e:\\vr-software\\REC\\VertBars.bmp");
@@ -879,7 +867,7 @@ namespace open3mod
                                 GL.BufferData(BufferTarget.PixelUnpackBuffer, compare.Width * compare.Height * 4, recdcData.Scan0, BufferUsageHint.DynamicDraw);
                                 GL.BindTexture(TextureTarget.Texture2D, _foregroundTexture);
                                 compare.UnlockBits(recdcData);
-                                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba8, NDISender.videoSizeX, NDISender.videoSizeY, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, IntPtr.Zero);
+                                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba8, videoSizeX, videoSizeY, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, IntPtr.Zero);
                                 GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
                                 compare.Dispose();
                 */
@@ -890,18 +878,10 @@ namespace open3mod
             renderControl.CopyVideoFramebuffers(1, 2);//from MS to SS
             timeTrack("15-BGReady");
 
-            if (_activeCamera == 0)
-            {
-                renderControl.SetRenderTarget((RenderControl.RenderTarget)((int)(RenderControl.RenderTarget.VideoSSCompat) + (int)GraphicsSettings.Default.RenderingBackend));
-                GL.BindBuffer(BufferTarget.PixelPackBuffer, pixelPackBuffer[2 * 2 + 1 - shift]);
-                GL.ReadPixels(0, 0, NDISender.videoSizeX, NDISender.videoSizeY, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, (IntPtr)0);
-                GL.BindBuffer(BufferTarget.PixelPackBuffer, 0);
-            }
-
             // and chromakey+fgd over
             renderingController.SetScenePartMode(ScenePartMode.Output);
             renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoSSCore);
-            GL.Viewport(0, 0, NDISender.videoSizeX, NDISender.videoSizeY);
+            GL.Viewport(0, 0, videoSizeX, videoSizeY);
             timeTrack("16-BFChroma");
             DrawChromakey(renderingController, false, _activeCamera, 1);
             timeTrack("17-Keyed");
@@ -911,15 +891,9 @@ namespace open3mod
             //and immediatelly start transfer to CPU memory / buffer
             renderControl.SetRenderTarget((RenderControl.RenderTarget)((int)(RenderControl.RenderTarget.VideoSSCompat) + (int)GraphicsSettings.Default.RenderingBackend));
             GL.BindBuffer(BufferTarget.PixelPackBuffer, pixelPackBuffer[2 * 0 + 1 - shift]);
-            GL.ReadPixels(0, 0, NDISender.videoSizeX, NDISender.videoSizeY, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, (IntPtr)0);
+            GL.ReadPixels(0, 0, videoSizeX, videoSizeY, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, (IntPtr)0);
             GL.BindBuffer(BufferTarget.PixelPackBuffer, 0);
 
-            if (_activeCamera == 0)
-            {
-                GL.BindBuffer(BufferTarget.PixelPackBuffer, pixelPackBuffer[2 * 1 + 1 - shift]);
-                GL.ReadPixels(0, 0, NDISender.videoSizeX, NDISender.videoSizeY, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, (IntPtr)0);
-                GL.BindBuffer(BufferTarget.PixelPackBuffer, 0);
-            }
             renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoSSCore);
             renderControl.CopyVideoFramebuffers(2, 1);
             renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoSSCore);
@@ -939,7 +913,7 @@ namespace open3mod
             timeTrack("20-OutStart");
             IntPtr src = (IntPtr)0;
             IntPtr[] srcs = new IntPtr[] { src, src, src, src };
-            int lastBuffer = NDISender.NDIchannels;
+            int lastBuffer = MainWindow.NDIchannels;
            // lastBuffer = 4;//only for BMD out, NDI out uses the same BGRA buffer
             lock (renderTargetLock)
             {
@@ -948,9 +922,9 @@ namespace open3mod
                 {
                     GL.BindBuffer(BufferTarget.PixelPackBuffer, pixelPackBuffer[2 * i + shift]);
                     srcs[i] = GL.MapBuffer(BufferTarget.PixelPackBuffer, BufferAccess.ReadOnly);
-                    for (int j = 0; j < NDISender.videoSizeY; j++)
+                    for (int j = 0; j < videoSizeY; j++)
                     {
-                        MainWindow.CopyMemory(_NDISender.senderVideoFrameList[2 * i + shift].BufferPtr + ((NDISender.videoSizeY - j - 1) * NDISender.stride), srcs[i] + (j * NDISender.stride), (uint)NDISender.stride);
+                        MainWindow.CopyMemory(_NDISender.senderVideoFrameList[2 * i + shift].BufferPtr + ((videoSizeY - j - 1) * stride), srcs[i] + (j * stride), (uint)stride);
                     }
                     if ((i == 0) && MainWindow.outputGenerator.IsRunning())
                     {
@@ -958,13 +932,13 @@ namespace open3mod
                         IntPtr dest = MainWindow.outputGenerator.videoFrameBuffer();
                         lock (MainWindow.outputGenerator.m_videoFrame)
                         {
+                           // MainWindow.outputGenerator.addBufferedAudioFrame(); //
                             if (MainWindow.outputGenerator.isOutputFresh) syncTrack(true,"Overwriting Output",5);
-                            for (int j = 0; j < NDISender.videoSizeY; j++)
+                            for (int j = 0; j < videoSizeY; j++)
                             {
-                                MainWindow.CopyMemory(dest + ((NDISender.videoSizeY - j - 1) * NDISender.stride) + 0, srcs[i] + (j * NDISender.stride), (uint)NDISender.stride - 1);//RGBA do ARGB = 1 pixel/byte shift
+                                MainWindow.CopyMemory(dest + ((videoSizeY - j - 1) * stride) + 0, srcs[i] + (j * stride), (uint)stride - 1);//RGBA do ARGB = 1 pixel/byte shift
                             }
                             MainWindow.outputGenerator.isOutputFresh = true;
-                            
                             syncTrack(false, "OutputMove, offset "+ MainWindow.outputGenerator.GetTimeInFrame().ToString()+" ms", 5);
                         }
                     }
@@ -979,19 +953,19 @@ namespace open3mod
             {
                 Parallel.Invoke(() =>
                 {
-                    _NDISender.PrepareFrame(streamName[0], _NDITimeCode, shift, waitTime * 250 / 40);// sendDelay*250 /40);//250=40ms prázná, 0=nic = plná, 
+                    _NDISender.PrepareFrame(MainWindow.streamName[0], _NDITimeCode, shift, waitTime * 250 / 40);// sendDelay*250 /40);//250=40ms prázná, 0=nic = plná, 
                 },  //close first Action
                               () =>
                               {
-                                  _NDISender.PrepareFrame(streamName[1], _NDITimeCode, shift);
+                                  _NDISender.PrepareFrame(MainWindow.streamName[1], _NDITimeCode, shift);//invalid streamNames return immediatelly
                               }, //close second Action
                               () =>
                               {
-                                  _NDISender.PrepareFrame(streamName[2], _NDITimeCode, shift);
+                                  _NDISender.PrepareFrame(MainWindow.streamName[2], _NDITimeCode, shift);
                               }, //close third Action
                               () =>
                               {
-                                  _NDISender.PrepareFrame(streamName[1], _NDITimeCode, shift);
+                                  _NDISender.PrepareFrame(MainWindow.streamName[3], _NDITimeCode, shift);
                               } //close fourth Action
                           ); //close parallel.invoke
 
@@ -1335,7 +1309,8 @@ namespace open3mod
             // Picking view is not implemented yet
             "HMD",
             "Controller 1",
-            "Controller 2"
+            "Controller 2",
+            "Virtual"
                     };
 
 
@@ -1348,7 +1323,8 @@ namespace open3mod
             "open3mod.Images.HUD_FPS",
             "open3mod.Images.HUD_HMD",
             "open3mod.Images.HUD_Cont1",
-            "open3mod.Images.HUD_Cont2"
+            "open3mod.Images.HUD_Cont2",
+            "open3mod.Images.HUD_Virt"
         };
 
 
@@ -1388,9 +1364,6 @@ namespace open3mod
 
         public void Dispose()
         {
-            CoreSettings.CoreSettings.Default.FovCam1 = _cameraController[1].GetFOV();
-            CoreSettings.CoreSettings.Default.FovCam2 = _cameraController[2].GetFOV();
-            CoreSettings.CoreSettings.Default.Save();
             if (_camera != null) _camera.Dispose();
             if (_lighthouse != null) _lighthouse.Dispose();
             if (_controller != null) _controller.Dispose();
@@ -1419,8 +1392,7 @@ namespace open3mod
         private int CameraToDraw(Tab.ViewIndex index)
         {
             int drawedCamera = _activeCamera;
-            if ((index == Tab.ViewIndex.Index0) || (index == Tab.ViewIndex.Index1)) drawedCamera = 1;
-            if ((index == Tab.ViewIndex.Index2) || (index == Tab.ViewIndex.Index3)) drawedCamera = 2;
+            if (index != Tab.ViewIndex.Index4) drawedCamera = (int)index;
             return drawedCamera;
         }
 
@@ -1584,7 +1556,7 @@ namespace open3mod
                 var modelView = new Matrix4();
                 var modelPosition = new Matrix4();
                 int toVideo = 0;
-                for (uint i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; i++)
+                for (uint i = 0; i < OpenVRInterface.totalDevices; i++)
                 {
 
                     modelPosition = OpenVRInterface.trackedPositions[i];
@@ -1602,8 +1574,8 @@ namespace open3mod
                             if (_camera != null) DrawScene(_camera, _tracker, toVideo, true);
                             break;
                         case ETrackedDeviceClass.Controller:
-                            if ((OpenVRInterface.displayOrder[1] == i) && (view.GetCameraMode() == CameraMode.Cont1)) break;//Do not draw when you see it in front of view
-                            if ((OpenVRInterface.displayOrder[2] == i) && (view.GetCameraMode() == CameraMode.Cont2)) break;//Do not draw when you see it in front of view
+                            if ((OpenVRInterface.indexOfDevice[1] == i) && (view.GetCameraMode() == CameraMode.Cont1)) break;//Do not draw when you see it in front of view
+                            if ((OpenVRInterface.indexOfDevice[2] == i) && (view.GetCameraMode() == CameraMode.Cont2)) break;//Do not draw when you see it in front of view
                             if (_controller != null) DrawScene(_controller, _tracker, toVideo, true);
                             modelPosition = OpenVRInterface.trackerToCamera[i] * OpenVRInterface.trackedPositions[i];
                             modelView = modelPosition * view.GetViewNoOffset();
@@ -1615,6 +1587,13 @@ namespace open3mod
                             break;
                         case ETrackedDeviceClass.TrackingReference:
                             if (_lighthouse != null) DrawScene(_lighthouse, _tracker, toVideo, true);
+                            break;
+                        case ETrackedDeviceClass.DisplayRedirect:
+                            ///if ((view.GetCameraMode() != CameraMode.Virtual) && (_camera != null)) DrawScene(_camera, _tracker, toVideo, true); //Do not draw virtual device
+                            modelPosition = OpenVRInterface.trackerToCamera[i] * OpenVRInterface.trackedPositions[i];
+                            modelView = modelPosition * view.GetViewNoOffset();
+                            _tracker.SetView(modelView);
+                            if (_camera != null) DrawScene(_camera, _tracker, toVideo, true);
                             break;
                         default:
                             //Debug.Assert(false);
@@ -1718,7 +1697,7 @@ namespace open3mod
                 if (toVideo == 1)
                 {
                     GL.DepthMask(true);
-                    GL.Viewport(0, 0, NDISender.videoSizeX, NDISender.videoSizeY);
+                    GL.Viewport(0, 0, videoSizeX, videoSizeY);
                     GL.ClearColor(BackgroundColor);
                     GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
                 }
@@ -1899,7 +1878,7 @@ namespace open3mod
                     if (cam.GetScenePartMode() >= ScenePartMode.Camera) // Camera, CameraCancelColor, Keying
                     {
                         int cameraToDraw = CameraToDraw(indexFOV);
-                        strScenePartMode = strScenePartMode + " " + _cameraController[cameraToDraw].GetCameraName();
+                        strScenePartMode = strScenePartMode + " #" + cameraToDraw.ToString() + " "+_cameraController[cameraToDraw].GetCameraName();
                         valueFOV = (float)(_cameraController[cameraToDraw].GetFOV() * 360 / Math.PI);
                         zoomXfov = "";//"FOV: " + ((int)valueFOV).ToString(); //checking FOV-Zoom ratio
                         zoomXfov = zoomXfov + " " + "ZOOM: " + FOVtoZoom(valueFOV, cameraToDraw).ToString();
@@ -1917,6 +1896,7 @@ namespace open3mod
                         case CameraMode.HMD:
                         case CameraMode.Cont1:
                         case CameraMode.Cont2:
+                        case CameraMode.Virtual:
                             if (OpenVRInterface.EVRerror == EVRInitError.None)
                             {
                                 DrawShadowedString(graphics, currStreamName + zoomXfov + " | " + strScenePartMode, MainWindow.UiState.DefaultFont16, rectFOV, Color.Black, Color.FromArgb(10, Color.White), formatFOV);

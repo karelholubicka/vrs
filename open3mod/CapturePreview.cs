@@ -70,9 +70,9 @@ namespace open3mod
                 deckLink.SetID(this, m_mainWindow, m_number);
 
 
-                if (comboBoxInputDevice.Items.Count == m_number)
+                if (comboBoxInputDevice.Items.Count == m_number + 2)
                 {
-                    comboBoxInputDevice.SelectedIndex = m_number-1;
+                    comboBoxInputDevice.SelectedIndex = m_number+1;
                     EnableInterface(true);
                     buttonStartStop.Enabled = true;
 //                    StartCapture();
@@ -154,7 +154,21 @@ namespace open3mod
             m_selectedDevice.InputFormatChanged += new DeckLinkFormatChangedHandler((m) => this.Invoke((Action)(() => { DisplayModeChanged(m); })));
 
             if (m_selectedDevice != null)
-                m_selectedDevice.StartCapture(displayMode, glWindow, checkBoxAutodetectFormat.Checked);
+            {
+                try
+                {
+                    m_selectedDevice.StartCapture(displayMode, glWindow, checkBoxAutodetectFormat.Checked);
+                }
+                catch
+                {
+                   // MessageBox.Show(this, "Failed to Start Input Video Device #"+ (m_number+1).ToString() +".");
+                    MessageBox.Show(this, "Failed to Start Input Device: " + ((StringObjectPair<DeckLinkInputDevice>)comboBoxInputDevice.SelectedItem).ToString() + ".");
+                    m_selectedDevice.InputSignalChanged += null;
+                    m_selectedDevice.InputFormatChanged += null;
+                    //maybe revert more things done in StartCapture...
+                    return;
+                }
+            }
 
             // Update UI
             buttonStartStop.Text = "Stop Capture";
@@ -199,10 +213,12 @@ namespace open3mod
 
         public void GetNextVideoFrame(out IntPtr videoData, out long dataSize, out IntPtr audioData, out long frameDelay, out bool valid)
         {
-            valid = true;
+            valid = false;
             audioData = (IntPtr)0;
             videoData = (IntPtr)0;
+            frameDelay = 0;
             dataSize = 0;
+            if (m_selectedDevice == null) return;
             m_selectedDevice.getNextFrame(out IDeckLinkVideoInputFrame videoFrame, out IDeckLinkAudioInputPacket audioPacket, out frameDelay, out long difference);
             if (videoFrame == null)
             {
@@ -210,6 +226,7 @@ namespace open3mod
             }
             else
             {
+                valid = true;
                 videoFrame.GetBytes(out videoData);
                 dataSize = videoFrame.GetRowBytes() * videoFrame.GetHeight();
             }

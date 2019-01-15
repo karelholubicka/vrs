@@ -33,6 +33,7 @@
             this.buttonStartStop = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.comboBoxVideoFormat = new System.Windows.Forms.ComboBox();
+            this.restartLabel = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -40,7 +41,7 @@
             // 
             this.comboBoxOutputDevice.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboBoxOutputDevice.FormattingEnabled = true;
-            this.comboBoxOutputDevice.Location = new System.Drawing.Point(93, 27);
+            this.comboBoxOutputDevice.Location = new System.Drawing.Point(93, 22);
             this.comboBoxOutputDevice.Name = "comboBoxOutputDevice";
             this.comboBoxOutputDevice.Size = new System.Drawing.Size(187, 21);
             this.comboBoxOutputDevice.TabIndex = 8;
@@ -49,7 +50,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(11, 30);
+            this.label5.Location = new System.Drawing.Point(11, 25);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(76, 13);
             this.label5.TabIndex = 10;
@@ -58,7 +59,7 @@
             // 
             // buttonStartStop
             // 
-            this.buttonStartStop.Location = new System.Drawing.Point(14, 55);
+            this.buttonStartStop.Location = new System.Drawing.Point(14, 53);
             this.buttonStartStop.Name = "buttonStartStop";
             this.buttonStartStop.Size = new System.Drawing.Size(75, 23);
             this.buttonStartStop.TabIndex = 1;
@@ -68,6 +69,7 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.restartLabel);
             this.groupBox1.Controls.Add(this.comboBoxVideoFormat);
             this.groupBox1.Controls.Add(this.buttonStartStop);
             this.groupBox1.Controls.Add(this.label5);
@@ -83,10 +85,20 @@
             // 
             this.comboBoxVideoFormat.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboBoxVideoFormat.FormattingEnabled = true;
-            this.comboBoxVideoFormat.Location = new System.Drawing.Point(124, 57);
+            this.comboBoxVideoFormat.Location = new System.Drawing.Point(124, 54);
             this.comboBoxVideoFormat.Name = "comboBoxVideoFormat";
             this.comboBoxVideoFormat.Size = new System.Drawing.Size(87, 21);
             this.comboBoxVideoFormat.TabIndex = 11;
+            this.comboBoxVideoFormat.SelectedIndexChanged += new System.EventHandler(this.comboBoxVideoFormat_SelectedIndexChanged);
+            // 
+            // restartLabel
+            // 
+            this.restartLabel.AutoSize = true;
+            this.restartLabel.Location = new System.Drawing.Point(105, 83);
+            this.restartLabel.Name = "restartLabel";
+            this.restartLabel.Size = new System.Drawing.Size(0, 13);
+            this.restartLabel.TabIndex = 12;
+            this.restartLabel.TextAlign = System.Drawing.ContentAlignment.TopRight;
             // 
             // OutputGenerator
             // 
@@ -115,5 +127,6 @@
         private System.Windows.Forms.Button buttonStartStop;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.ComboBox comboBoxVideoFormat;
+        private System.Windows.Forms.Label restartLabel;
     }
 }

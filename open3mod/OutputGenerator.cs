@@ -50,6 +50,7 @@ namespace open3mod
         private IReadOnlyList<int> kAudioChannels = new List<int> {2, 8, 16};
 
         private bool m_running;
+        private int m_number = 1;
 
         private DeckLinkDeviceDiscovery m_deckLinkDiscovery;
         private DeckLinkOutputDevice m_selectedDevice;
@@ -76,12 +77,11 @@ namespace open3mod
         private uint m_audioBufferSampleLength;
         private uint m_audioSamplesPerFrame;
         private uint m_audioDataPerSample;
-        private uint m_audioChannelCount;
+        private uint m_audioChannelCount = 16;
         private uint m_audioDataPerFrame;
-        private _BMDAudioSampleRate m_audioSampleRate;
-        private _BMDAudioSampleType m_audioSampleDepth;
+        private _BMDAudioSampleRate m_audioSampleRate = _BMDAudioSampleRate.bmdAudioSampleRate48kHz;
+        private _BMDAudioSampleType m_audioSampleDepth = _BMDAudioSampleType.bmdAudioSampleType16bitInteger;
         private _BMDPixelFormat m_pixelFormat;
-        private int m_number = 1;
         private bool m_audioBufferAllocated = false;
         public bool isOutputFresh = false;
 
@@ -103,7 +103,9 @@ namespace open3mod
                //    m_pixelFormat = _BMDPixelFormat.bmdFormat8BitARGB;//jiné možné pořadí, OK.
 
             this.ShowInTaskbar = false;
-            m_audioSampleDepth = _BMDAudioSampleType.bmdAudioSampleType16bitInteger;
+            m_frameWidth = MainWindow.videoSize.Width;
+            m_frameHeight = MainWindow.videoSize.Height;
+
         }
         IDeckLinkVideoConversion frameConverter = new CDeckLinkVideoConversion();
 
@@ -117,10 +119,16 @@ namespace open3mod
                 comboBoxOutputDevice.Items.Add(new StringObjectPair<DeckLinkOutputDevice>(deckLink.deviceName, deckLink));
                 comboBoxOutputDevice.EndUpdate();
 
-                if (comboBoxOutputDevice.Items.Count == m_number)
+                comboBoxOutputDevice.SelectedIndex = 0;
+
+                foreach (StringObjectPair<DeckLinkOutputDevice> item in comboBoxOutputDevice.Items)
                 {
-                    comboBoxOutputDevice.SelectedIndex = m_number-1;
-                  //  StartRunning();
+                    if (item.ToString() == CoreSettings.CoreSettings.Default.OutputDeviceName)
+                    {
+                        comboBoxOutputDevice.SelectedItem = item;
+                        //  comboBoxOutputDevice.SelectedIndex = m_number - 1;
+                        break;
+                    }
                 }
             }
         }
@@ -178,15 +186,7 @@ namespace open3mod
         public void StartRunning()
         {
             if (m_running) return;
-                //     m_selectedDevice.VideoFrameCompleted += new DeckLinkVideoOutputHandler((b) => this.BeginInvoke((Action)(() => { ScheduleNextFrame(b); })));
-                m_selectedDevice.VideoFrameCompleted += new DeckLinkVideoOutputHandler((b) =>  ScheduleNextFrame(b));
-            m_selectedDevice.AudioOutputRequested += new DeckLinkAudioOutputHandler(() => this.BeginInvoke((Action)(() => { WriteNextAudioSamples(); })));//used only for preroll and when in sync troubles
-            m_selectedDevice.PlaybackStopped += new DeckLinkPlaybackStoppedHandler(() => this.BeginInvoke((Action)(() => { DisableOutput(); })));
 
-            m_audioChannelCount = 16;
-            m_audioSampleDepth = _BMDAudioSampleType.bmdAudioSampleType16bitInteger;
-            m_audioSampleRate = _BMDAudioSampleRate.bmdAudioSampleRate48kHz;
-            //
             //- Extract the IDeckLinkDisplayMode from the display mode popup menu
             IDeckLinkDisplayMode videoDisplayMode;
             videoDisplayMode = ((DisplayModeEntry)comboBoxVideoFormat.SelectedItem).displayMode;
@@ -197,10 +197,22 @@ namespace open3mod
             m_framesPerSecond = (uint)((m_frameTimescale + (m_frameDuration - 1)) / m_frameDuration);
             var mode = videoDisplayMode.GetDisplayMode();
             // Set the video output mode
-            m_selectedDevice.deckLinkOutput.EnableVideoOutput(videoDisplayMode.GetDisplayMode(), _BMDVideoOutputFlags.bmdVideoOutputFlagDefault);
-            // Set the audio output mode
-            m_selectedDevice.deckLinkOutput.EnableAudioOutput(m_audioSampleRate, m_audioSampleDepth, m_audioChannelCount, _BMDAudioOutputStreamType.bmdAudioOutputStreamContinuous);
-
+            try
+            {
+                m_selectedDevice.VideoFrameCompleted += new DeckLinkVideoOutputHandler((b) => ScheduleNextFrame(b));
+                m_selectedDevice.AudioOutputRequested += new DeckLinkAudioOutputHandler(() => this.BeginInvoke((Action)(() => { WriteNextAudioSamples(); })));//used only for preroll and when in sync troubles
+                m_selectedDevice.PlaybackStopped += new DeckLinkPlaybackStoppedHandler(() => this.BeginInvoke((Action)(() => { DisableOutput(); })));
+                m_selectedDevice.deckLinkOutput.EnableVideoOutput(videoDisplayMode.GetDisplayMode(), _BMDVideoOutputFlags.bmdVideoOutputFlagDefault);
+                // Set the audio output mode
+                m_selectedDevice.deckLinkOutput.EnableAudioOutput(m_audioSampleRate, m_audioSampleDepth, m_audioChannelCount, _BMDAudioOutputStreamType.bmdAudioOutputStreamContinuous);
+                //     m_selectedDevice.VideoFrameCompleted += new DeckLinkVideoOutputHandler((b) => this.BeginInvoke((Action)(() => { ScheduleNextFrame(b); })));
+            }
+            catch
+            {
+                MessageBox.Show(this, "Failed to Start Output Device: " + ((StringObjectPair<DeckLinkOutputDevice>)comboBoxOutputDevice.SelectedItem).ToString()+".");
+                m_selectedDevice.RemoveAllListeners();
+                return;
+            }
             // Generate prerollFrames of audio
             m_audioBufferSampleLength = (uint)(m_prerollFrames * audioSamplesPerFrame());
             int m_audioBufferDataLength = (int)(m_audioBufferSampleLength * audioDataPerSample());
@@ -235,7 +247,12 @@ namespace open3mod
             m_running = true;
             comboBoxOutputDevice.Enabled = false;
             comboBoxVideoFormat.Enabled = false;
-
+            CoreSettings.CoreSettings.Default.OutputDeviceName = ((StringObjectPair<DeckLinkOutputDevice>)comboBoxOutputDevice.SelectedItem).ToString();
+            videoDisplayMode.GetName(out string videoMode);
+            videoDisplayMode.GetFrameRate(out MainWindow.frameDuration, out MainWindow.timeScale);
+            CoreSettings.CoreSettings.Default.OutputVideoMode = videoMode;
+            CoreSettings.CoreSettings.Default.FrameDuration = MainWindow.frameDuration;
+            CoreSettings.CoreSettings.Default.TimeScale = MainWindow.timeScale;
         }
 
         public IntPtr videoFrameBuffer()
@@ -251,7 +268,7 @@ namespace open3mod
         }
         public uint audioSamplesPerFrame()
         {
-            m_audioSamplesPerFrame = (uint)(((uint)m_audioSampleRate * m_frameDuration) / m_frameTimescale);
+            m_audioSamplesPerFrame = m_frameTimescale != 0 ? (uint)(((uint)m_audioSampleRate * m_frameDuration) / m_frameTimescale) : 0;
             return m_audioSamplesPerFrame;
         }
 
@@ -272,8 +289,30 @@ namespace open3mod
                 MainWindow.CopyMemory(m_audioBuffer, audioData, audioDataPerFrame());
             }
         }
+        public void copyAudioFrameChannelPair(IntPtr audioData, uint sourceLCh, uint destinationLCh)
+        {
+            if (!m_audioBufferAllocated) return;
+            if (m_running == false) return;
+            if ((sourceLCh >= m_audioChannelCount-1) || (sourceLCh >= m_audioChannelCount-1)) return;
+            var sampleSize = m_audioSampleDepth == _BMDAudioSampleType.bmdAudioSampleType16bitInteger ? 2 : 4;
 
-        public void repeatAudioFrame()
+            for (int i = 0; i < audioSamplesPerFrame(); i++) //each sample we copy 2 channels in one take
+            {
+                int readOffset = (int)((i * m_audioChannelCount + sourceLCh) * sampleSize);
+                if (m_audioSampleDepth == _BMDAudioSampleType.bmdAudioSampleType16bitInteger)
+                {
+                    System.Int32 chanSample = Marshal.ReadInt32(audioData + readOffset);//reading 2 consecutive 16bit channels,
+                    Marshal.WriteInt32(m_audioBuffer, (int)((i * m_audioChannelCount + destinationLCh) * sampleSize), chanSample);//samples: 16/32 bit, channels 0-1-2-atd, then next sample; so 32 bit writes 2 channels
+                }
+                else
+                {
+                  //  System.Int64 chanSample = Marshal.ReadInt64(audioData + readOffset);//reading 2 channels
+                  //  Marshal.WriteInt64(m_audioBuffer, (int)((i * m_audioChannelCount + destinationLCh) * sampleSize), chanSample);
+                }
+            }
+        }
+
+        public void addBufferedAudioFrame()
         {
             if (!m_audioBufferAllocated) return;
             if (m_running == false) return;
@@ -292,7 +331,7 @@ namespace open3mod
             m_selectedDevice.deckLinkOutput.GetBufferedAudioSampleFrameCount(out bufferedSamples);
             if (bufferedSamples < kAudioWaterlevel)//this happenes only when addAudioFrame is behind
             {
-                m_mainWindow.Renderer.syncTrack(true, "RepeatingAudioAtFrm:" + m_totalFramesScheduled.ToString(), 13);
+                if (m_mainWindow.Renderer != null) m_mainWindow.Renderer.syncTrack(true, "RepeatingAudioAtFrm:" + m_totalFramesScheduled.ToString(), 13);
                 m_selectedDevice.deckLinkOutput.ScheduleAudioSamples(m_audioBuffer, audioSamplesPerFrame(), 0, 0, out uint samplesWritten);
             }
         }
@@ -389,16 +428,17 @@ namespace open3mod
                 // Or if we are not waiting for something
                 if (isAlreadyScheduling)
                 {
-                    m_mainWindow.Renderer.syncTrack(true, "EscapingScheduling, " + str + " bufd", 1);
+                    if (m_mainWindow.Renderer != null) m_mainWindow.Renderer.syncTrack(true, "EscapingScheduling, " + str + " bufd", 1);
                     return;
                 }
             }
             isAlreadyScheduling = true;
-            m_mainWindow.Renderer.syncTrack(false, "Scheduling", 1 );
+            if (m_mainWindow.Renderer != null) m_mainWindow.Renderer.syncTrack(false, "Scheduling", 1 );
             lock (m_videoFrame)
             {
-                if (isOutputFresh == false) m_mainWindow.Renderer.syncTrack(true,"Reusing output frame", 2);
+                if ((isOutputFresh == false) && (m_mainWindow.Renderer != null)) m_mainWindow.Renderer.syncTrack(true,"Reusing output frame", 2);
                 isOutputFresh = false;
+                addBufferedAudioFrame();
                 if (buffered < m_prerollFrames)
                 {
                     m_selectedDevice.deckLinkOutput.ScheduleVideoFrame(m_videoFrame[currentVideoFrame], (m_totalFramesScheduled * m_frameDuration), m_frameDuration, m_frameTimescale);
@@ -410,8 +450,8 @@ namespace open3mod
                     m_totalFramesScheduled += 1;
                     m_selectedDevice.deckLinkOutput.ScheduleVideoFrame(m_videoFrame[currentVideoFrame], (m_totalFramesScheduled * m_frameDuration), m_frameDuration, m_frameTimescale);
                     m_totalFramesScheduled += 1;
-                    addAudioFrame(m_audioBuffer);//we need to add an audioframe more to keep sync
-                    m_mainWindow.Renderer.syncTrack(true, "Buffered " +buffered.ToString()+" frames, Upbuffered 2 frames!! , total "+ m_totalFramesScheduled.ToString(), 12);
+                    addBufferedAudioFrame();//we need to add an audioframe more to keep sync
+                    if (m_mainWindow.Renderer != null) m_mainWindow.Renderer.syncTrack(true, "Buffered " +buffered.ToString()+" frames, Upbuffered 2 frames!! , total "+ m_totalFramesScheduled.ToString(), 12);
 
                 }
             }
@@ -453,18 +493,48 @@ namespace open3mod
             }
         }
 
+        private void SelectDisplayMode(string newDisplayModeName)
+        {
+            foreach (DisplayModeEntry item in comboBoxVideoFormat.Items)
+            {
+                item.displayMode.GetName(out string actName);
+                if (actName == newDisplayModeName)
+                {
+                    comboBoxVideoFormat.SelectedItem = item;
+                    break;
+                }
+            }
+        }
+
+        private void comboBoxVideoFormat_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            IDeckLinkDisplayMode videoDisplayMode;
+            videoDisplayMode = ((DisplayModeEntry)comboBoxVideoFormat.SelectedItem).displayMode;
+            CoreSettings.CoreSettings.Default.StartupVideoSize = new Size(videoDisplayMode.GetWidth(), videoDisplayMode.GetHeight());
+            if ((m_frameWidth != videoDisplayMode.GetWidth()) || (m_frameHeight != videoDisplayMode.GetHeight()))
+            {
+                restartLabel.Text = "Please restart the application.";
+                restartLabel.ForeColor = Color.Red;
+            }
+            else
+            {
+                restartLabel.Text = "";
+            }
+
+
+        }
+
         private void comboBoxOutputDevice_SelectedValueChanged(object sender, EventArgs e)
         {
             m_selectedDevice = null;
-
             if (comboBoxOutputDevice.SelectedIndex < 0)
                 return;
 
             m_selectedDevice = ((StringObjectPair<DeckLinkOutputDevice>)comboBoxOutputDevice.SelectedItem).value;
 
-            // Update the video mode popup menu
+                // Update the video mode popup menu
             RefreshVideoModeList();
-
+            SelectDisplayMode(CoreSettings.CoreSettings.Default.OutputVideoMode);
             // Enable the interface
             EnableInterface(true);
         }
@@ -473,7 +543,7 @@ namespace open3mod
         {
             comboBoxOutputDevice.Enabled = enabled;
             comboBoxVideoFormat.Enabled = enabled;
-            buttonStartStop.Enabled = enabled;
+            buttonStartStop.Enabled = restartLabel.Text == "" ? enabled : false;
        }
 
         private void RefreshVideoModeList()
@@ -483,14 +553,10 @@ namespace open3mod
                 comboBoxVideoFormat.BeginUpdate();
                 comboBoxVideoFormat.Items.Clear();
 
-                int count = 0;
                 foreach (IDeckLinkDisplayMode displayMode in m_selectedDevice)
-                { comboBoxVideoFormat.Items.Add(new DisplayModeEntry(displayMode));
-                    // if (displayMode = bmdModeHD1080i50) comboBoxVideoFormat.SelectedIndex=count;
-                    count++;
-                        }
-                comboBoxVideoFormat.SelectedIndex = 7;
-
+                {
+                    comboBoxVideoFormat.Items.Add(new DisplayModeEntry(displayMode));
+                }
                 comboBoxVideoFormat.EndUpdate();
             }
         }
@@ -529,7 +595,7 @@ namespace open3mod
 
                 for (uint i = 0; i < samplesToWrite; i++)
                 {
- //                   Int16 sample = (Int16)(24576.0 * Math.Sin((i * 2.0 * Math.PI) / 48.0));
+ //                   Int16 sample = (Int16)(24576.0 * Math.Sin((i * 2.0 * Math.PI) / 48.0));//too loud
                     Int16 sample = (Int16)(76.0 * Math.Sin((i * 2.0 * Math.PI) / 48.0));
                     for (uint ch = 0; ch < channels; ch++)
                     {
@@ -700,5 +766,6 @@ namespace open3mod
             }
             else StopRunning();
         }
+
     }
 }

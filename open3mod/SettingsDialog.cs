@@ -318,7 +318,8 @@ namespace open3mod
         int unit = 100;
         private void InitCam0Offset()
         {
-            Matrix4 position = OpenVRInterface.trackerToCamera[OpenVRInterface.displayOrder[0]];
+            if (OpenVRInterface.indexOfDevice[0] >= OpenVRInterface.trackerToCamera.Length) return;
+            Matrix4 position = OpenVRInterface.trackerToCamera[OpenVRInterface.indexOfDevice[0]];
             cam0offsX.Text = (position.M41 * unit).ToString("0.###", _provider);
             cam0offsY.Text = (position.M42 * unit).ToString("0.###", _provider);
             cam0offsZ.Text = (position.M43 * unit).ToString("0.###", _provider);
@@ -446,6 +447,11 @@ namespace open3mod
         private void rescanVRDevices_Click(object sender, EventArgs e)
         {
             OpenVRInterface.SetupDevices();
+        }
+
+        private void grabCamToVirt_Click(object sender, EventArgs e)
+        {
+            OpenVRInterface.GrabCamToVirt();
         }
     }
 }

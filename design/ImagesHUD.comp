@@ -2,11 +2,11 @@ Composition {
 	CurrentTime = 0,
 	RenderRange = { 0, 0 },
 	GlobalRange = { 0, 1 },
-	CurrentID = 146,
+	CurrentID = 251,
 	HiQ = true,
 	MotionBlur = false,
 	PlaybackUpdateMode = 0,
-	Version = "Fusion 9.0.1 build 3",
+	Version = "Fusion 9.0.2 build 15",
 	SavedOutputs = 1,
 	HeldTools = 0,
 	DisabledTools = 10,
@@ -17,74 +17,24 @@ Composition {
 		"comp:\\VRModels.png"
 	},
 	Tools = {
-		Loader1 = Loader {
-			Clips = {
-				Clip {
-					ID = "Clip1",
-					Filename = "E:\\vr-software\\open3mod-master\\open3mod\\Images\\HUD_Picking_Hover.png",
-					FormatID = "PNGFormat",
-					StartFrame = -1,
-					LengthSetManually = true,
-					TrimIn = 0,
-					TrimOut = 0,
-					ExtendFirst = 0,
-					ExtendLast = 0,
-					Loop = 0,
-					AspectMode = 0,
-					Depth = 0,
-					TimeCode = 0,
-					GlobalStart = 0,
-					GlobalEnd = 0
-				}
-			},
-			Inputs = {
-				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
-			},
-			ViewInfo = OperatorInfo { Pos = { 165, 115.5 } },
-		},
-		Loader2 = Loader {
-			Clips = {
-				Clip {
-					ID = "Clip1",
-					Filename = "E:\\vr-software\\open3mod-master\\open3mod\\Images\\HUD_Picking_Normal.png",
-					FormatID = "PNGFormat",
-					StartFrame = -1,
-					LengthSetManually = true,
-					TrimIn = 0,
-					TrimOut = 0,
-					ExtendFirst = 0,
-					ExtendLast = 0,
-					Loop = 0,
-					AspectMode = 0,
-					Depth = 0,
-					TimeCode = 0,
-					GlobalStart = 0,
-					GlobalEnd = 0
-				}
-			},
-			Inputs = {
-				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
-			},
-			ViewInfo = OperatorInfo { Pos = { 165, 148.5 } },
-		},
 		Loader3 = Loader {
 			Clips = {
 				Clip {
 					ID = "Clip1",
-					Filename = "E:\\vr-software\\open3mod-master\\open3mod\\Images\\HUD_Picking_Selected.png",
+					Filename = "comp:..\\\\open3mod\\Images\\HUD_Picking_Selected.png",
 					FormatID = "PNGFormat",
 					StartFrame = -1,
 					LengthSetManually = true,
 					TrimIn = 0,
 					TrimOut = 0,
 					ExtendFirst = 0,
-					ExtendLast = 0,
+					ExtendLast = 1,
 					Loop = 0,
 					AspectMode = 0,
 					Depth = 0,
 					TimeCode = 0,
 					GlobalStart = 0,
-					GlobalEnd = 0
+					GlobalEnd = 1
 				}
 			},
 			Inputs = {
@@ -96,7 +46,7 @@ Composition {
 			Clips = {
 				Clip {
 					ID = "Clip1",
-					Filename = "E:\\vr-software\\open3mod-master\\SteamVRImage.png",
+					Filename = "comp:SteamVRImage.png",
 					FormatID = "PNGFormat",
 					StartFrame = -1,
 					LengthSetManually = true,
@@ -117,96 +67,56 @@ Composition {
 			},
 			ViewInfo = OperatorInfo { Pos = { 165, 247.5 } },
 		},
-		BrightnessContrast4 = BrightnessContrast {
-			Inputs = {
-				Alpha = Input { Value = 1, },
-				Gain = Input { Value = 0, },
-				Input = Input {
-					SourceOp = "Crop1_2",
-					Source = "Output",
-				},
+		Loader1 = Loader {
+			Clips = {
+				Clip {
+					ID = "Clip1",
+					Filename = "comp:..\\\\open3mod\\Images\\HUD_Picking_Hover.png",
+					FormatID = "PNGFormat",
+					StartFrame = -1,
+					LengthSetManually = true,
+					TrimIn = 0,
+					TrimOut = 0,
+					ExtendFirst = 0,
+					ExtendLast = 0,
+					Loop = 0,
+					AspectMode = 0,
+					Depth = 0,
+					TimeCode = 0,
+					GlobalStart = 0,
+					GlobalEnd = 0
+				}
 			},
-			ViewInfo = OperatorInfo { Pos = { 605, 379.5 } },
-		},
-		ChannelBooleans1 = ChannelBoolean {
-			Inputs = {
-				ToRed = Input { Value = 1, },
-				ToBlue = Input { Value = 1, },
-				Background = Input {
-					SourceOp = "LumaKeyer1",
-					Source = "Output",
-				},
-			},
-			ViewInfo = OperatorInfo { Pos = { 440, 313.5 } },
-		},
-		Scale1_2 = Scale {
-			Inputs = {
-				XSize = Input { Value = 0.6, },
-				PixelAspect = Input { Value = { 1, 1 }, },
-				FilterMethod = Input { Value = 8, },
-				Input = Input {
-					SourceOp = "ChannelBooleans1",
-					Source = "Output",
-				},
-			},
-			ViewInfo = OperatorInfo { Pos = { 715, 346.5 } },
-		},
-		Merge3 = Merge {
-			Inputs = {
-				Background = Input {
-					SourceOp = "BrightnessContrast4",
-					Source = "Output",
-				},
-				Foreground = Input {
-					SourceOp = "Scale1_2",
-					Source = "Output",
-				},
-				Center = Input { Value = { 1.43422733077905, 2.42001114827202 }, },
-				PerformDepthMerge = Input { Value = 0, },
-			},
-			ViewInfo = OperatorInfo { Pos = { 715, 379.5 } },
-		},
-		Crop1_2 = Crop {
-			Inputs = {
-				XOffset = Input { Value = 24, },
-				YOffset = Input { Value = 402, },
-				XSize = Input { Value = 23, },
-				YSize = Input { Value = 22, },
-				Input = Input {
-					SourceOp = "Loader4",
-					Source = "Output",
-				},
-			},
-			ViewInfo = OperatorInfo { Pos = { 385, 379.5 } },
-		},
-		PerspectivePositioner1 = PerspectivePositioner {
-			Inputs = {
-				MappingType = Input { Value = 1, },
-				TopLeft = Input { Value = { 0.297183098591549, 0.674509803921569 }, },
-				TopRight = Input { Value = { 0.604225352112676, 0.602941176470588 }, },
-				BottomLeft = Input { Value = { 0.215962441314554, 0.250980392156863 }, },
-				BottomRight = Input { Value = { 0.699530516431925, 0.345098039215686 }, },
-				Input = Input {
-					SourceOp = "Crop1_2",
-					Source = "Output",
-				},
-			},
-			ViewInfo = OperatorInfo { Pos = { 770, 412.5 } },
-		},
-		ChannelBooleans2 = ChannelBoolean {
 			CtrlWZoom = false,
 			Inputs = {
-				Operation = Input { Value = 6, },
-				Background = Input {
-					SourceOp = "Merge3",
-					Source = "Output",
-				},
-				Foreground = Input {
-					SourceOp = "PerspectivePositioner1",
-					Source = "Output",
-				},
+				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
 			},
-			ViewInfo = OperatorInfo { Pos = { 825, 379.5 } },
+			ViewInfo = OperatorInfo { Pos = { 165, 115.5 } },
+		},
+		Loader2 = Loader {
+			Clips = {
+				Clip {
+					ID = "Clip1",
+					Filename = "comp:..\\\\open3mod\\Images\\HUD_Picking_Normal.png",
+					FormatID = "PNGFormat",
+					StartFrame = -1,
+					LengthSetManually = true,
+					TrimIn = 0,
+					TrimOut = 0,
+					ExtendFirst = 0,
+					ExtendLast = 0,
+					Loop = 0,
+					AspectMode = 0,
+					Depth = 0,
+					TimeCode = 0,
+					GlobalStart = 0,
+					GlobalEnd = 0
+				}
+			},
+			Inputs = {
+				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
+			},
+			ViewInfo = OperatorInfo { Pos = { 165, 148.5 } },
 		},
 		Saver1_3 = Saver {
 			Inputs = {
@@ -223,6 +133,7 @@ Composition {
 						Loop = 1,
 						AspectMode = 0,
 						Depth = 0,
+						TimeCode = 0,
 						GlobalStart = -2000000000,
 						GlobalEnd = 0
 					},
@@ -236,284 +147,16 @@ Composition {
 			},
 			ViewInfo = OperatorInfo { Pos = { 935, 379.5 } },
 		},
-		Instance_BrightnessContrast3_1 = BrightnessContrast {
-			SourceOp = "BrightnessContrast3",
+		BrightnessContrast1 = BrightnessContrast {
 			Inputs = {
+				Alpha = Input { Value = 1, },
+				Gain = Input { Value = 0, },
 				Input = Input {
-					SourceOp = "Crop1_1",
-					Source = "Output",
-				},
-				StartEndRenderScripts = Input { },
-				EffectMask = Input { }
-			},
-			ViewInfo = OperatorInfo { Pos = { 660, 280.5 } },
-		},
-		Saver1 = Saver {
-			PassThrough = true,
-			Inputs = {
-				ProcessWhenBlendIs00 = Input { Value = 0, },
-				Clip = Input {
-					Value = Clip {
-						Filename = "comp:\\HUD_Cont1_Selected.png",
-						FormatID = "PNGFormat",
-						Length = 0,
-						Saving = true,
-						TrimIn = 0,
-						ExtendFirst = 0,
-						ExtendLast = 0,
-						Loop = 1,
-						AspectMode = 0,
-						Depth = 0,
-						TimeCode = 0,
-						GlobalStart = -2000000000,
-						GlobalEnd = 0
-					},
-				},
-				OutputFormat = Input { Value = FuID { "PNGFormat" }, },
-				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
-				Input = Input {
-					SourceOp = "Instance_BrightnessContrast3_1",
+					SourceOp = "Loader1",
 					Source = "Output",
 				},
 			},
-			ViewInfo = OperatorInfo { Pos = { 770, 280.5 } },
-		},
-		Saver1_1_1_1 = Saver {
-			PassThrough = true,
-			Inputs = {
-				ProcessWhenBlendIs00 = Input { Value = 0, },
-				Clip = Input {
-					Value = Clip {
-						Filename = "comp:\\HUD_Cont2_Hover.png",
-						FormatID = "PNGFormat",
-						Length = 0,
-						Saving = true,
-						TrimIn = 0,
-						ExtendFirst = 0,
-						ExtendLast = 0,
-						Loop = 1,
-						AspectMode = 0,
-						Depth = 0,
-						TimeCode = 0,
-						GlobalStart = -2000000000,
-						GlobalEnd = 0
-					},
-				},
-				OutputFormat = Input { Value = FuID { "PNGFormat" }, },
-				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
-				Input = Input {
-					SourceOp = "Instance_BrightnessContrast2_1",
-					Source = "Output",
-				},
-			},
-			ViewInfo = OperatorInfo { Pos = { 1100, 181.5 } },
-		},
-		Instance_BrightnessContrast2 = BrightnessContrast {
-			SourceOp = "BrightnessContrast2",
-			Inputs = {
-				Input = Input {
-					SourceOp = "Transform1",
-					Source = "Output",
-				},
-				StartEndRenderScripts = Input { },
-				EffectMask = Input { }
-			},
-			ViewInfo = OperatorInfo { Pos = { 880, 148.5 } },
-		},
-		Instance_BrightnessContrast2_1 = BrightnessContrast {
-			SourceOp = "BrightnessContrast2_1",
-			Inputs = {
-				Input = Input {
-					SourceOp = "Instance_BrightnessContrast2",
-					Source = "Output",
-				},
-				StartEndRenderScripts = Input { },
-				EffectMask = Input { }
-			},
-			ViewInfo = OperatorInfo { Pos = { 1155, 148.5 } },
-		},
-		Instance_BrightnessContrast2_1_1 = BrightnessContrast {
-			SourceOp = "BrightnessContrast2_1_1",
-			Inputs = {
-				Input = Input {
-					SourceOp = "Instance_BrightnessContrast2_1",
-					Source = "Output",
-				},
-				StartEndRenderScripts = Input { },
-				EffectMask = Input { }
-			},
-			ViewInfo = OperatorInfo { Pos = { 1265, 148.5 } },
-		},
-		Instance_Shadow1 = Shadow {
-			SourceOp = "Shadow1",
-			Inputs = {
-				Input = Input {
-					SourceOp = "Instance_BrightnessContrast2_1_1",
-					Source = "Output",
-				},
-				Depth = Input { },
-				StartEndRenderScripts = Input { },
-				EffectMask = Input { }
-			},
-			ViewInfo = OperatorInfo { Pos = { 1375, 148.5 } },
-		},
-		Saver1_1_2 = Saver {
-			PassThrough = true,
-			Inputs = {
-				ProcessWhenBlendIs00 = Input { Value = 0, },
-				Clip = Input {
-					Value = Clip {
-						Filename = "comp:\\HUD_Cont2_Normal.png",
-						FormatID = "PNGFormat",
-						Length = 0,
-						Saving = true,
-						TrimIn = 0,
-						ExtendFirst = 0,
-						ExtendLast = 0,
-						Loop = 1,
-						AspectMode = 0,
-						Depth = 0,
-						TimeCode = 0,
-						GlobalStart = -2000000000,
-						GlobalEnd = 0
-					},
-				},
-				OutputFormat = Input { Value = FuID { "PNGFormat" }, },
-				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
-				Input = Input {
-					SourceOp = "Instance_Shadow1",
-					Source = "Output",
-				},
-			},
-			ViewInfo = OperatorInfo { Pos = { 1430, 181.5 } },
-		},
-		Transform1 = Transform {
-			Inputs = {
-				FlipHoriz = Input { Value = 1, },
-				Input = Input {
-					SourceOp = "Crop1_1",
-					Source = "Output",
-				},
-			},
-			ViewInfo = OperatorInfo { Pos = { 550, 148.5 } },
-		},
-		BrightnessContrast3 = BrightnessContrast {
-			Inputs = {
-				Gain = Input { Value = 1.2, },
-				Input = Input {
-					SourceOp = "Transform1",
-					Source = "Output",
-				},
-			},
-			ViewInfo = OperatorInfo { Pos = { 660, 181.5 } },
-		},
-		Saver1_2 = Saver {
-			PassThrough = true,
-			Inputs = {
-				ProcessWhenBlendIs00 = Input { Value = 0, },
-				Clip = Input {
-					Value = Clip {
-						Filename = "comp:\\HUD_Cont2_Selected.png",
-						FormatID = "PNGFormat",
-						Length = 0,
-						Saving = true,
-						TrimIn = 0,
-						ExtendFirst = 0,
-						ExtendLast = 0,
-						Loop = 1,
-						AspectMode = 0,
-						Depth = 0,
-						TimeCode = 0,
-						GlobalStart = -2000000000,
-						GlobalEnd = 0
-					},
-				},
-				OutputFormat = Input { Value = FuID { "PNGFormat" }, },
-				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
-				Input = Input {
-					SourceOp = "BrightnessContrast3",
-					Source = "Output",
-				},
-			},
-			ViewInfo = OperatorInfo { Pos = { 770, 181.5 } },
-		},
-		BrightnessContrast2_1_1 = BrightnessContrast {
-			Inputs = {
-				Gain = Input { Value = 0.274, },
-				Saturation = Input { Value = 0, },
-				Input = Input {
-					SourceOp = "BrightnessContrast2_1",
-					Source = "Output",
-				},
-			},
-			ViewInfo = OperatorInfo { Pos = { 1265, 247.5 } },
-		},
-		Shadow1 = Shadow {
-			Inputs = {
-				Softness = Input { Value = 0.1, },
-				Red = Input { Value = 1, },
-				Green = Input { Value = 1, },
-				Blue = Input { Value = 1, },
-				Input = Input {
-					SourceOp = "BrightnessContrast2_1_1",
-					Source = "Output",
-				},
-			},
-			ViewInfo = OperatorInfo { Pos = { 1375, 247.5 } },
-		},
-		Saver1_1 = Saver {
-			PassThrough = true,
-			Inputs = {
-				ProcessWhenBlendIs00 = Input { Value = 0, },
-				Clip = Input {
-					Value = Clip {
-						Filename = "comp:\\HUD_Cont1_Normal.png",
-						FormatID = "PNGFormat",
-						Length = 0,
-						Saving = true,
-						TrimIn = 0,
-						ExtendFirst = 0,
-						ExtendLast = 0,
-						Loop = 1,
-						AspectMode = 0,
-						Depth = 0,
-						TimeCode = 0,
-						GlobalStart = -2000000000,
-						GlobalEnd = 0
-					},
-				},
-				OutputFormat = Input { Value = FuID { "PNGFormat" }, },
-				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
-				Input = Input {
-					SourceOp = "Shadow1",
-					Source = "Output",
-				},
-			},
-			ViewInfo = OperatorInfo { Pos = { 1430, 280.5 } },
-		},
-		Crop1_1 = Crop {
-			Inputs = {
-				XOffset = Input { Value = 55, },
-				YOffset = Input { Value = 5, },
-				XSize = Input { Value = 24, },
-				YSize = Input { Value = 24, },
-				Input = Input {
-					SourceOp = "Scale1",
-					Source = "Output",
-				},
-			},
-			ViewInfo = OperatorInfo { Pos = { 660, 247.5 } },
-		},
-		BrightnessContrast2 = BrightnessContrast {
-			Inputs = {
-				Gain = Input { Value = 1.3, },
-				Saturation = Input { Value = 0, },
-				Input = Input {
-					SourceOp = "Crop1_1",
-					Source = "Output",
-				},
-			},
-			ViewInfo = OperatorInfo { Pos = { 880, 247.5 } },
+			ViewInfo = OperatorInfo { Pos = { 275, 82.5 } },
 		},
 		BrightnessContrast2_1 = BrightnessContrast {
 			Inputs = {
@@ -526,13 +169,13 @@ Composition {
 			},
 			ViewInfo = OperatorInfo { Pos = { 1155, 247.5 } },
 		},
-		Saver1_1_1 = Saver {
+		Saver1_1_2_1 = Saver {
 			PassThrough = true,
 			Inputs = {
 				ProcessWhenBlendIs00 = Input { Value = 0, },
 				Clip = Input {
 					Value = Clip {
-						Filename = "comp:\\HUD_Cont1_Hover.png",
+						Filename = "comp:\\HUD_HMD_Normal.png",
 						FormatID = "PNGFormat",
 						Length = 0,
 						Saving = true,
@@ -550,22 +193,11 @@ Composition {
 				OutputFormat = Input { Value = FuID { "PNGFormat" }, },
 				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
 				Input = Input {
-					SourceOp = "BrightnessContrast2_1",
+					SourceOp = "Instance_Shadow1_1",
 					Source = "Output",
 				},
 			},
-			ViewInfo = OperatorInfo { Pos = { 1100, 280.5 } },
-		},
-		BrightnessContrast1 = BrightnessContrast {
-			Inputs = {
-				Alpha = Input { Value = 1, },
-				Gain = Input { Value = 0, },
-				Input = Input {
-					SourceOp = "Loader1",
-					Source = "Output",
-				},
-			},
-			ViewInfo = OperatorInfo { Pos = { 275, 82.5 } },
+			ViewInfo = OperatorInfo { Pos = { 1430, 82.5 } },
 		},
 		Merge1_1 = Merge {
 			PassThrough = true,
@@ -597,19 +229,45 @@ Composition {
 			},
 			ViewInfo = OperatorInfo { Pos = { 275, 148.5 } },
 		},
-		Merge2 = Merge {
+		Saver1_2_1 = Saver {
+			PassThrough = true,
 			Inputs = {
-				Background = Input {
-					SourceOp = "Merge1",
+				ProcessWhenBlendIs00 = Input { Value = 0, },
+				Clip = Input {
+					Value = Clip {
+						Filename = "comp:\\HUD_HMD_Selected.png",
+						FormatID = "PNGFormat",
+						Length = 0,
+						Saving = true,
+						TrimIn = 0,
+						ExtendFirst = 0,
+						ExtendLast = 0,
+						Loop = 1,
+						AspectMode = 0,
+						Depth = 0,
+						TimeCode = 0,
+						GlobalStart = -2000000000,
+						GlobalEnd = 0
+					},
+				},
+				OutputFormat = Input { Value = FuID { "PNGFormat" }, },
+				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
+				Input = Input {
+					SourceOp = "Instance_BrightnessContrast3",
 					Source = "Output",
 				},
-				Foreground = Input {
-					SourceOp = "Loader3",
-					Source = "Output",
-				},
-				PerformDepthMerge = Input { Value = 0, },
 			},
-			ViewInfo = OperatorInfo { Pos = { 275, 181.5 } },
+			ViewInfo = OperatorInfo { Pos = { 770, 115.5 } },
+		},
+		Transform1 = Transform {
+			Inputs = {
+				FlipHoriz = Input { Value = 1, },
+				Input = Input {
+					SourceOp = "Crop1_1",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 550, 148.5 } },
 		},
 		Saver1_1_1_1_1 = Saver {
 			PassThrough = true,
@@ -641,25 +299,39 @@ Composition {
 			},
 			ViewInfo = OperatorInfo { Pos = { 1100, 82.5 } },
 		},
-		Instance_BrightnessContrast3 = BrightnessContrast {
-			SourceOp = "BrightnessContrast3",
+		Instance_BrightnessContrast2_1 = BrightnessContrast {
+			SourceOp = "BrightnessContrast2_1",
 			Inputs = {
 				Input = Input {
-					SourceOp = "Crop1_1_1",
+					SourceOp = "Instance_BrightnessContrast2",
 					Source = "Output",
 				},
 				StartEndRenderScripts = Input { },
 				EffectMask = Input { }
 			},
-			ViewInfo = OperatorInfo { Pos = { 770, 82.5 } },
+			ViewInfo = OperatorInfo { Pos = { 1155, 148.5 } },
 		},
-		Saver1_2_1 = Saver {
+		Merge2 = Merge {
+			Inputs = {
+				Background = Input {
+					SourceOp = "Merge1",
+					Source = "Output",
+				},
+				Foreground = Input {
+					SourceOp = "Loader3",
+					Source = "Output",
+				},
+				PerformDepthMerge = Input { Value = 0, },
+			},
+			ViewInfo = OperatorInfo { Pos = { 275, 181.5 } },
+		},
+		Saver1_1_1 = Saver {
 			PassThrough = true,
 			Inputs = {
 				ProcessWhenBlendIs00 = Input { Value = 0, },
 				Clip = Input {
 					Value = Clip {
-						Filename = "comp:\\HUD_HMD_Selected.png",
+						Filename = "comp:\\HUD_Cont1_Hover.png",
 						FormatID = "PNGFormat",
 						Length = 0,
 						Saving = true,
@@ -677,11 +349,137 @@ Composition {
 				OutputFormat = Input { Value = FuID { "PNGFormat" }, },
 				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
 				Input = Input {
-					SourceOp = "Instance_BrightnessContrast3",
+					SourceOp = "BrightnessContrast2_1",
 					Source = "Output",
 				},
 			},
-			ViewInfo = OperatorInfo { Pos = { 770, 115.5 } },
+			ViewInfo = OperatorInfo { Pos = { 1100, 280.5 } },
+		},
+		Saver1_1 = Saver {
+			PassThrough = true,
+			Inputs = {
+				ProcessWhenBlendIs00 = Input { Value = 0, },
+				Clip = Input {
+					Value = Clip {
+						Filename = "comp:\\HUD_Cont1_Normal.png",
+						FormatID = "PNGFormat",
+						Length = 0,
+						Saving = true,
+						TrimIn = 0,
+						ExtendFirst = 0,
+						ExtendLast = 0,
+						Loop = 1,
+						AspectMode = 0,
+						Depth = 0,
+						TimeCode = 0,
+						GlobalStart = -2000000000,
+						GlobalEnd = 0
+					},
+				},
+				OutputFormat = Input { Value = FuID { "PNGFormat" }, },
+				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
+				Input = Input {
+					SourceOp = "Shadow1",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 1430, 280.5 } },
+		},
+		Instance_BrightnessContrast2 = BrightnessContrast {
+			SourceOp = "BrightnessContrast2",
+			Inputs = {
+				Input = Input {
+					SourceOp = "Transform1",
+					Source = "Output",
+				},
+				StartEndRenderScripts = Input { },
+				EffectMask = Input { }
+			},
+			ViewInfo = OperatorInfo { Pos = { 880, 148.5 } },
+		},
+		VirtKamera = Merge {
+			NameSet = true,
+			Inputs = {
+				Background = Input {
+					SourceOp = "Background1",
+					Source = "Output",
+				},
+				Foreground = Input {
+					SourceOp = "Background1_1",
+					Source = "Output",
+				},
+				PerformDepthMerge = Input { Value = 0, },
+				EffectMask = Input {
+					SourceOp = "Triangle1",
+					Source = "Mask",
+				}
+			},
+			ViewInfo = OperatorInfo { Pos = { 990, -16.5 } },
+		},
+		Shadow2 = Shadow {
+			Inputs = {
+				Softness = Input { Value = 0.00256, },
+				Red = Input { Value = 1, },
+				Green = Input { Value = 1, },
+				Blue = Input { Value = 1, },
+				Input = Input {
+					SourceOp = "VirtKamera",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 1100, -16.5 } },
+		},
+		ChannelBooleans2 = ChannelBoolean {
+			CtrlWZoom = false,
+			Inputs = {
+				Operation = Input { Value = 6, },
+				Background = Input {
+					SourceOp = "Merge3",
+					Source = "Output",
+				},
+				Foreground = Input {
+					SourceOp = "PerspectivePositioner1",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 825, 379.5 } },
+		},
+		BrightnessContrast2 = BrightnessContrast {
+			Inputs = {
+				Gain = Input { Value = 1.3, },
+				Saturation = Input { Value = 0, },
+				Input = Input {
+					SourceOp = "Crop1_1",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 880, 247.5 } },
+		},
+		PerspectivePositioner1 = PerspectivePositioner {
+			Inputs = {
+				MappingType = Input { Value = 1, },
+				TopLeft = Input { Value = { 0.297183098591549, 0.674509803921569 }, },
+				TopRight = Input { Value = { 0.604225352112676, 0.602941176470588 }, },
+				BottomLeft = Input { Value = { 0.215962441314554, 0.250980392156863 }, },
+				BottomRight = Input { Value = { 0.699530516431925, 0.345098039215686 }, },
+				Input = Input {
+					SourceOp = "Crop1_2",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 770, 412.5 } },
+		},
+		Instance_BrightnessContrast3 = BrightnessContrast {
+			SourceOp = "BrightnessContrast3",
+			Inputs = {
+				Input = Input {
+					SourceOp = "Crop1_1_1",
+					Source = "Output",
+				},
+				StartEndRenderScripts = Input { },
+				EffectMask = Input { }
+			},
+			ViewInfo = OperatorInfo { Pos = { 770, 82.5 } },
 		},
 		Crop1 = Crop {
 			Inputs = {
@@ -695,28 +493,107 @@ Composition {
 			},
 			ViewInfo = OperatorInfo { Pos = { 275, 247.5 } },
 		},
-		LumaKeyer1 = LumaKeyer {
+		Rectangle1 = RectangleMask {
 			Inputs = {
-				High = Input { Value = 0.206, },
-				Low = Input { Value = 0.155, },
+				MaskWidth = Input { Value = 1920, },
+				MaskHeight = Input { Value = 1080, },
+				PixelAspect = Input { Value = { 1, 1 }, },
+				ClippingMode = Input { Value = FuID { "None" }, },
+				Center = Input { Value = { 0.316748066748067, 0.509937593270927 }, },
+				Width = Input { Value = 0.548568715235381, },
+				Height = Input { Value = 0.405236738570072, },
+			},
+			ViewInfo = OperatorInfo { Pos = { 990, -115.5 } },
+		},
+		BrightnessContrast2_1_1 = BrightnessContrast {
+			Inputs = {
+				Gain = Input { Value = 0.274, },
+				Saturation = Input { Value = 0, },
 				Input = Input {
-					SourceOp = "Crop1",
+					SourceOp = "BrightnessContrast2_1",
 					Source = "Output",
 				},
 			},
-			ViewInfo = OperatorInfo { Pos = { 385, 247.5 } },
+			ViewInfo = OperatorInfo { Pos = { 1265, 247.5 } },
 		},
-		Scale1 = Scale {
+		Instance_BrightnessContrast2_1_1_1 = BrightnessContrast {
+			SourceOp = "BrightnessContrast2_1_1",
 			Inputs = {
-				XSize = Input { Value = 0.71, },
-				PixelAspect = Input { Value = { 1, 1 }, },
-				FilterMethod = Input { Value = 8, },
 				Input = Input {
+					SourceOp = "Instance_BrightnessContrast2_1_2",
+					Source = "Output",
+				},
+				StartEndRenderScripts = Input { },
+				EffectMask = Input { }
+			},
+			ViewInfo = OperatorInfo { Pos = { 1265, 49.5 } },
+		},
+		Saver1_1_2 = Saver {
+			PassThrough = true,
+			Inputs = {
+				ProcessWhenBlendIs00 = Input { Value = 0, },
+				Clip = Input {
+					Value = Clip {
+						Filename = "comp:\\HUD_Cont2_Normal.png",
+						FormatID = "PNGFormat",
+						Length = 0,
+						Saving = true,
+						TrimIn = 0,
+						ExtendFirst = 0,
+						ExtendLast = 0,
+						Loop = 1,
+						AspectMode = 0,
+						Depth = 0,
+						TimeCode = 0,
+						GlobalStart = -2000000000,
+						GlobalEnd = 0
+					},
+				},
+				OutputFormat = Input { Value = FuID { "PNGFormat" }, },
+				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
+				Input = Input {
+					SourceOp = "Instance_Shadow1",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 1430, 181.5 } },
+		},
+		Shadow1 = Shadow {
+			Inputs = {
+				Softness = Input { Value = 0.1, },
+				Red = Input { Value = 1, },
+				Green = Input { Value = 1, },
+				Blue = Input { Value = 1, },
+				Input = Input {
+					SourceOp = "BrightnessContrast2_1_1",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 1375, 247.5 } },
+		},
+		ChannelBooleans1 = ChannelBoolean {
+			Inputs = {
+				ToRed = Input { Value = 1, },
+				ToBlue = Input { Value = 1, },
+				Background = Input {
 					SourceOp = "LumaKeyer1",
 					Source = "Output",
 				},
 			},
-			ViewInfo = OperatorInfo { Pos = { 495, 247.5 } },
+			ViewInfo = OperatorInfo { Pos = { 440, 313.5 } },
+		},
+		Crop1_1 = Crop {
+			Inputs = {
+				XOffset = Input { Value = 55, },
+				YOffset = Input { Value = 5, },
+				XSize = Input { Value = 24, },
+				YSize = Input { Value = 24, },
+				Input = Input {
+					SourceOp = "Scale1",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 660, 247.5 } },
 		},
 		Scale1_1 = Scale {
 			Inputs = {
@@ -729,6 +606,28 @@ Composition {
 				},
 			},
 			ViewInfo = OperatorInfo { Pos = { 495, 49.5 } },
+		},
+		Instance_BrightnessContrast2_1_2 = BrightnessContrast {
+			SourceOp = "BrightnessContrast2_1",
+			Inputs = {
+				Input = Input {
+					SourceOp = "Instance_BrightnessContrast2_2",
+					Source = "Output",
+				},
+				StartEndRenderScripts = Input { },
+				EffectMask = Input { }
+			},
+			ViewInfo = OperatorInfo { Pos = { 1155, 49.5 } },
+		},
+		BrightnessContrast3 = BrightnessContrast {
+			Inputs = {
+				Gain = Input { Value = 1.2, },
+				Input = Input {
+					SourceOp = "Transform1",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 660, 181.5 } },
 		},
 		Crop1_1_1 = Crop {
 			Inputs = {
@@ -743,41 +642,92 @@ Composition {
 			},
 			ViewInfo = OperatorInfo { Pos = { 770, 49.5 } },
 		},
-		Instance_BrightnessContrast2_2 = BrightnessContrast {
-			SourceOp = "BrightnessContrast2",
+		Background1_1 = Background {
+			Inputs = {
+				GlobalOut = Input { Value = 1, },
+				Width = Input { Value = 32, },
+				Height = Input { Value = 32, },
+				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
+				TopLeftRed = Input { Value = 0.192156881093979, },
+				TopLeftGreen = Input { Value = 0.192156881093979, },
+				TopLeftBlue = Input { Value = 0.192156881093979, },
+			},
+			ViewInfo = OperatorInfo { Pos = { 880, -115.5 } },
+		},
+		Instance_Shadow1 = Shadow {
+			SourceOp = "Shadow1",
 			Inputs = {
 				Input = Input {
-					SourceOp = "Crop1_1_1",
+					SourceOp = "Instance_BrightnessContrast2_1_1",
+					Source = "Output",
+				},
+				Depth = Input { },
+				StartEndRenderScripts = Input { },
+				EffectMask = Input { }
+			},
+			ViewInfo = OperatorInfo { Pos = { 1375, 148.5 } },
+		},
+		Instance_BrightnessContrast3_1 = BrightnessContrast {
+			SourceOp = "BrightnessContrast3",
+			Inputs = {
+				Input = Input {
+					SourceOp = "Crop1_1",
 					Source = "Output",
 				},
 				StartEndRenderScripts = Input { },
 				EffectMask = Input { }
 			},
-			ViewInfo = OperatorInfo { Pos = { 990, 49.5 } },
+			ViewInfo = OperatorInfo { Pos = { 660, 280.5 } },
 		},
-		Instance_BrightnessContrast2_1_2 = BrightnessContrast {
-			SourceOp = "BrightnessContrast2_1",
-			Inputs = {
-				Input = Input {
-					SourceOp = "Instance_BrightnessContrast2_2",
-					Source = "Output",
-				},
-				StartEndRenderScripts = Input { },
-				EffectMask = Input { }
-			},
-			ViewInfo = OperatorInfo { Pos = { 1155, 49.5 } },
-		},
-		Instance_BrightnessContrast2_1_1_1 = BrightnessContrast {
+		Instance_BrightnessContrast2_1_1 = BrightnessContrast {
 			SourceOp = "BrightnessContrast2_1_1",
 			Inputs = {
 				Input = Input {
-					SourceOp = "Instance_BrightnessContrast2_1_2",
+					SourceOp = "Instance_BrightnessContrast2_1",
 					Source = "Output",
 				},
 				StartEndRenderScripts = Input { },
 				EffectMask = Input { }
 			},
-			ViewInfo = OperatorInfo { Pos = { 1265, 49.5 } },
+			ViewInfo = OperatorInfo { Pos = { 1265, 148.5 } },
+		},
+		Background1 = Background {
+			Inputs = {
+				GlobalOut = Input { Value = 1, },
+				Width = Input { Value = 32, },
+				Height = Input { Value = 32, },
+				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
+				TopLeftAlpha = Input { Value = 0, },
+			},
+			ViewInfo = OperatorInfo { Pos = { 880, -82.5 } },
+		},
+		Triangle1 = TriangleMask {
+			Inputs = {
+				MaskWidth = Input { Value = 1920, },
+				MaskHeight = Input { Value = 1080, },
+				PixelAspect = Input { Value = { 1, 1 }, },
+				ClippingMode = Input { Value = FuID { "None" }, },
+				Point1 = Input { Value = { 0.533400318816985, 0.513342830009497 }, },
+				Point2 = Input { Value = { 0.941878646045313, 0.308282458282458 }, },
+				Point3 = Input { Value = { 0.941926129426129, 0.726210826210826 }, },
+				EffectMask = Input {
+					SourceOp = "Rectangle1",
+					Source = "Mask",
+				}
+			},
+			ViewInfo = OperatorInfo { Pos = { 990, -82.5 } },
+		},
+		Scale1_2 = Scale {
+			Inputs = {
+				XSize = Input { Value = 0.6, },
+				PixelAspect = Input { Value = { 1, 1 }, },
+				FilterMethod = Input { Value = 8, },
+				Input = Input {
+					SourceOp = "ChannelBooleans1",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 715, 346.5 } },
 		},
 		Instance_Shadow1_1 = Shadow {
 			SourceOp = "Shadow1",
@@ -792,13 +742,13 @@ Composition {
 			},
 			ViewInfo = OperatorInfo { Pos = { 1375, 49.5 } },
 		},
-		Saver1_1_2_1 = Saver {
+		Saver1_2 = Saver {
 			PassThrough = true,
 			Inputs = {
 				ProcessWhenBlendIs00 = Input { Value = 0, },
 				Clip = Input {
 					Value = Clip {
-						Filename = "comp:\\HUD_HMD_Normal.png",
+						Filename = "comp:\\HUD_Cont2_Selected.png",
 						FormatID = "PNGFormat",
 						Length = 0,
 						Saving = true,
@@ -816,11 +766,145 @@ Composition {
 				OutputFormat = Input { Value = FuID { "PNGFormat" }, },
 				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
 				Input = Input {
-					SourceOp = "Instance_Shadow1_1",
+					SourceOp = "BrightnessContrast3",
 					Source = "Output",
 				},
 			},
-			ViewInfo = OperatorInfo { Pos = { 1430, 82.5 } },
+			ViewInfo = OperatorInfo { Pos = { 770, 181.5 } },
+		},
+		Instance_BrightnessContrast2_2 = BrightnessContrast {
+			SourceOp = "BrightnessContrast2",
+			Inputs = {
+				Input = Input {
+					SourceOp = "Crop1_1_1",
+					Source = "Output",
+				},
+				StartEndRenderScripts = Input { },
+				EffectMask = Input { }
+			},
+			ViewInfo = OperatorInfo { Pos = { 990, 49.5 } },
+		},
+		Merge3 = Merge {
+			Inputs = {
+				Background = Input {
+					SourceOp = "BrightnessContrast4",
+					Source = "Output",
+				},
+				Foreground = Input {
+					SourceOp = "Scale1_2",
+					Source = "Output",
+				},
+				Center = Input { Value = { 1.43422733077905, 2.42001114827202 }, },
+				PerformDepthMerge = Input { Value = 0, },
+			},
+			ViewInfo = OperatorInfo { Pos = { 715, 379.5 } },
+		},
+		Crop1_2 = Crop {
+			Inputs = {
+				XOffset = Input { Value = 24, },
+				YOffset = Input { Value = 402, },
+				XSize = Input { Value = 23, },
+				YSize = Input { Value = 22, },
+				Input = Input {
+					SourceOp = "Loader4",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 385, 379.5 } },
+		},
+		Scale1 = Scale {
+			Inputs = {
+				XSize = Input { Value = 0.71, },
+				PixelAspect = Input { Value = { 1, 1 }, },
+				FilterMethod = Input { Value = 8, },
+				Input = Input {
+					SourceOp = "LumaKeyer1",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 495, 247.5 } },
+		},
+		BrightnessContrast4 = BrightnessContrast {
+			Inputs = {
+				Alpha = Input { Value = 1, },
+				Gain = Input { Value = 0, },
+				Input = Input {
+					SourceOp = "Crop1_2",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 605, 379.5 } },
+		},
+		Saver1_1_1_1 = Saver {
+			PassThrough = true,
+			Inputs = {
+				ProcessWhenBlendIs00 = Input { Value = 0, },
+				Clip = Input {
+					Value = Clip {
+						Filename = "comp:\\HUD_Cont2_Hover.png",
+						FormatID = "PNGFormat",
+						Length = 0,
+						Saving = true,
+						TrimIn = 0,
+						ExtendFirst = 0,
+						ExtendLast = 0,
+						Loop = 1,
+						AspectMode = 0,
+						Depth = 0,
+						TimeCode = 0,
+						GlobalStart = -2000000000,
+						GlobalEnd = 0
+					},
+				},
+				OutputFormat = Input { Value = FuID { "PNGFormat" }, },
+				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
+				Input = Input {
+					SourceOp = "Instance_BrightnessContrast2_1",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 1100, 181.5 } },
+		},
+		LumaKeyer1 = LumaKeyer {
+			Inputs = {
+				High = Input { Value = 0.206, },
+				Low = Input { Value = 0.155, },
+				Input = Input {
+					SourceOp = "Crop1",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 385, 247.5 } },
+		},
+		Saver1 = Saver {
+			PassThrough = true,
+			Inputs = {
+				ProcessWhenBlendIs00 = Input { Value = 0, },
+				Clip = Input {
+					Value = Clip {
+						Filename = "comp:\\HUD_Cont1_Selected.png",
+						FormatID = "PNGFormat",
+						Length = 0,
+						Saving = true,
+						TrimIn = 0,
+						ExtendFirst = 0,
+						ExtendLast = 0,
+						Loop = 1,
+						AspectMode = 0,
+						Depth = 0,
+						TimeCode = 0,
+						GlobalStart = -2000000000,
+						GlobalEnd = 0
+					},
+				},
+				OutputFormat = Input { Value = FuID { "PNGFormat" }, },
+				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
+				Input = Input {
+					SourceOp = "Instance_BrightnessContrast3_1",
+					Source = "Output",
+				},
+			},
+			ViewInfo = OperatorInfo { Pos = { 770, 280.5 } },
 		}
 	},
 	Views = {
@@ -845,6 +929,7 @@ Composition {
 					},
 					Flow = FlowView {
 						Flags = {
+							Navigator = true,
 							AutoHideNavigator = true,
 							GridSnap = true,
 							AutoSnap = true,
@@ -854,7 +939,7 @@ Composition {
 						Direction = "Horizontal",
 						PipeStyle = "Direct",
 						Scale = 1,
-						Offset = { -22, 26 }
+						Offset = { -31, 225 }
 					},
 					Timeline = TimelineView {
 						TreeControlState = {
@@ -921,12 +1006,12 @@ Composition {
 					{
 						Columns = 2,
 						RatioX = 1,
-						RatioY = 0.472463768115942,
-						{ ID = "Left", RatioX = 0.5, RatioY = 97.799591002045, Pop = true },
+						RatioY = 0.328502415458937,
+						{ ID = "Left", RatioX = 0.5, RatioY = 97.8, Pop = true },
 						{ ID = "Right", RatioX = 0.5, Pop = true },
 						Pop = true
 					},
-					{ ID = "Main", RatioY = 0.471497584541063, Pop = true },
+					{ ID = "Main", RatioY = 0.615458937198068, Pop = true },
 					{ ID = "Time", SnapY = 56, Flat = true }
 				},
 				{
@@ -1002,9 +1087,6 @@ Composition {
 					PrevCtrlInactiveColor = 0,
 					PickW = 1,
 					FullScreen = false,
-					PickH = 1,
-					AlwaysOnTop = true,
-					PrevCtrlActiveColor = 0,
 					SideB = {
 						PrevCtrlInactiveColor = 4278255360,
 						PickW = 1,
@@ -1019,7 +1101,10 @@ Composition {
 							FarZ = -1000,
 							NearZ = 0
 						}
-					}
+					},
+					AlwaysOnTop = true,
+					PrevCtrlActiveColor = 0,
+					PickH = 1
 				},
 			},
 			Preview = {

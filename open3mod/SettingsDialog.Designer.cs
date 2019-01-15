@@ -129,6 +129,7 @@
             this.button1 = new System.Windows.Forms.Button();
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.labelPleaseRestart = new System.Windows.Forms.Label();
+            this.grabCamToVirt = new System.Windows.Forms.Button();
             this.tabControl.SuspendLayout();
             this.tabPageTracking.SuspendLayout();
             this.groupBox6.SuspendLayout();
@@ -177,6 +178,7 @@
             // 
             // tabPageTracking
             // 
+            this.tabPageTracking.Controls.Add(this.grabCamToVirt);
             this.tabPageTracking.Controls.Add(this.rescanVRDevices);
             this.tabPageTracking.Controls.Add(this.groupBox6);
             this.tabPageTracking.Controls.Add(this.groupBox5);
@@ -1332,6 +1334,18 @@
             this.labelPleaseRestart.Text = "Please restart the application to see all changes";
             this.labelPleaseRestart.Visible = false;
             // 
+            // grabCamToVirt
+            // 
+            this.grabCamToVirt.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.grabCamToVirt.DialogResult = System.Windows.Forms.DialogResult.OK;
+            this.grabCamToVirt.Location = new System.Drawing.Point(306, 238);
+            this.grabCamToVirt.Name = "grabCamToVirt";
+            this.grabCamToVirt.Size = new System.Drawing.Size(150, 23);
+            this.grabCamToVirt.TabIndex = 20;
+            this.grabCamToVirt.Text = "Grab Camera 1 to Virtual";
+            this.grabCamToVirt.UseVisualStyleBackColor = true;
+            this.grabCamToVirt.Click += new System.EventHandler(this.grabCamToVirt_Click);
+            // 
             // SettingsDialog
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1489,5 +1503,6 @@
         private System.Windows.Forms.Button resetStudioZeroFromHMDRef;
         private System.Windows.Forms.Label labelYR;
         private System.Windows.Forms.Button rescanVRDevices;
+        private System.Windows.Forms.Button grabCamToVirt;
     }
 }

@@ -620,25 +620,12 @@ namespace CoreSettings {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0, 0")]
-        public global::System.Drawing.Point LocationCam1 {
+        public global::System.Collections.Specialized.StringCollection LocationInput {
             get {
-                return ((global::System.Drawing.Point)(this["LocationCam1"]));
+                return ((global::System.Collections.Specialized.StringCollection)(this["LocationInput"]));
             }
             set {
-                this["LocationCam1"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0, 0")]
-        public global::System.Drawing.Point LocationCam2 {
-            get {
-                return ((global::System.Drawing.Point)(this["LocationCam2"]));
-            }
-            set {
-                this["LocationCam2"] = value;
+                this["LocationInput"] = value;
             }
         }
         
@@ -663,30 +650,6 @@ namespace CoreSettings {
             }
             set {
                 this["SecondsToPhotons"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0")]
-        public float FovCam1 {
-            get {
-                return ((float)(this["FovCam1"]));
-            }
-            set {
-                this["FovCam1"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0")]
-        public float FovCam2 {
-            get {
-                return ((float)(this["FovCam2"]));
-            }
-            set {
-                this["FovCam2"] = value;
             }
         }
         
@@ -747,6 +710,66 @@ namespace CoreSettings {
             }
             set {
                 this["ViewOffsetShift"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1920, 1080")]
+        public global::System.Drawing.Size StartupVideoSize {
+            get {
+                return ((global::System.Drawing.Size)(this["StartupVideoSize"]));
+            }
+            set {
+                this["StartupVideoSize"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string OutputVideoMode {
+            get {
+                return ((string)(this["OutputVideoMode"]));
+            }
+            set {
+                this["OutputVideoMode"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string OutputDeviceName {
+            get {
+                return ((string)(this["OutputDeviceName"]));
+            }
+            set {
+                this["OutputDeviceName"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public long FrameDuration {
+            get {
+                return ((long)(this["FrameDuration"]));
+            }
+            set {
+                this["FrameDuration"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public long TimeScale {
+            get {
+                return ((long)(this["TimeScale"]));
+            }
+            set {
+                this["TimeScale"] = value;
             }
         }
     }

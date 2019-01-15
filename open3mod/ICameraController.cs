@@ -38,7 +38,8 @@ namespace open3mod
         HMD = 5,
         Cont1 = 6,
         Cont2 = 7,
-        _Max = 8,
+        Virtual = 8,
+        _Max = 9,
         
     }
 

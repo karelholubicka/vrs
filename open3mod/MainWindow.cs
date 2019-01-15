@@ -57,10 +57,16 @@ namespace open3mod
         public static NewTek.NDI.Finder NDIFinder;
         NewTek.NDI.Source[] _NDISources;
         NewTek.NDI.Source _selectedNDISource = null;
-        public static long mainTiming = 40;
         public static long timeOffset = 0;
-        public CapturePreview capturePreview1;
-        public CapturePreview capturePreview2;
+        public static Size videoSize;
+        public static long frameDuration = 1000;
+        public static long timeScale = 25000;
+        public static long mainTiming = frameDuration * 1000 / timeScale;
+        public static int inputs = 4; //stream 0 HMD, 1,2 controllers, 3 fixed...
+        public static int outputs = 1;
+        public static string[] streamName = { "Composite", "HMD Composite", "HMD Background", "HMD Foreground" };//must be at least 4 due to parallel invoke in Renderer
+        public static int NDIchannels = outputs;
+        public CapturePreview[] capturePreview = new CapturePreview[inputs];
         public OutputGenerator outputGenerator;
 
         private readonly UiState _ui;
@@ -140,7 +146,16 @@ namespace open3mod
             _delegateSelectTab = SelectTab;
             _delegatePopulateInspector = PopulateInspector;
 
-             InitializeComponent();
+            videoSize = CoreSettings.CoreSettings.Default.StartupVideoSize;
+            if (CoreSettings.CoreSettings.Default.TimeScale != 0)
+            {
+                frameDuration = CoreSettings.CoreSettings.Default.FrameDuration;
+                timeScale = CoreSettings.CoreSettings.Default.TimeScale;
+                mainTiming = frameDuration * 1000 / timeScale;
+            }
+
+
+            InitializeComponent();
             _captionStub = Text;
             _openVRInterface = new OpenVRInterface();
             OpenVRInterface.fPredictedSecondsToPhotonsFromNow = CoreSettings.CoreSettings.Default.SecondsToPhotons;
@@ -162,19 +177,16 @@ namespace open3mod
             showBoundingBoxesToolStripMenuItem.Checked = toolStripButtonShowBB.Checked = _ui.ShowBBs;
             showAnimationSkeletonToolStripMenuItem.Checked = toolStripButtonShowSkeleton.Checked = _ui.ShowSkeleton;
 
-        //    GraphicsContext[] graphicsContexts = new GraphicsContext[4];
-         //   graphicsContexts[0] = (GraphicsContext)GraphicsContext.CurrentContext;
             if (useIO)
             {
-            capturePreview2 = new CapturePreview(this,2);
-            capturePreview1 = new CapturePreview(this,1);
-            capturePreview1.Location = CoreSettings.CoreSettings.Default.LocationCam1;
-            capturePreview2.Location = CoreSettings.CoreSettings.Default.LocationCam2;
+                for (int i = 0; i < inputs ; i++)
+                {
+                    capturePreview[i] = new CapturePreview(this, i);
+                    capturePreview[i].Location = LoadInputPosition(i);
+                }
             outputGenerator = new OutputGenerator(this);
             outputGenerator.Location = CoreSettings.CoreSettings.Default.LocationOutput;
             }
-       //     graphicsContexts[0] = (GraphicsContext)GraphicsContext.CurrentContext;
-         //   GraphicsMode gm = new GraphicsMode(new ColorFormat(32), 24, 8, 0);
 
             // manually register the MouseWheel handler
             renderControl1.MouseWheel += OnMouseMove;
@@ -222,6 +234,7 @@ namespace open3mod
 
             _initialized = true;
             CloseTab(_emptyTab);
+            outputGenerator.Show();
 
         }
 
@@ -238,9 +251,9 @@ namespace open3mod
             for (int i = 0; i < MainWindow.NDIFinder.Sources.Count; i++)
             {
                 bool isOwn = false;
-                for (int j = 0; j < Renderer.streamName.Length; j++)
+                for (int j = 0; j < streamName.Length; j++)
                 {
-                    if (Renderer.streamName[j] == MainWindow.NDIFinder.Sources.ElementAt(i).SourceName) isOwn = true;
+                    if (streamName[j] == MainWindow.NDIFinder.Sources.ElementAt(i).SourceName) isOwn = true;
                 }
                 if (!isOwn)
                 {
@@ -297,8 +310,10 @@ namespace open3mod
                 int delay = 3000;
                 DelayExecution(TimeSpan.FromMilliseconds(delay),  outputGenerator.StartRunning);
                 DelayExecution(TimeSpan.FromMilliseconds(delay),  GenlockOn);
-                DelayExecution(TimeSpan.FromMilliseconds(delay + 100), capturePreview1.StartCapture);
-                DelayExecution(TimeSpan.FromMilliseconds(delay + 200), capturePreview2.StartCapture);
+                for (int i = 0; i< inputs; i++)
+                {
+                    DelayExecution(TimeSpan.FromMilliseconds(delay + 100+100*i), capturePreview[i].StartCapture);
+                }
                 DelayExecution(TimeSpan.FromMilliseconds(delay + 300), SearchDynamicSources);//we need NDI sources to be already discovered
               //  DelayExecution(TimeSpan.FromMilliseconds(delay + 1000), ShowSettings);
                 DelayExecution(TimeSpan.FromMilliseconds(delay + 5000), OpenVRInterface.SetupDevices);//rescan
@@ -914,8 +929,7 @@ namespace open3mod
 #endif
             {
                 bool InputIsRunning = false;
-                if (Renderer.ActiveCamera == 1) InputIsRunning = capturePreview1.IsCapturing();
-                if (Renderer.ActiveCamera == 2) InputIsRunning = capturePreview2.IsCapturing();
+                InputIsRunning = capturePreview[Renderer.ActiveCamera].IsCapturing();
                 if (!InputIsRunning || !CoreSettings.CoreSettings.Default.Genlock)
                 {
                    if (CoreSettings.CoreSettings.Default.KeepTimingRight) Renderer.WaitForRightTiming();
@@ -1006,6 +1020,7 @@ namespace open3mod
         int renderCalls = 0;
         public void callRender()
         {
+            if (Renderer == null) return;
             Renderer.syncTrack(false, "CallRendStrt", 2);
             if (!CoreSettings.CoreSettings.Default.Genlock) return;
             if (renderCalls > 0)
@@ -1274,8 +1289,10 @@ namespace open3mod
         {
             if (useIO)
             {
-                capturePreview1.Dispose();
-                capturePreview2.Dispose();
+                for (int i = 0; i < inputs; i++)
+                {
+                    capturePreview[i].Dispose();
+                }
                 outputGenerator.Dispose();
             }
 
@@ -1419,12 +1436,17 @@ namespace open3mod
         {
             if (useIO)
             {
-                capturePreview1.StopCapture();
-                capturePreview2.StopCapture();
+                for (int i = 0; i < inputs; i++)
+                {
+                    capturePreview[i].StopCapture();
+                    float fov = MathHelper.PiOver4 * 80 / 90;
+                    if (Renderer.cameraController((uint)i) != null) fov = Renderer.cameraController((uint)i).GetFOV();
+                    SaveInputPosition(i, capturePreview[i].Location, fov);
+
+                }
                 outputGenerator.StopRunning();
-                CoreSettings.CoreSettings.Default.LocationCam1 = capturePreview1.Location;
-                CoreSettings.CoreSettings.Default.LocationCam2 = capturePreview2.Location;
                 CoreSettings.CoreSettings.Default.LocationOutput = outputGenerator.Location;
+                CoreSettings.CoreSettings.Default.Save();
             }
 
             CoreSettings.CoreSettings.Default.ViewsStatus = _ui.ActiveTab.getViewsStatusString();//read status 
@@ -1716,8 +1738,10 @@ namespace open3mod
         {
             if (useIO)
             {
-                capturePreview1.Show();
-                capturePreview2.Show();
+                for (int i = 0; i < inputs; i++)
+                {
+                    capturePreview[i].Show();
+                }
                 outputGenerator.Show();
             }
         }
@@ -1766,13 +1790,18 @@ namespace open3mod
 
         private void resetCaptureWindowsPositionsToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            int distance = 220;
             if (useIO)
             {
-                capturePreview1.Location = new Point(0, 0);
-                capturePreview2.Location = new Point(0, 240);
-                outputGenerator.Location = new Point(0, 480);
-                CoreSettings.CoreSettings.Default.LocationCam1 = capturePreview1.Location;
-                CoreSettings.CoreSettings.Default.LocationCam2 = capturePreview2.Location;
+                int lastPos = 0;
+                for (int i = 0; i < inputs; i++)
+                {
+                    float fov = Renderer.cameraController((uint)i) != null ? Renderer.cameraController((uint)i).GetFOV() : MathHelper.PiOver4 * 80 / 90;
+                    capturePreview[i].Location = new Point(0, distance * i);
+                    SaveInputPosition(i, capturePreview[i].Location, fov);
+                    lastPos = distance * i;
+                }
+                outputGenerator.Location = new Point(0, lastPos + distance);
                 CoreSettings.CoreSettings.Default.LocationOutput = outputGenerator.Location;
                 CoreSettings.CoreSettings.Default.Save();
             }
@@ -1782,8 +1811,107 @@ namespace open3mod
         {
             e.Handled = true;
         }
-    }
 
+        public static void SaveInputPosition(int id, Point location, float fov)
+        {
+            string saveStr = id.ToString() + MainWindow.recentDataSeparator[0] + locationAndFovToString(location, fov);
+            var saved = CoreSettings.CoreSettings.Default.LocationInput;
+            if (saved == null)
+            {
+                saved = CoreSettings.CoreSettings.Default.LocationInput = new StringCollection();
+                CoreSettings.CoreSettings.Default.Save();
+            }
+            string[] oldData;
+            int i = 0;
+            if (saved != null)
+            {
+                foreach (var s in saved)
+                {
+                    oldData = s.Split(MainWindow.recentDataSeparator, StringSplitOptions.None);
+                    if (oldData[0] == id.ToString())
+                    {
+                        saved.Remove(s);
+                        break;
+                    }
+                    ++i;
+                }
+                saved.Insert(0, saveStr);
+            }
+            CoreSettings.CoreSettings.Default.Save();
+        }
+
+        public static Point LoadInputPosition(int id)
+        {
+            var saved = CoreSettings.CoreSettings.Default.LocationInput;
+            string[] savedData;
+            string SN = id.ToString();
+            Point outPoint = new Point(0,240*id);
+            if (saved != null)
+            {
+                foreach (var s in saved)
+                {
+                    savedData = s.Split(MainWindow.recentDataSeparator, StringSplitOptions.None);
+                    if (savedData[0] == SN)
+                    {
+                        bool valid = stringAndFovToLocation(savedData[1], out outPoint, out float fov);//we do not care about validity here
+                    }
+                }
+            }
+            return outPoint;
+        }
+
+        public static float LoadFov(int id)
+        {
+            var saved = CoreSettings.CoreSettings.Default.LocationInput;
+            string[] savedData;
+            string SN = id.ToString();
+            Point outPoint = new Point(0, 240 * id);
+            float outFov = 80;
+            if (outFov > MathHelper.PiOver4 * 150 / 90) outFov = MathHelper.PiOver4 * 80 / 90;
+            if (outFov < MathHelper.PiOver4 * 30 / 90) outFov = MathHelper.PiOver4 * 80 / 90;
+            if (saved != null)
+            {
+                foreach (var s in saved)
+                {
+                    savedData = s.Split(MainWindow.recentDataSeparator, StringSplitOptions.None);
+                    if (savedData[0] == SN)
+                    {
+                        bool valid = stringAndFovToLocation(savedData[1], out outPoint, out outFov);//we do not care about validity here
+                        if (outFov > MathHelper.PiOver4 * 150 / 90) outFov = MathHelper.PiOver4 * 80 / 90;
+                        if (outFov < MathHelper.PiOver4 * 30 / 90) outFov = MathHelper.PiOver4 * 80 / 90;
+                    }
+                }
+            }
+            return outFov;
+        }
+
+        public static string locationAndFovToString(Point src, float fov)
+        {
+            string outStr = src.X.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            outStr = outStr + MainWindow.recentItemSeparator[0] + src.Y.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            outStr = outStr + MainWindow.recentItemSeparator[0] + fov.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            return outStr;
+        }
+
+        public static bool stringAndFovToLocation(string src, out Point outPoint, out float fov)
+        {
+            string[] itemStrings = src.Split(MainWindow.recentItemSeparator, StringSplitOptions.None);
+            bool valid = true;
+            outPoint = Point.Empty;
+            fov = 80;//needs to check preset here!!
+            try
+            {
+                outPoint.X = int.Parse(itemStrings[0], System.Globalization.CultureInfo.InvariantCulture);
+                outPoint.Y = int.Parse(itemStrings[1], System.Globalization.CultureInfo.InvariantCulture);
+                fov = float.Parse(itemStrings[2], System.Globalization.CultureInfo.InvariantCulture);
+            }
+            catch
+            {
+                valid = false;
+            }
+            return valid;
+        }
+    }
 }
 
 /* vi: set shiftwidth=4 tabstop=4: */ 

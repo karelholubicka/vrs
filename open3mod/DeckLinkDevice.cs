@@ -350,6 +350,9 @@ namespace open3mod
             m_deckLinkInput.SetScreenPreviewCallback(null);
             m_deckLinkInput.SetCallback(null);
 
+            m_deckLinkInput.DisableVideoInput();
+            m_deckLinkInput.DisableAudioInput();
+
             m_currentlyCapturing = false;
 
             for (int i = m_memSize - 1; i >= 0; i--)

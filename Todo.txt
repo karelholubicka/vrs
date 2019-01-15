@@ -4,13 +4,17 @@ Newer. Assimp 4.1.216079013 (assimp viewer)
 Moje kompilace #1 : Assimp 4.1.0
 Moje kompilace #2+3 : Assimp 4.1.0 - ale z masteru
 
-
 kontrola zvuku a synce a timingu VR
-jak vypadá Janssen nové studio v renderu-vyrobit...f/bg/gr atd
+jak vypadá Janssen nové studio v renderu v provozu
 
 
-zmìnit NDISEnderX+Y na nìjaký master.X+Y+settings vs Output generator settings..HD preset fix,a když je device zvoleno, recreate renderer a GL??
+Save one frame by perfoming both uploads at once? Any slowdown?
+Podložka pod brejle neklouzavá ..tvar..??
+
 zmenšit textury VR modelù/png/tga/psd
+
+Kontrola pøi nesyncu AV:
+GetHardwareReferenceTimestamp vs GetPacketTime 
 
 
 INFO:
@@ -24,7 +28,7 @@ Pøi záseku se použije buffered videoFrame.
 Pokud se zasekne ScreenRender, VideoRender se mùže zaseknout vzájemným lockem, 
 proto se ScreenRender pouští až nakonec.
 
-Model v Blenteru musí mít materiál, jinak crashne import
+Model v Blenderu musí mít materiál, jinak crashne import
 Intensity u materiálu nefunguje, musí být 1.0
 RGB 000 nefunguje, musí být aspoò 0.001
 
@@ -48,6 +52,9 @@ ____________
 uklidit modely
 
 POZDÌJI:
+Render zrcadel v modelu - ?? oznaèit lesklou plochu??+overlay
+Pøiøazení streamu videa a zaøízení k èíslu streamu (a èasem i výstupu - direct nebo edit)
+
 zakázat standby hmd nálepkou
 øešit pøepnutí kompenzace zpoždìní kamer o buffered frames døív???
 nastavení a uložení spojení SN kontroléru = jméno kamery =additional delay

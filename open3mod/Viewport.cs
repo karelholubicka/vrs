@@ -109,10 +109,12 @@ namespace open3mod
                     case CameraMode.HMD:
                     case CameraMode.Cont1:
                     case CameraMode.Cont2:
+                    case CameraMode.Virtual:
                         var vrcont = new PickingCameraController(camMode, _fovy, _scenePartMode);
                         _cameraImpls[(int)CameraMode.HMD] = vrcont;
                         _cameraImpls[(int)CameraMode.Cont1] = vrcont;
                         _cameraImpls[(int)CameraMode.Cont2] = vrcont;
+                        _cameraImpls[(int)CameraMode.Virtual] = vrcont;
                         break;
                     default:
                         Debug.Assert(false);
@@ -165,8 +167,8 @@ namespace open3mod
                 Debug.Assert(orbit != null);
                 orbit.SetOrbitOrConstrainedMode(cameraMode);
             }
-            // special handling to switch VR controller between HMD,Cont1, Con2 modes
-            if (cameraMode == CameraMode.HMD || cameraMode == CameraMode.Cont1 || cameraMode == CameraMode.Cont2)
+            // special handling to switch VR controller between HMD,Cont1, Cont2 + Virtual modes
+            if (cameraMode == CameraMode.HMD || cameraMode == CameraMode.Cont1 || cameraMode == CameraMode.Cont2 || cameraMode == CameraMode.Virtual)
             {
                 if (_cameraImpls[(int)CameraMode.HMD] == null)
                 {

@@ -51,7 +51,7 @@ namespace open3mod
 
         private void UpdateViewMatrix()
         {
-            if (OpenVRInterface.EVRerror == EVRInitError.None)
+            if ((OpenVRInterface.EVRerror == EVRInitError.None)&& (contIndex < OpenVRInterface.trackedPositions.Length))
             {
                 _trackerPosition = OpenVRInterface.trackedPositions[contIndex];
                 _viewPosition = OpenVRInterface.trackerToCamera[contIndex] * _trackerPosition;
@@ -132,34 +132,34 @@ namespace open3mod
 
         public string GetCameraName()
         {
+            if (contIndex >= OpenVRInterface.deviceName.Length) return "";
             return OpenVRInterface.deviceName[contIndex];
         }
 
         public int GetCameraAddDelay()
         {
+            if (contIndex >= OpenVRInterface.deviceAdditionalDelay.Length) return 0;
             return OpenVRInterface.deviceAdditionalDelay[contIndex];
         }
 
         public void SetVRCameraMode(CameraMode mode)
         {
-            Debug.Assert((mode == CameraMode.HMD) || (mode == CameraMode.Cont1) || (mode == CameraMode.Cont2));
+            Debug.Assert((mode == CameraMode.HMD) || (mode == CameraMode.Cont1) || (mode == CameraMode.Cont2) || (mode == CameraMode.Virtual));
             _cameraMode = mode;
             switch (_cameraMode)
             {
                 case CameraMode.HMD:
-                    contIndex = OpenVRInterface.displayOrder[0];
+                    contIndex = OpenVRInterface.indexOfDevice[0];
                     break;
                 case CameraMode.Cont1:
-                    contIndex = OpenVRInterface.displayOrder[1];
+                    contIndex = OpenVRInterface.indexOfDevice[1];
                     break;
                 case CameraMode.Cont2:
-                    contIndex = OpenVRInterface.displayOrder[2];
+                    contIndex = OpenVRInterface.indexOfDevice[2];
                     break;
-            }
-            if ((contIndex == 0) || (contIndex >= OpenVR.k_unMaxTrackedDeviceCount))
-            {
-                //    throw new Exception("No controller is ON!");
-                contIndex = 0;
+                case CameraMode.Virtual:
+                    contIndex = OpenVRInterface.indexOfDevice[3];//solve: more controllers - more cameramodes? if fix :save position/matrix at button--matrix is loaded when scanpositions is done..
+                    break;
             }
          }
 
