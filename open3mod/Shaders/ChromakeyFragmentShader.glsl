@@ -18,9 +18,11 @@ uniform vec3      iBackgroundColorHSV;      //keying color
 uniform vec3      iWeightsKeying;          //keying distance
 uniform float     iTresholdKeying;         // treshold for keying
 uniform float     iPowerCanceling;         // treshold for keying
+uniform float     digitalZoom;         // zoom
+uniform float     digitalZoomCenter;         // zoom
 uniform bool      iWellDone;     //canceling process
 uniform int       iMatteBlur;     //size of blur pixels
-uniform int       iMode;     //canceling process 0:normal composition 1: camera+key (no fgd+mask) 2:camera+cancel color (no fgd+mask) 3: camera natural
+uniform int       iMode;     // 0:normal composition 1: camera+key (no fgd+mask) 2:camera+cancel color (no fgd+mask) 3: camera natural
 
 vec4 rec709YCbCr2rgba(float Y, float Cb, float Cr, float a) 
 { 
@@ -215,25 +217,29 @@ vec3 changeSaturation(vec3 color, float saturation)
 
 
 void main(void)
-{
+{    
+    // gl_FragCoord.x 0-1919;
     ivec2 iTextureResolution = textureSize(iForeground, 0); //RGBA texture resolution (in pixels)
 	vec2 scale = vec2(iViewportSize) / vec2(iTextureResolution);
 	vec2 uv = gl_FragCoord.xy / iTextureResolution.xy;
 	bool notScaled = false;
-	if ((iTextureResolution.x == iViewportSize.x)&&(iTextureResolution.y == iViewportSize.y)) notScaled = true;
+	if ((iTextureResolution.x ==  iViewportSize.x)&&(iTextureResolution.y == iViewportSize.y)&&(digitalZoom == 1.0)) notScaled = true;
 
 	//texPos: scale involved, straight, values 0 - iTextureResolution
 	ivec2 texPos  = ivec2((gl_FragCoord.x - 0.5-iViewportStart.x)/scale.x, (gl_FragCoord.y - 0.5-iViewportStart.y)/scale.y); //texture input, halfpixels
 	//texPos2: noscale, upside down
-    ivec2 texPos2 = ivec2((gl_FragCoord.x - 0.5),  iTextureResolution.y-1-(gl_FragCoord.y - 0.5));
+    ivec2 texPos2 = ivec2((gl_FragCoord.x - 0.5),  iTextureResolution.y -1-(gl_FragCoord.y - 0.5));
 
-    vec2 tc = vec2((gl_FragCoord.x - 0.5)-iViewportStart.x, iViewportStart.y+iViewportSize.y-(gl_FragCoord.y - 0.5)); 
+    vec2 tc = vec2((gl_FragCoord.x - 0.5)-iViewportStart.x - (iTextureResolution.x * (1-digitalZoom))*digitalZoomCenter , iViewportStart.y+(iViewportSize.y)* digitalZoom - (gl_FragCoord.y - 0.5)); 
     tc.x = tc.x/2; //UYVY vs RGBA texture size
 	tc = tc/scale;
+    tc = tc/digitalZoom; 
 
 	float alpha = 1; 
 	if ((gl_FragCoord.x - 0.5 < iViewportStart.x)|| (gl_FragCoord.y - 0.5  < iViewportStart.y)) alpha = 0.0;
 	if ((gl_FragCoord.x - 0.5 > iViewportSize.x + iViewportStart.x)|| (gl_FragCoord.y - 0.5  > iViewportSize.y + iViewportStart.y)) alpha = 0.0;
+	if ((tc.x > iTextureResolution.x/2)|| (tc.y > iTextureResolution.y)) alpha = 0.0;
+	if ((tc.x < 0)|| (tc.y < 0)) alpha = 0.0;
 	float viewportAlpha = alpha;
 
 	vec4 macro, macro_u, macro_r, macro_ur;
@@ -274,6 +280,8 @@ void main(void)
 
 	vec3 color = camera.rgb;
 	vec4 mask = texelFetch(iMask, texPos, 0);
+
+	mask = mask * alpha;
 
 	vec4 foreground = texelFetch(iForeground, texPos, 0);
    // mask = vec4(0.0,0.0,0.0,1.0); //mask switched off

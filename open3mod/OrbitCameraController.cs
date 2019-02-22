@@ -37,9 +37,9 @@ namespace open3mod
         private Vector3 _panVector;
         private ScenePartMode _scenePartMode = ScenePartMode.All;
         private CameraMode _cameraMode;
-        private float _fovy = MathHelper.PiOver4;
-        private float _zNear = 0.01f;
-        private float _zFar = 100.0f;
+        private float _fovy = MainWindow.fovPreset;
+        private float _digitalZoom = 1f;
+        private float _digitalZoomCenter = 0.5f;
 
         private bool _dirty = true;
 
@@ -97,11 +97,6 @@ namespace open3mod
             return _viewLookAtAndPan;
         }
 
-        public float GetFOV()
-        {
-            return _fovy;
-        }
-
         public void SetParam(float fovy, ScenePartMode scenePartMode, CameraMode mode)
         {
             Debug.Assert((mode == CameraMode.X) || (mode == CameraMode.Y) || (mode == CameraMode.Z)||(mode == CameraMode.Orbit));
@@ -111,6 +106,59 @@ namespace open3mod
             SetOrbitOrConstrainedMode(mode, false);
         }
 
+        public void SetAllParam(float fovy, float digitalZoom, float digitalZoomCenter, ScenePartMode scenePartMode, CameraMode mode)
+        {
+            _scenePartMode = scenePartMode;
+            _cameraMode = mode;
+            _fovy = fovy;
+            _digitalZoom = digitalZoom;
+            _digitalZoomCenter = digitalZoomCenter;
+        }
+
+        public float GetFOV()
+        {
+            return _fovy;
+        }
+
+        public float GetDigitalZoom()
+        {
+            return _digitalZoom;
+        }
+
+        public float GetDigitalZoomCenter()
+        {
+            return _digitalZoomCenter;
+        }
+
+        public CameraMode GetCameraMode()
+        {
+            return _cameraMode;
+        }
+
+        public ScenePartMode GetScenePartMode()
+        {
+            return _scenePartMode;
+        }
+
+        public void SetFOV(float value)
+        {
+            _fovy = value;
+        }
+
+        public void SetDigitalZoom(float value)
+        {
+            _digitalZoom = value;
+        }
+
+        public void SetDigitalZoomCenter(float value)
+        {
+            _digitalZoomCenter = value;
+        }
+
+        public void SetScenePartMode(ScenePartMode value)
+        {
+            _scenePartMode = value;
+        }
 
         public void MouseMove(int x, int y)
         {
@@ -157,22 +205,6 @@ namespace open3mod
         public void MovementKey(float x, float y, float z)
         {
             // TODO switch to FPS camera at current position?
-        }
-
-
-        public CameraMode GetCameraMode()
-        {
-            return _cameraMode;
-        }
-
-        public ScenePartMode GetScenePartMode()
-        {
-            return _scenePartMode;
-        }
-
-        public void SetScenePartMode(ScenePartMode value)
-        {
-            _scenePartMode = value;
         }
 
         private void UpdateViewMatrix()

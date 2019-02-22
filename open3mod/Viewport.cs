@@ -36,7 +36,7 @@ namespace open3mod
     {
         private Vector4 _bounds;
         private CameraMode _camMode;
-        private float _fovy = MathHelper.PiOver4;
+        private float _fovy = MainWindow.fovPreset;
         private ScenePartMode _scenePartMode = ScenePartMode.All;
 
         /// <summary>
@@ -127,8 +127,8 @@ namespace open3mod
         public void ResetCameraController() 
         {
             _cameraImpls[(int)_camMode] = null;
-            _fovy = MathHelper.PiOver4 * 78 / 90;
-            _scenePartMode = ScenePartMode.All;
+            _fovy = MainWindow.fovPreset;
+          //  _scenePartMode = ScenePartMode.All;
             ActiveCameraControllerForView();
         }
 

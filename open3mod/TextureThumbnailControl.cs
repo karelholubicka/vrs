@@ -318,8 +318,11 @@ namespace open3mod
                     {
                         ContextMenuStrip.Items[i].Enabled = true;
                     }
-                    if (texture.ActualLocation.Contains("Placeholder")|| texture.ActualLocation.Contains("NDI")) OnContextMenuToggleDynamic(this, null);
-                    //maybe add here selection of NDI stream for dynamic.....+add NDI receiver to the scene..
+                    if (!string.IsNullOrEmpty(texture.NDIStreamName))
+                    {
+                        _scene.Renderer.MainWindow.selectDynamicSource(texture.NDIStreamName, texture.NDIStreamNumber);
+                        OnContextMenuToggleDynamic(this, null); //must be connected manually to stream 0
+                    }
                 }
                 else
                 {
@@ -408,7 +411,8 @@ namespace open3mod
 
         private void OnContextMenuToggleDynamic(object sender, EventArgs eventArgs)
         {
-            if (_scene.dynamicTexture == _texture)
+            int dynTexIndex = _texture.NDIStreamNumber;
+            if (_scene.dynamicTexture[dynTexIndex] == _texture)
             {
                 if (_texture != null)
                 {
@@ -422,31 +426,34 @@ namespace open3mod
                 ContextMenuStrip.Items[9].Enabled = true;
                 var s1 = (ToolStripMenuItem)ContextMenuStrip.Items[11];
                 s1.Checked = false;
-                _scene.dynamicTexture = null;
-                _scene.dynamicTextureMenu = null;
+                s1.Text = dynTexIndex != 0 ? "Toggle dynamic #" + dynTexIndex.ToString() : "Toggle dynamic";
+                _scene.dynamicTexture[dynTexIndex] = null;
+                _scene.dynamicTextureMenu[dynTexIndex] = null;
             }
             else
             {
-                if (_scene.dynamicTexture != null)
+                if (_scene.dynamicTexture[dynTexIndex] != null)
                 {
-                    _scene.dynamicTexture.ReleaseUpload();
-                    _scene.dynamicTexture.Upload();
+                    if (_scene.dynamicTexture[dynTexIndex].State == Texture.TextureState.GlTextureCreated) _scene.dynamicTexture[dynTexIndex].ReleaseUpload();
+                    _scene.dynamicTexture[dynTexIndex].Upload();
                 }
-                _scene.dynamicTexture = null;
-                if (_scene.dynamicTextureMenu != null)
+                _scene.dynamicTexture[dynTexIndex] = null;
+                if (_scene.dynamicTextureMenu[dynTexIndex] != null)
                     {
-                    _scene.dynamicTextureMenu.ContextMenuStrip.Items[2].Enabled = true;
-                    _scene.dynamicTextureMenu.ContextMenuStrip.Items[3].Enabled = true;
-                    _scene.dynamicTextureMenu.ContextMenuStrip.Items[5].Enabled = true;
-                    _scene.dynamicTextureMenu.ContextMenuStrip.Items[6].Enabled = true;
-                    _scene.dynamicTextureMenu.ContextMenuStrip.Items[9].Enabled = true;
-                    var s2 = (ToolStripMenuItem)_scene.dynamicTextureMenu.ContextMenuStrip.Items[11];
+                    _scene.dynamicTextureMenu[dynTexIndex].ContextMenuStrip.Items[2].Enabled = true;
+                    _scene.dynamicTextureMenu[dynTexIndex].ContextMenuStrip.Items[3].Enabled = true;
+                    _scene.dynamicTextureMenu[dynTexIndex].ContextMenuStrip.Items[5].Enabled = true;
+                    _scene.dynamicTextureMenu[dynTexIndex].ContextMenuStrip.Items[6].Enabled = true;
+                    _scene.dynamicTextureMenu[dynTexIndex].ContextMenuStrip.Items[9].Enabled = true;
+                    var s2 = (ToolStripMenuItem)_scene.dynamicTextureMenu[dynTexIndex].ContextMenuStrip.Items[11];
                     s2.Checked = false;
+                    s2.Text = dynTexIndex != 0 ? "Toggle dynamic #" + dynTexIndex.ToString() : "Toggle dynamic";
+
 
                 }
                 //  _texture.Dynamic = true;
-                _scene.dynamicTexture = _texture;
-                _scene.dynamicTextureMenu = this;
+                _scene.dynamicTexture[dynTexIndex] = _texture;
+                _scene.dynamicTextureMenu[dynTexIndex] = this;
                 ContextMenuStrip.Items[2].Enabled = false;
                 ContextMenuStrip.Items[3].Enabled = false;
                 ContextMenuStrip.Items[5].Enabled = false;
@@ -454,6 +461,8 @@ namespace open3mod
                 ContextMenuStrip.Items[9].Enabled = false;
                 var s = (ToolStripMenuItem)ContextMenuStrip.Items[11];
                 s.Checked = true;
+                s.Text = dynTexIndex != 0 ? "Toggle dynamic #" + dynTexIndex.ToString() : "Toggle dynamic"; 
+
 
             }
         }

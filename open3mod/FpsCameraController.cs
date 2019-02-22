@@ -28,9 +28,9 @@ namespace open3mod
     public class FpsCameraController : ICameraController
     {
         private Matrix4 _view;
-        private float _fovy = MathHelper.PiOver4;
-        private float _zNear = 0.01f;
-        private float _zFar = 100.0f;
+        private float _fovy = MainWindow.fovPreset;
+        private float _digitalZoom = 1f;
+        private float _digitalZoomCenter = 0.5f;
         private Matrix4 _orientation;
         private Vector3 _translation;
         private ScenePartMode _scenePartMode = ScenePartMode.All;
@@ -81,16 +81,65 @@ namespace open3mod
             return _view;
         }
 
-        public float GetFOV()
-        {
-            return _fovy;
-        }
-
         public void SetParam(float fovy, ScenePartMode scenePartMode, CameraMode mode)
         {
             _scenePartMode = scenePartMode;
             Debug.Assert(mode == CameraMode.Fps);
             _fovy = fovy;
+        }
+
+        public void SetAllParam(float fovy, float digitalZoom, float digitalZoomCenter, ScenePartMode scenePartMode, CameraMode mode)
+        {
+            _scenePartMode = scenePartMode;
+            //_cameraMode = mode; has no effect
+            _fovy = fovy;
+            _digitalZoom = digitalZoom;
+            _digitalZoomCenter = digitalZoomCenter;
+        }
+
+        public float GetFOV()
+        {
+            return _fovy;
+        }
+
+        public float GetDigitalZoom()
+        {
+            return _digitalZoom;
+        }
+
+        public float GetDigitalZoomCenter()
+        {
+            return _digitalZoomCenter;
+        }
+
+        public CameraMode GetCameraMode()
+        {
+            return CameraMode.Fps;
+        }
+
+        public ScenePartMode GetScenePartMode()
+        {
+            return _scenePartMode;
+        }
+
+        public void SetFOV(float value)
+        {
+            _fovy = value;
+        }
+
+        public void SetDigitalZoom(float value)
+        {
+            _digitalZoom = value;
+        }
+
+        public void SetDigitalZoomCenter(float value)
+        {
+            _digitalZoomCenter = value;
+        }
+
+        public void SetScenePartMode(ScenePartMode value)
+        {
+            _scenePartMode = value;
         }
 
         public void Pan(float x, float y)
@@ -106,22 +155,6 @@ namespace open3mod
             // It seems we messed up with OpenTK's matrix conventions.
             _translation += v.X * o.Row0.Xyz + v.Y * o.Row1.Xyz + v.Z * o.Row2.Xyz;
             _dirty = true;
-        }
-
-
-        public CameraMode GetCameraMode()
-        {
-            return CameraMode.Fps;
-        }
-
-        public ScenePartMode GetScenePartMode()
-        {
-            return _scenePartMode;
-        }
-
-        public void SetScenePartMode(ScenePartMode value)
-        {
-            _scenePartMode = value;
         }
 
         public void MouseMove(int x, int y)

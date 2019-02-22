@@ -39,6 +39,10 @@ namespace open3mod
         private bool _downPressed;
         private bool _fovyUpPressed;
         private bool _fovyDownPressed;
+        private bool _digZoomUpPressed;
+        private bool _digZoomDownPressed;
+        private bool _digZoomCenterLeftPressed;
+        private bool _digZoomCenterRightPressed;
         private bool _shiftPressed;
 
         private int _previousMousePosX = -1;
@@ -96,6 +100,7 @@ namespace open3mod
             if (changed) cam.MovementKey(x, y, z);
 
             float step = 1.005f;
+            float stepCenter = 0.01f;
             if (_shiftPressed) step = 1.05f;
 
 
@@ -105,6 +110,8 @@ namespace open3mod
             }
 
             float fov = cam.GetFOV();
+            float digZoom = cam.GetDigitalZoom();
+            float digZoomCenter = cam.GetDigitalZoomCenter();
 
             if (_fovyUpPressed)
             {
@@ -117,15 +124,41 @@ namespace open3mod
                 fov = fov / step;
             }
 
+            if (_digZoomUpPressed)
+            {
+                changedz = true;
+                digZoom = digZoom * (step + stepCenter);
+            }
+            if (_digZoomDownPressed)
+            {
+                changedz = true;
+                digZoom = digZoom / (step + stepCenter);
+            }
+
+            if (_digZoomCenterLeftPressed)
+            {
+                changedz = true;
+                digZoomCenter = digZoomCenter - stepCenter;
+            }
+            if (_digZoomCenterRightPressed)
+            {
+                changedz = true;
+                digZoomCenter = digZoomCenter + stepCenter;
+            }
+
+
             if (!changedz)
             {
                 return;
             }
 
-            if (fov > MathHelper.PiOver2) fov = MathHelper.PiOver2;
-            ScenePartMode spm = cam.GetScenePartMode();
-            CameraMode cm = cam.GetCameraMode();
-            cam.SetParam(fov, spm, cm);
+            CheckBoundsFloat(ref fov, fovLimitLower, fovLimitUpper);
+            CheckBoundsFloat(ref digZoom, digitalZoomLimitLower, digitalZoomLimitUpper);
+            CheckBoundsFloat(ref digZoomCenter, 0f, 1f);
+            cam.SetFOV(fov);
+            cam.SetDigitalZoom(digZoom);
+            cam.SetDigitalZoomCenter(digZoomCenter);
+
         }
 
         private void UpdateActiveViewIfNeeded(MouseEventArgs e)
@@ -437,9 +470,14 @@ namespace open3mod
 
                 case Keys.F5:
                 case Keys.Escape:
-                    UiForTab(_ui.ActiveTab).GetInspector().Animations.SetTime(0); //reset or replay
-                    UiForTab(_ui.ActiveTab).GetInspector().Animations.OnPlay(sender, e);
-                    break;
+                        var anim = UiForTab(_ui.ActiveTab).GetInspector().Animations;
+                        if (anim != null)
+                        {
+                            anim.SetTime(0); //reset or replay
+                            anim.OnPlay(sender, e);
+                        }
+
+                        break;
 
                 case Keys.OemPeriod:
                     Renderer.SwitchActiveCameras();
@@ -484,15 +522,31 @@ namespace open3mod
                     OpenVRInterface.viewOffset = Matrix4.Identity;
                     break;
 
-                case Keys.Subtract:
-                        _fovyDownPressed = true;
+                    case Keys.Add:
+                        _digZoomDownPressed = true;
                         break;
 
-                case Keys.Add:
+                    case Keys.Subtract:
+                        _digZoomUpPressed = true;
+                        break;
+
+                    case Keys.NumPad7:
+                        _digZoomCenterLeftPressed = true;
+                        break;
+
+                    case Keys.NumPad9:
+                        _digZoomCenterRightPressed = true;
+                        break;
+
+                    case Keys.NumPad8:
                         _fovyUpPressed = true;
                         break;
 
-                case Keys.E:
+                    case Keys.NumPad5:
+                        _fovyDownPressed = true;
+                        break;
+
+                    case Keys.E:
                     // switch backend
                     if (_settings == null || _settings.IsDisposed) _settings = new SettingsDialog { MainWindow = this };
                     _settings.ChangeRenderingBackend();
@@ -506,35 +560,35 @@ namespace open3mod
                         Renderer.SwitchToCamera(0);
                         break;
                     case Keys.B:
-                        if (_renderer.renderIO) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.Background);
-                    break;
-                case Keys.F:
-                    if (_renderer.renderIO) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.Foreground);
-                    break;
-                case Keys.X:
-                    if (_renderer.renderIO) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.Others);
-                    break;
-                case Keys.C:
-                    if (_renderer.renderIO) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.Camera);
-                    break;
-                case Keys.L:
-                    UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.All);
-                    break;
-                case Keys.J:
-                    if (_renderer.renderIO) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.CameraCancelColor);
-                    break;
-                case Keys.M:
-                    if (_renderer.renderIO) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.Output);
-                    break;
-                case Keys.K:
-                    if (_renderer.renderIO) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.Keying);
-                    break;
-                case Keys.G:
-                    if (_renderer.renderIO) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.GreenScreen);
-                    break;
-                case Keys.Enter:
+                        if (_renderer.renderIO && (UiState.ActiveTab.ActiveCameraController != null)) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.Background);
+                        break;
+                    case Keys.F:
+                        if (_renderer.renderIO && (UiState.ActiveTab.ActiveCameraController != null)) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.Foreground);
+                        break;
+                    case Keys.X:
+                        if (_renderer.renderIO && (UiState.ActiveTab.ActiveCameraController != null)) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.Others);
+                        break;
+                    case Keys.C:
+                        if (_renderer.renderIO && (UiState.ActiveTab.ActiveCameraController != null)) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.Camera);
+                        break;
+                    case Keys.L:
+                        if (_renderer.renderIO && (UiState.ActiveTab.ActiveCameraController != null)) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.All);
+                        break;
+                    case Keys.J:
+                        if (_renderer.renderIO && (UiState.ActiveTab.ActiveCameraController != null)) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.CameraCancelColor);
+                        break;
+                    case Keys.M:
+                        if (_renderer.renderIO && (UiState.ActiveTab.ActiveCameraController != null)) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.Output);
+                        break;
+                    case Keys.K:
+                        if (_renderer.renderIO && (UiState.ActiveTab.ActiveCameraController != null)) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.Keying);
+                        break;
+                    case Keys.G:
+                        if (_renderer.renderIO && (UiState.ActiveTab.ActiveCameraController != null)) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.GreenScreen);
+                        break;
+                    case Keys.Enter:
                         Renderer.SwitchActiveCameras();
-                    Renderer.syncTrack(false, "SwitchCameras", 15);
+                        Renderer.syncTrack(false, "SwitchCameras", 15);
                         e.Handled = true;
                         break;
                     case Keys.NumPad0:
@@ -571,48 +625,58 @@ namespace open3mod
             switch (keyEventArgs.KeyData)
             {
                 case Keys.W:
-                case Keys.Up:
                     _forwardPressed = false;
                     break;
 
                 case Keys.A:
-                case Keys.Left:
                     _leftPressed = false;
                     break;
 
                 case Keys.S:
-                case Keys.Down:
                     _backPressed = false;
                     break;
 
                 case Keys.D:
-                case Keys.Right:
                     _rightPressed = false;
                     break;
 
-                case Keys.PageUp:
+                case Keys.Up:
                     _upPressed = false;
                     break;
 
-                case Keys.PageDown:
+                case Keys.Down:
                     _downPressed = false;
                     break;
 
                 case Keys.Add:
-                    _fovyUpPressed = false;
+                    _digZoomDownPressed = false;
                     break;
 
                 case Keys.Subtract:
+                    _digZoomUpPressed = false;
+                    break;
+
+                case Keys.NumPad7:
+                    _digZoomCenterLeftPressed = false;
+                    break;
+
+                case Keys.NumPad9:
+                    _digZoomCenterRightPressed = false;
+                    break;
+
+                case Keys.NumPad8:
+                    _fovyUpPressed = false;
+                    break;
+
+                case Keys.NumPad5:
                     _fovyDownPressed = false;
                     break;
 
                 case Keys.Multiply:
                     _shiftPressed = false;
                     break;
-
-
-            }
-        }
+    }
+}
     }
 }
 

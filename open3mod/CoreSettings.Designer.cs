@@ -772,5 +772,17 @@ namespace CoreSettings {
                 this["TimeScale"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool AllowDigitalZoom {
+            get {
+                return ((bool)(this["AllowDigitalZoom"]));
+            }
+            set {
+                this["AllowDigitalZoom"] = value;
+            }
+        }
     }
 }

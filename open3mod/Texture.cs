@@ -184,6 +184,63 @@ namespace open3mod
             private set { _actualLocation = value; }
         }
 
+        /// <summary>
+        /// Gets NDI stream name from texture location. If there is no name to be decoded, returns ""
+        /// </summary>
+        public string NDIStreamName
+        {
+            get
+            {
+                string streamName = "";
+                if (ActualLocation.Contains("NDI"))
+                {
+                    // example: location\NDI_4_EDIT(VLC).bmp
+                    string[] streamInfo = ActualLocation.Split('_', '.');
+                    int j = 0;
+                    foreach (var s in streamInfo)
+                    {
+                        if (s.Contains("NDI")) break;
+                        j++;
+                    }
+                    //                    }
+                 //   bool numberFound = int.TryParse(streamInfo[j], out int chanNumber);
+                    j++;
+                    j++;
+                    if (j < streamInfo.Length) streamName = streamInfo[j];
+                }
+                return streamName;
+            }
+        }
+
+        /// <summary>
+        /// Gets NDI stream number from texture location. If there is no name to be decoded, returns "0"
+        /// </summary>
+        public int NDIStreamNumber
+        {
+            get
+            {
+                int streamNumber = 0;
+                if (ActualLocation.Contains("NDI"))
+                {
+                    // example: location\NDI_4_EDIT(VLC).bmp
+                    string[] streamInfo = ActualLocation.Split('_', '.');
+                    int j = 0;
+                    foreach (var s in streamInfo)
+                    {
+                        if (s.Contains("NDI")) break;
+                        j++;
+                    }
+                    j++;
+                    try
+                    {
+                        bool numberFound = int.TryParse(streamInfo[j], out int foundNumber);
+                        if ((numberFound) && (streamNumber < MainWindow.receivers)) streamNumber = foundNumber;
+                    }
+                    catch { };
+                }
+                return streamNumber;
+            }
+        }
 
         /// <summary>
         /// Returns whether the texture has any non-opaque pixels and thus

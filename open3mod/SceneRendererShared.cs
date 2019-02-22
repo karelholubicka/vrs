@@ -111,9 +111,9 @@ namespace open3mod
         0: Background;
         1: Else (always visible);
         2: Foreground;
-        3: GreenScreenAnimated;
+        3: GreenScreen;
         4: BackgroundAnimated;
-        5: Else (always visible)Animated;
+        5: Else (always visible) Animated;
         6: ForegroundAnimated;
         7: GreenScreenAnimated;
         Animated - list is refreshed each frame
@@ -127,6 +127,8 @@ namespace open3mod
             {
                 case "B":
                     return 0;
+                case "X":
+                    return 1;
                 case "F":
                     return 2;
                 case "G":
@@ -135,12 +137,14 @@ namespace open3mod
                     return 4;
                 case "a":
                     return 5; //animated others
+                case "x":
+                    return 5; //oher animated others
                 case "f":
                     return 6;
                 case "g":
                     return 7;
                 default:
-                    return 1;
+                    return 0;//everything else/unnamed goes automatically to BKGD
             }
         }
 

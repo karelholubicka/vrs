@@ -4,9 +4,26 @@ Newer. Assimp 4.1.216079013 (assimp viewer)
 Moje kompilace #1 : Assimp 4.1.0
 Moje kompilace #2+3 : Assimp 4.1.0 - ale z masteru
 
-kontrola zvuku a synce a timingu VR
-jak vypadá Janssen nové studio v renderu v provozu
 
+zoom start level + save+load restore opravit
+více vrstev pod náhledy composite
+vyhodit zoom z jiných controlerù - nechat ho jen v Picking
+-zobrazování modelù zahrnout zoom, nebo vypnouot
+
+
+
+pøehodit audio - camera 1 jde do stopy 0+1
+když není dost BMD vstupù, pouští se jen cam 1
+
+opravit zoom levely - momentálnì hlášených 9 odpovídá NX reál 0
+
+kontrola zvuku a synce a timingu VR
+
+https://learnopengl.com/PBR/Theory
+SSAO, Physical Based Rendering
+
+vyndat model studia VEN - separátní model, zrušit (?) G kategorii
+- model homestudio kostka nedávat pøední stìnu
 
 Save one frame by perfoming both uploads at once? Any slowdown?
 Podložka pod brejle neklouzavá ..tvar..??
@@ -15,6 +32,12 @@ zmenšit textury VR modelù/png/tga/psd
 
 Kontrola pøi nesyncu AV:
 GetHardwareReferenceTimestamp vs GetPacketTime 
+
+
+
+Špatné normály u døeva
+UV mapy pro textury zcela zprasené - mimo základní mapu a duplicitní
+
 
 
 INFO:

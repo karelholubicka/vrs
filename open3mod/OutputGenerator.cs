@@ -187,6 +187,7 @@ namespace open3mod
         {
             if (m_running) return;
 
+            if (comboBoxVideoFormat.SelectedItem == null) return;
             //- Extract the IDeckLinkDisplayMode from the display mode popup menu
             IDeckLinkDisplayMode videoDisplayMode;
             videoDisplayMode = ((DisplayModeEntry)comboBoxVideoFormat.SelectedItem).displayMode;

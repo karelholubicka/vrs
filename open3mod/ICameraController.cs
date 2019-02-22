@@ -98,16 +98,71 @@ namespace open3mod
         Matrix4 GetViewNoOffset();
 
         /// <summary>
+        /// Sets controller view parameters
+        /// </summary>
+        void SetParam(float fovy, ScenePartMode scenePartMode, CameraMode mode);
+
+        /// <summary>
+        /// Sets controller view parameters
+        /// </summary>
+        void SetAllParam(float fovy, float digitalZoom, float digitalZoomCenter, ScenePartMode scenePartMode, CameraMode mode);
+
+        /// <summary>
         /// Obtains current field of view
         /// </summary>
         /// <returns>field of view for Y in radians</returns>
         float GetFOV();
 
         /// <summary>
-        /// Sets controller view parameters
+        /// Obtains current digital zoom value
         /// </summary>
+        /// <returns>zoom value (usually usable from 1/2 to 2)</returns>
+        float GetDigitalZoom();
 
-        void SetParam(float fovy, ScenePartMode scenePartMode, CameraMode mode);
+        /// <summary>
+        /// Obtains current digital zoom center
+        /// </summary>
+        /// <returns>aligment of digital zoom - 0 towards left, 1 towards right</returns>
+        float GetDigitalZoomCenter();
+
+        /// <summary>
+        /// Gets the mode of displaying
+        /// </summary>
+        /// <returns></returns>
+        ScenePartMode GetScenePartMode();
+
+        /// <summary>
+        /// Gets the mode of the camera. The camera mode is allowed to change
+        /// during calls to MovementKey() or MouseMove() or Scroll() (this allows
+        /// one implementation class to handle multiple, related camera modes
+        /// that are still kept separate in the UI).
+        /// </summary>
+        /// <returns></returns>
+        CameraMode GetCameraMode();
+
+        /// <summary>
+        /// Obtains current field of view
+        /// </summary>
+        /// <returns>field of view for Y in radians</returns>
+        void SetFOV(float value);
+
+        /// <summary>
+        /// Obtains current digital zoom value
+        /// </summary>
+        /// <returns>zoom value (usually usable from 1/2 to 2)</returns>
+        void SetDigitalZoom(float value);
+
+        /// <summary>
+        /// Obtains current digital zoom center
+        /// </summary>
+        /// <returns>aligment of digital zoom - 0 towards left, 1 towards right</returns>
+        void SetDigitalZoomCenter(float value);
+
+        /// <summary>
+        /// Sets the mode of displaying
+        /// </summary>
+        /// <returns></returns>
+        void SetScenePartMode(ScenePartMode value);
      
         /// <summary>
         /// Processes mouse movement events
@@ -137,27 +192,6 @@ namespace open3mod
         /// <param name="y">Signed Y axis movement, normalized by time</param>
         /// <param name="z">Signed Z axis movement, normalized by time</param>
         void MovementKey(float x, float y, float z);
-
-        /// <summary>
-        /// Gets the mode of the camera. The camera mode is allowed to change
-        /// during calls to MovementKey() or MouseMove() or Scroll() (this allows
-        /// one implementation class to handle multiple, related camera modes
-        /// that are still kept separate in the UI).
-        /// </summary>
-        /// <returns></returns>
-        CameraMode GetCameraMode();
-
-        /// <summary>
-        /// Gets the mode of displaying
-        /// </summary>
-        /// <returns></returns>
-        ScenePartMode GetScenePartMode();
-
-        /// <summary>
-        /// Sets the mode of displaying
-        /// </summary>
-        /// <returns></returns>
-        void SetScenePartMode(ScenePartMode value);
 
         /// <summary>
         /// Process the 3D Input of the LeapMotion device

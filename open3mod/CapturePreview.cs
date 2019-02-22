@@ -69,14 +69,13 @@ namespace open3mod
                 comboBoxInputDevice.EndUpdate();
                 deckLink.SetID(this, m_mainWindow, m_number);
 
-
-                if (comboBoxInputDevice.Items.Count == m_number + 2)
+                int ignoreDevices = -1;
+                if (comboBoxInputDevice.Items.Count == m_number + ignoreDevices + 1)
                 {
-                    comboBoxInputDevice.SelectedIndex = m_number+1;
-                    EnableInterface(true);
-                    buttonStartStop.Enabled = true;
-//                    StartCapture();
+                    comboBoxInputDevice.SelectedIndex = m_number + ignoreDevices;
                 }
+                EnableInterface(true);
+                buttonStartStop.Enabled = true;
             }
         }
 

@@ -168,7 +168,7 @@ namespace open3mod
                 activePositions[i] = false;
                 lensToGround[i] = Matrix4.Identity;
                 trackerToCamera[i] = Matrix4.Identity;
-                if (EVRerror == EVRInitError.None)
+                if ((EVRerror == EVRInitError.None)&& (i < OpenVR.k_unMaxTrackedDeviceCount)) //setup real devices
                     {
                     OpenVR.System.GetDeviceToAbsoluteTrackingPose(eOrg, fPredictedSecondsToPhotonsFromNow, pTrackedDevicePoseArray);
                     if (pTrackedDevicePoseArray[i].bPoseIsValid)
@@ -399,26 +399,28 @@ namespace open3mod
                     var cam = renderer.cameraController(contIndex);
                     if (cam != null)
                     {
-                        float _fovy = cam.GetFOV();
+                        float _digitalZoom = cam.GetDigitalZoom();
+                        float _digitalZoomCenter = cam.GetDigitalZoomCenter();
                         float step = 1.01f;
-                        /*    if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y > 0.5f))
-                            if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y < -0.5f))*/
-                        //   if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y > 0.5f)) _fovy = _fovy / step; ;
-                        //  if ((controllerState.rAxis0.x > -0.5f) && (controllerState.rAxis0.x < 0.5f) && (controllerState.rAxis0.y < -0.5f)) _fovy = _fovy * step; ;
-                        if ((controllerState.rAxis0.y > 0.5f)) _fovy = _fovy / step; ;
-                        if ((controllerState.rAxis0.y < -0.5f)) _fovy = _fovy * step; ;
-                        CoreSettings.CoreSettings.Default.SecondsToPhotons = fPredictedSecondsToPhotonsFromNow;
-                        if (_fovy > MathHelper.PiOver2) _fovy = MathHelper.PiOver2;
-                        if (_fovy < MathHelper.PiOver6 / 4) _fovy = MathHelper.PiOver6 / 4;
-                        int zoom = renderer.FOVtoZoom((float)(_fovy * 360 / Math.PI), renderer.cameraAtContIndex(contIndex));
-                         if (zoom < 0) _fovy = _fovy / step;//returning back changes
-                        if (zoom > 60) _fovy = _fovy * step;//returning back changes
-
-                        ScenePartMode spm = cam.GetScenePartMode();
-                        CameraMode cm = cam.GetCameraMode();
+                        float centerTouch = 0.2f;
+                        float centerNoTouch = 0.6f;
+                        float stepCenter = 0.03f;
+                        if ((controllerState.rAxis0.x > -centerNoTouch) && (controllerState.rAxis0.x < centerNoTouch))
+                        {
+                            if (controllerState.rAxis0.y < -centerTouch) _digitalZoom = _digitalZoom / step;
+                            if (controllerState.rAxis0.y > centerTouch) _digitalZoom = _digitalZoom * step;
+                        }
+                        if ((controllerState.rAxis0.y > -centerNoTouch) && (controllerState.rAxis0.y < centerNoTouch))
+                        {
+                            if (controllerState.rAxis0.x < -centerTouch) _digitalZoomCenter = _digitalZoomCenter - stepCenter;
+                            if (controllerState.rAxis0.x > centerTouch) _digitalZoomCenter = _digitalZoomCenter + stepCenter;
+                        }
+                        MainWindow.CheckBoundsFloat(ref _digitalZoom, MainWindow.digitalZoomLimitLower, MainWindow.digitalZoomLimitUpper);
+                        MainWindow.CheckBoundsFloat(ref _digitalZoomCenter, 0f, 1f);
                         lock (renderer.renderParameterLock)
                         {
-                            cam.SetParam(_fovy, spm, cm);
+                            cam.SetDigitalZoom(_digitalZoom);
+                            cam.SetDigitalZoomCenter(_digitalZoomCenter);
                         }
                     }
                 }

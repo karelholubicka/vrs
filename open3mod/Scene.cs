@@ -30,6 +30,7 @@ using System.Text;
 using Assimp;
 using Assimp.Configs;
 using OpenTK;
+using System.Windows.Forms;
 
 
 namespace open3mod
@@ -57,8 +58,8 @@ namespace open3mod
         private readonly LogStore _logStore;
         private readonly TextureSet _textureSet;
         public Node ActiveLight;
-        public Texture dynamicTexture;
-        public TextureThumbnailControl dynamicTextureMenu;
+        public Texture[] dynamicTexture = new Texture[MainWindow.receivers];
+        public TextureThumbnailControl[] dynamicTextureMenu = new TextureThumbnailControl[MainWindow.receivers];
 
         private MaterialMapper _mapper;
         private ISceneRenderer _sceneRenderer;
@@ -313,7 +314,8 @@ namespace open3mod
             catch(AssimpException ex)
             {
                 Dispose();
-                throw new Exception("failed to read file: " + file + " (" + ex.Message + ")");               
+                MessageBox.Show("Failed to read file: " + file + "\n(" + ex.Message + ")");
+                throw new Exception("Failed to read file: " + file + " (" + ex.Message + ")");               
             }
 
             stopwatch.Stop();

@@ -31,6 +31,7 @@
             this.components = new System.ComponentModel.Container();
             this.tabControl = new System.Windows.Forms.TabControl();
             this.tabPageTracking = new System.Windows.Forms.TabPage();
+            this.grabCamToVirt = new System.Windows.Forms.Button();
             this.rescanVRDevices = new System.Windows.Forms.Button();
             this.groupBox6 = new System.Windows.Forms.GroupBox();
             this.resetStudioZeroFromHMDRef = new System.Windows.Forms.Button();
@@ -52,6 +53,7 @@
             this.label22 = new System.Windows.Forms.Label();
             this.label23 = new System.Windows.Forms.Label();
             this.tabPageGeneral = new System.Windows.Forms.TabPage();
+            this.label18 = new System.Windows.Forms.Label();
             this.autoSourceNDI = new System.Windows.Forms.TextBox();
             this.autoConnectNDI = new System.Windows.Forms.CheckBox();
             this.autoStartCheckBox = new System.Windows.Forms.CheckBox();
@@ -129,7 +131,7 @@
             this.button1 = new System.Windows.Forms.Button();
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.labelPleaseRestart = new System.Windows.Forms.Label();
-            this.grabCamToVirt = new System.Windows.Forms.Button();
+            this.allowDigitalZoom = new System.Windows.Forms.CheckBox();
             this.tabControl.SuspendLayout();
             this.tabPageTracking.SuspendLayout();
             this.groupBox6.SuspendLayout();
@@ -188,6 +190,18 @@
             this.tabPageTracking.TabIndex = 6;
             this.tabPageTracking.Text = "Tracking";
             this.tabPageTracking.UseVisualStyleBackColor = true;
+            // 
+            // grabCamToVirt
+            // 
+            this.grabCamToVirt.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.grabCamToVirt.DialogResult = System.Windows.Forms.DialogResult.OK;
+            this.grabCamToVirt.Location = new System.Drawing.Point(306, 238);
+            this.grabCamToVirt.Name = "grabCamToVirt";
+            this.grabCamToVirt.Size = new System.Drawing.Size(150, 23);
+            this.grabCamToVirt.TabIndex = 20;
+            this.grabCamToVirt.Text = "Grab Camera 1 to Virtual";
+            this.grabCamToVirt.UseVisualStyleBackColor = true;
+            this.grabCamToVirt.Click += new System.EventHandler(this.grabCamToVirt_Click);
             // 
             // rescanVRDevices
             // 
@@ -409,6 +423,7 @@
             // 
             // tabPageGeneral
             // 
+            this.tabPageGeneral.Controls.Add(this.label18);
             this.tabPageGeneral.Controls.Add(this.autoSourceNDI);
             this.tabPageGeneral.Controls.Add(this.autoConnectNDI);
             this.tabPageGeneral.Controls.Add(this.autoStartCheckBox);
@@ -426,10 +441,19 @@
             this.tabPageGeneral.Text = "General";
             this.tabPageGeneral.UseVisualStyleBackColor = true;
             // 
+            // label18
+            // 
+            this.label18.AutoSize = true;
+            this.label18.Location = new System.Drawing.Point(267, 351);
+            this.label18.Name = "label18";
+            this.label18.Size = new System.Drawing.Size(218, 13);
+            this.label18.TabIndex = 17;
+            this.label18.Text = "If source derived from tex name not available";
+            // 
             // autoSourceNDI
             // 
             this.autoSourceNDI.DataBindings.Add(new System.Windows.Forms.Binding("Text", global::CoreSettings.CoreSettings.Default, "AutoSourceNDI", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.autoSourceNDI.Location = new System.Drawing.Point(164, 348);
+            this.autoSourceNDI.Location = new System.Drawing.Point(150, 348);
             this.autoSourceNDI.Name = "autoSourceNDI";
             this.autoSourceNDI.Size = new System.Drawing.Size(100, 20);
             this.autoSourceNDI.TabIndex = 9;
@@ -561,6 +585,7 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.allowDigitalZoom);
             this.groupBox1.Controls.Add(this.comboBoxNdiTexResolution);
             this.groupBox1.Controls.Add(this.label17);
             this.groupBox1.Controls.Add(this.checkBoxBFCulling);
@@ -1334,17 +1359,18 @@
             this.labelPleaseRestart.Text = "Please restart the application to see all changes";
             this.labelPleaseRestart.Visible = false;
             // 
-            // grabCamToVirt
+            // allowDigitalZoom
             // 
-            this.grabCamToVirt.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.grabCamToVirt.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.grabCamToVirt.Location = new System.Drawing.Point(306, 238);
-            this.grabCamToVirt.Name = "grabCamToVirt";
-            this.grabCamToVirt.Size = new System.Drawing.Size(150, 23);
-            this.grabCamToVirt.TabIndex = 20;
-            this.grabCamToVirt.Text = "Grab Camera 1 to Virtual";
-            this.grabCamToVirt.UseVisualStyleBackColor = true;
-            this.grabCamToVirt.Click += new System.EventHandler(this.grabCamToVirt_Click);
+            this.allowDigitalZoom.AutoSize = true;
+            this.allowDigitalZoom.Checked = global::CoreSettings.CoreSettings.Default.AllowDigitalZoom;
+            this.allowDigitalZoom.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.allowDigitalZoom.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "AllowDigitalZoom", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.allowDigitalZoom.Location = new System.Drawing.Point(322, 278);
+            this.allowDigitalZoom.Name = "allowDigitalZoom";
+            this.allowDigitalZoom.Size = new System.Drawing.Size(113, 17);
+            this.allowDigitalZoom.TabIndex = 16;
+            this.allowDigitalZoom.Text = "Allow Digital Zoom";
+            this.allowDigitalZoom.UseVisualStyleBackColor = true;
             // 
             // SettingsDialog
             // 
@@ -1504,5 +1530,7 @@
         private System.Windows.Forms.Label labelYR;
         private System.Windows.Forms.Button rescanVRDevices;
         private System.Windows.Forms.Button grabCamToVirt;
+        private System.Windows.Forms.Label label18;
+        private System.Windows.Forms.CheckBox allowDigitalZoom;
     }
 }

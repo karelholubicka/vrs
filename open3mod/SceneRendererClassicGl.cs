@@ -130,7 +130,7 @@ namespace open3mod
             tmp = Math.Max(InitposeMax.Z - InitposeMin.Z, tmp);
             int logScale = (int)Math.Truncate(Math.Log10(tmp*10/50)); //  Up to 50units max size = 50m: keep scale (for smaller scenes).
             float scale = 1;
-            for (int i = 0; i < logScale;i++) scale = scale / 10;
+           // for (int i = 0; i < logScale;i++) scale = scale / 10; keep 1x
             Owner.Scale = scale;
             if (cam != null)
             {

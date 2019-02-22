@@ -80,7 +80,7 @@ namespace open3mod
             tmp = Math.Max(InitposeMax.Z - InitposeMin.Z, tmp);
             int logScale = (int)Math.Truncate(Math.Log10(tmp * 10 / 50)); //  Up to 50units max size = 50m: keep scale (for smaller scenes).
             float scale = 1;
-            for (int i = 0; i < logScale; i++) scale = scale / 10;
+            //   for (int i = 0; i < logScale; i++) scale = scale / 10;
             Owner.Scale = scale;
             Matrix4 world = Matrix4.Identity;//want to keep unity in our world
 
@@ -105,8 +105,8 @@ namespace open3mod
             switch (cam.GetScenePartMode())
             {
                 case ScenePartMode.Background: currDispList = 0;break;
-                case ScenePartMode.Foreground: currDispList = 2; break;
                 case ScenePartMode.Others: currDispList = 1; break;
+                case ScenePartMode.Foreground: currDispList = 2; break;
                 case ScenePartMode.GreenScreen: currDispList = 3; break;
                 case ScenePartMode.All: currDispList = 0;count = 4; break;
                 default: break;//at other modes we do not render anything

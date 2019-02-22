@@ -36,9 +36,9 @@ namespace open3mod
         private Matrix4 _view;
         private Matrix4 _trackerPosition;
         private Matrix4 _viewPosition;
-        private float _fovy = MathHelper.PiOver4;
-        private float _zNear = 0.01f;
-        private float _zFar = 100.0f;
+        private float _fovy = MainWindow.fovPreset;
+        private float _digitalZoom = 1f;
+        private float _digitalZoomCenter = 0.5f;
         private uint contIndex = 0; //controller OpenVR index
         private static readonly Vector3 TrackingOffPosition = new Vector3(-0.0f, -0.7f, -1.8f);
         private CameraMode _cameraMode;
@@ -92,11 +92,6 @@ namespace open3mod
         {
             return _view;
         }
-
-        public float GetFOV()
-        {
-            return _fovy;
-        }
         
         public void SetParam(float fovy, ScenePartMode scenePartMode, CameraMode mode)
         {
@@ -105,14 +100,28 @@ namespace open3mod
             _fovy = fovy;
         }
 
-        public void Pan(float x, float y)
+        public void SetAllParam(float fovy, float digitalZoom, float digitalZoomCenter, ScenePartMode scenePartMode, CameraMode mode)
         {
-            UpdateViewMatrix();
+            _scenePartMode = scenePartMode;
+            _cameraMode = mode;
+            _fovy = fovy;
+            _digitalZoom = digitalZoom;
+            _digitalZoomCenter = digitalZoomCenter;
         }
 
-        public void MovementKey(float x, float y, float z)
+        public float GetFOV()
         {
-            UpdateViewMatrix();
+            return _fovy;
+        }
+
+        public float GetDigitalZoom()
+        {
+            return _digitalZoom;
+        }
+
+        public float GetDigitalZoomCenter()
+        {
+            return _digitalZoomCenter;
         }
 
         public CameraMode GetCameraMode()
@@ -125,9 +134,34 @@ namespace open3mod
             return _scenePartMode;
         }
 
+        public void SetFOV(float value)
+        {
+            _fovy = value;
+        }
+
+        public void SetDigitalZoom(float value)
+        {
+            _digitalZoom = value;
+        }
+
+        public void SetDigitalZoomCenter(float value)
+        {
+            _digitalZoomCenter = value;
+        }
+
         public void SetScenePartMode(ScenePartMode value)
         {
             _scenePartMode = value;
+        }
+
+        public void Pan(float x, float y)
+        {
+            UpdateViewMatrix();
+        }
+
+        public void MovementKey(float x, float y, float z)
+        {
+            UpdateViewMatrix();
         }
 
         public string GetCameraName()
