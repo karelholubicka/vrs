@@ -378,6 +378,31 @@ namespace open3mod
             return scheduleFrame;
         }
 
+        public IDeckLinkVideoFrame Convert(IDeckLinkVideoFrame srcFrame, _BMDPixelFormat destFormat = _BMDPixelFormat.bmdFormat8BitYUV)
+        {
+            if ((srcFrame.GetPixelFormat() == destFormat) || (m_selectedDevice == null))
+            {
+                // no format conversion
+                return srcFrame;
+            }
+            else
+            {
+                // Pixel formats are different
+                int bpp = 4;
+                if (destFormat == _BMDPixelFormat.bmdFormat8BitYUV) bpp = 2;
+                m_selectedDevice.deckLinkOutput.CreateVideoFrame(srcFrame.GetWidth(), srcFrame.GetHeight(), srcFrame.GetWidth()*bpp, destFormat, srcFrame.GetFlags(), out IDeckLinkMutableVideoFrame destFrame);
+                try
+                {
+                    frameConverter.ConvertFrame(srcFrame, destFrame);
+                }
+                catch
+                {
+                    return srcFrame;
+                }
+                return destFrame;
+            }
+        }
+
         public void StopRunning()
         {
             if (!m_running) return;

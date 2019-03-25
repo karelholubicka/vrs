@@ -548,6 +548,7 @@
     <Content Include="Images\HUD_Virt_Hover.png" />
     <Content Include="Images\HUD_Virt_Normal.png" />
     <Content Include="Images\HUD_Virt_Selected.png" />
+    <Content Include="Images\RescanDevices.png" />
     <Content Include="Resources\FailedToLoad.bmp" />
     <EmbeddedResource Include="Shaders\ChromakeyFragmentShader.glsl" />
     <EmbeddedResource Include="Shaders\ChromakeyVertexShader.glsl" />

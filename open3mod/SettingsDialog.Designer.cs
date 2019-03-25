@@ -54,49 +54,29 @@
             this.label23 = new System.Windows.Forms.Label();
             this.tabPageGeneral = new System.Windows.Forms.TabPage();
             this.label18 = new System.Windows.Forms.Label();
-            this.autoSourceNDI = new System.Windows.Forms.TextBox();
-            this.autoConnectNDI = new System.Windows.Forms.CheckBox();
-            this.autoStartCheckBox = new System.Windows.Forms.CheckBox();
-            this.genlockCheckBox = new System.Windows.Forms.CheckBox();
-            this.KeepTimingCheckBox = new System.Windows.Forms.CheckBox();
-            this.SendNDICheckBox = new System.Windows.Forms.CheckBox();
-            this.UseTrackingCheckbox = new System.Windows.Forms.CheckBox();
-            this.CheckDroppedFramesCheckbox = new System.Windows.Forms.CheckBox();
-            this.MarkFramesCheckbox = new System.Windows.Forms.CheckBox();
-            this.ExitAppCheckbox = new System.Windows.Forms.CheckBox();
-            this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.tabPageRendering = new System.Windows.Forms.TabPage();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.comboBoxNdiTexResolution = new System.Windows.Forms.ComboBox();
             this.label17 = new System.Windows.Forms.Label();
-            this.checkBoxBFCulling = new System.Windows.Forms.CheckBox();
             this.label6 = new System.Windows.Forms.Label();
             this.comboBoxSetLightingMode = new System.Windows.Forms.ComboBox();
             this.checkBox3 = new System.Windows.Forms.CheckBox();
             this.label5 = new System.Windows.Forms.Label();
             this.comboBoxSetBackend = new System.Windows.Forms.ComboBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.checkBoxLinearMIP = new System.Windows.Forms.CheckBox();
             this.comboBoxTexResolution = new System.Windows.Forms.ComboBox();
             this.label3 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.comboBoxSetTextureFilter = new System.Windows.Forms.ComboBox();
             this.comboBoxSetMultiSampling = new System.Windows.Forms.ComboBox();
-            this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.tabPageImport = new System.Windows.Forms.TabPage();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
-            this.checkBoxmergeDuplicateVertices = new System.Windows.Forms.CheckBox();
-            this.checkBoxOptimize = new System.Windows.Forms.CheckBox();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
-            this.checkBoxRemoveDegenerates = new System.Windows.Forms.CheckBox();
-            this.checkBoxFixWinding = new System.Windows.Forms.CheckBox();
-            this.checkBoxSortByPrimitiveType = new System.Windows.Forms.CheckBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.checkBoxGenerateTangentSpace = new System.Windows.Forms.CheckBox();
-            this.checkBoxComputeNormals = new System.Windows.Forms.CheckBox();
-            this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.tabPageAnimation = new System.Windows.Forms.TabPage();
             this.label8 = new System.Windows.Forms.Label();
             this.tabPageTextures = new System.Windows.Forms.TabPage();
-            this.checkBoxLoadTextures = new System.Windows.Forms.CheckBox();
             this.label7 = new System.Windows.Forms.Label();
             this.folderSetDisplaySearchPaths = new open3mod.FolderSetDisplay();
             this.tabPageLeapMotion = new System.Windows.Forms.TabPage();
@@ -105,9 +85,6 @@
             this.SmoothingGroup = new System.Windows.Forms.GroupBox();
             this.SmoothLabel = new System.Windows.Forms.Label();
             this.ResponsiveLabel = new System.Windows.Forms.Label();
-            this.RotationSmoothing = new System.Windows.Forms.CheckBox();
-            this.trackBarSmoothing = new System.Windows.Forms.TrackBar();
-            this.TranslationSmoothing = new System.Windows.Forms.CheckBox();
             this.tabPageKeying = new System.Windows.Forms.TabPage();
             this.label16 = new System.Windows.Forms.Label();
             this.trackBarKeyingMatteBlur = new System.Windows.Forms.TrackBar();
@@ -131,23 +108,48 @@
             this.button1 = new System.Windows.Forms.Button();
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.labelPleaseRestart = new System.Windows.Forms.Label();
+            this.UseAllAnglesForOffsetCheckbox = new System.Windows.Forms.CheckBox();
+            this.UseHTCCheckbox = new System.Windows.Forms.CheckBox();
+            this.autoSourceNDI = new System.Windows.Forms.TextBox();
+            this.autoConnectNDI = new System.Windows.Forms.CheckBox();
+            this.autoStartCheckBox = new System.Windows.Forms.CheckBox();
+            this.genlockCheckBox = new System.Windows.Forms.CheckBox();
+            this.KeepTimingCheckBox = new System.Windows.Forms.CheckBox();
+            this.SendNDICheckBox = new System.Windows.Forms.CheckBox();
+            this.CheckDroppedFramesCheckbox = new System.Windows.Forms.CheckBox();
+            this.MarkFramesCheckbox = new System.Windows.Forms.CheckBox();
+            this.ExitAppCheckbox = new System.Windows.Forms.CheckBox();
+            this.checkBox1 = new System.Windows.Forms.CheckBox();
+            this.renderBaseScene = new System.Windows.Forms.CheckBox();
             this.allowDigitalZoom = new System.Windows.Forms.CheckBox();
+            this.checkBoxBFCulling = new System.Windows.Forms.CheckBox();
+            this.checkBoxLinearMIP = new System.Windows.Forms.CheckBox();
+            this.checkBoxmergeDuplicateVertices = new System.Windows.Forms.CheckBox();
+            this.checkBoxOptimize = new System.Windows.Forms.CheckBox();
+            this.checkBoxRemoveDegenerates = new System.Windows.Forms.CheckBox();
+            this.checkBoxFixWinding = new System.Windows.Forms.CheckBox();
+            this.checkBoxSortByPrimitiveType = new System.Windows.Forms.CheckBox();
+            this.checkBoxGenerateTangentSpace = new System.Windows.Forms.CheckBox();
+            this.checkBoxComputeNormals = new System.Windows.Forms.CheckBox();
+            this.checkBoxLoadTextures = new System.Windows.Forms.CheckBox();
+            this.RotationSmoothing = new System.Windows.Forms.CheckBox();
+            this.trackBarSmoothing = new System.Windows.Forms.TrackBar();
+            this.TranslationSmoothing = new System.Windows.Forms.CheckBox();
             this.tabControl.SuspendLayout();
             this.tabPageTracking.SuspendLayout();
             this.groupBox6.SuspendLayout();
             this.groupBox5.SuspendLayout();
             this.tabPageGeneral.SuspendLayout();
-            this.tabPage1.SuspendLayout();
+            this.tabPageRendering.SuspendLayout();
             this.groupBox1.SuspendLayout();
-            this.tabPage2.SuspendLayout();
+            this.tabPageImport.SuspendLayout();
             this.groupBox4.SuspendLayout();
             this.groupBox3.SuspendLayout();
             this.groupBox2.SuspendLayout();
-            this.tabPage3.SuspendLayout();
+            this.tabPageAnimation.SuspendLayout();
             this.tabPageTextures.SuspendLayout();
             this.tabPageLeapMotion.SuspendLayout();
             this.SmoothingGroup.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.trackBarSmoothing)).BeginInit();
             this.tabPageKeying.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trackBarKeyingMatteBlur)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackBarKeyingVSensitivity)).BeginInit();
@@ -157,6 +159,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.trackBarKeyingColorV)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackBarKeyingColorS)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackBarKeyingColorH)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.trackBarSmoothing)).BeginInit();
             this.SuspendLayout();
             // 
             // tabControl
@@ -166,9 +169,9 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tabControl.Controls.Add(this.tabPageTracking);
             this.tabControl.Controls.Add(this.tabPageGeneral);
-            this.tabControl.Controls.Add(this.tabPage1);
-            this.tabControl.Controls.Add(this.tabPage2);
-            this.tabControl.Controls.Add(this.tabPage3);
+            this.tabControl.Controls.Add(this.tabPageRendering);
+            this.tabControl.Controls.Add(this.tabPageImport);
+            this.tabControl.Controls.Add(this.tabPageAnimation);
             this.tabControl.Controls.Add(this.tabPageTextures);
             this.tabControl.Controls.Add(this.tabPageLeapMotion);
             this.tabControl.Controls.Add(this.tabPageKeying);
@@ -180,6 +183,8 @@
             // 
             // tabPageTracking
             // 
+            this.tabPageTracking.Controls.Add(this.UseAllAnglesForOffsetCheckbox);
+            this.tabPageTracking.Controls.Add(this.UseHTCCheckbox);
             this.tabPageTracking.Controls.Add(this.grabCamToVirt);
             this.tabPageTracking.Controls.Add(this.rescanVRDevices);
             this.tabPageTracking.Controls.Add(this.groupBox6);
@@ -195,11 +200,11 @@
             // 
             this.grabCamToVirt.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.grabCamToVirt.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.grabCamToVirt.Location = new System.Drawing.Point(306, 238);
+            this.grabCamToVirt.Location = new System.Drawing.Point(306, 295);
             this.grabCamToVirt.Name = "grabCamToVirt";
             this.grabCamToVirt.Size = new System.Drawing.Size(150, 23);
             this.grabCamToVirt.TabIndex = 20;
-            this.grabCamToVirt.Text = "Grab Camera 1 to Virtual";
+            this.grabCamToVirt.Text = "Grab Cam #1 to Virtual Cam";
             this.grabCamToVirt.UseVisualStyleBackColor = true;
             this.grabCamToVirt.Click += new System.EventHandler(this.grabCamToVirt_Click);
             // 
@@ -207,7 +212,7 @@
             // 
             this.rescanVRDevices.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.rescanVRDevices.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.rescanVRDevices.Location = new System.Drawing.Point(41, 238);
+            this.rescanVRDevices.Location = new System.Drawing.Point(41, 295);
             this.rescanVRDevices.Name = "rescanVRDevices";
             this.rescanVRDevices.Size = new System.Drawing.Size(150, 23);
             this.rescanVRDevices.TabIndex = 19;
@@ -225,7 +230,7 @@
             this.groupBox6.Controls.Add(this.hmdRefZ);
             this.groupBox6.Controls.Add(this.label20);
             this.groupBox6.Controls.Add(this.label21);
-            this.groupBox6.Location = new System.Drawing.Point(28, 28);
+            this.groupBox6.Location = new System.Drawing.Point(28, 85);
             this.groupBox6.Name = "groupBox6";
             this.groupBox6.Size = new System.Drawing.Size(477, 89);
             this.groupBox6.TabIndex = 18;
@@ -321,7 +326,7 @@
             this.groupBox5.Controls.Add(this.cam0offsZ);
             this.groupBox5.Controls.Add(this.label22);
             this.groupBox5.Controls.Add(this.label23);
-            this.groupBox5.Location = new System.Drawing.Point(28, 126);
+            this.groupBox5.Location = new System.Drawing.Point(28, 183);
             this.groupBox5.Name = "groupBox5";
             this.groupBox5.Size = new System.Drawing.Size(477, 89);
             this.groupBox5.TabIndex = 17;
@@ -430,7 +435,6 @@
             this.tabPageGeneral.Controls.Add(this.genlockCheckBox);
             this.tabPageGeneral.Controls.Add(this.KeepTimingCheckBox);
             this.tabPageGeneral.Controls.Add(this.SendNDICheckBox);
-            this.tabPageGeneral.Controls.Add(this.UseTrackingCheckbox);
             this.tabPageGeneral.Controls.Add(this.CheckDroppedFramesCheckbox);
             this.tabPageGeneral.Controls.Add(this.MarkFramesCheckbox);
             this.tabPageGeneral.Controls.Add(this.ExitAppCheckbox);
@@ -444,147 +448,27 @@
             // label18
             // 
             this.label18.AutoSize = true;
-            this.label18.Location = new System.Drawing.Point(267, 351);
+            this.label18.Location = new System.Drawing.Point(267, 310);
             this.label18.Name = "label18";
             this.label18.Size = new System.Drawing.Size(218, 13);
             this.label18.TabIndex = 17;
             this.label18.Text = "If source derived from tex name not available";
             // 
-            // autoSourceNDI
+            // tabPageRendering
             // 
-            this.autoSourceNDI.DataBindings.Add(new System.Windows.Forms.Binding("Text", global::CoreSettings.CoreSettings.Default, "AutoSourceNDI", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.autoSourceNDI.Location = new System.Drawing.Point(150, 348);
-            this.autoSourceNDI.Name = "autoSourceNDI";
-            this.autoSourceNDI.Size = new System.Drawing.Size(100, 20);
-            this.autoSourceNDI.TabIndex = 9;
-            this.autoSourceNDI.Text = global::CoreSettings.CoreSettings.Default.AutoSourceNDI;
-            // 
-            // autoConnectNDI
-            // 
-            this.autoConnectNDI.AutoSize = true;
-            this.autoConnectNDI.Checked = global::CoreSettings.CoreSettings.Default.AutoConnectNDI;
-            this.autoConnectNDI.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.autoConnectNDI.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "AutoConnectNDI", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.autoConnectNDI.Location = new System.Drawing.Point(21, 350);
-            this.autoConnectNDI.Name = "autoConnectNDI";
-            this.autoConnectNDI.Size = new System.Drawing.Size(124, 17);
-            this.autoConnectNDI.TabIndex = 8;
-            this.autoConnectNDI.Text = "Auto connect NDI to";
-            this.autoConnectNDI.UseVisualStyleBackColor = true;
-            // 
-            // autoStartCheckBox
-            // 
-            this.autoStartCheckBox.AutoSize = true;
-            this.autoStartCheckBox.Checked = global::CoreSettings.CoreSettings.Default.AutoStart;
-            this.autoStartCheckBox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "AutoStart", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.autoStartCheckBox.Location = new System.Drawing.Point(21, 310);
-            this.autoStartCheckBox.Name = "autoStartCheckBox";
-            this.autoStartCheckBox.Size = new System.Drawing.Size(242, 17);
-            this.autoStartCheckBox.TabIndex = 7;
-            this.autoStartCheckBox.Text = "Autostart IN + OUT + NDI search + Sync lock";
-            this.autoStartCheckBox.UseVisualStyleBackColor = true;
-            this.autoStartCheckBox.CheckedChanged += new System.EventHandler(this.autoStartCheckBox_CheckedChanged);
-            // 
-            // genlockCheckBox
-            // 
-            this.genlockCheckBox.AutoSize = true;
-            this.genlockCheckBox.Checked = global::CoreSettings.CoreSettings.Default.Genlock;
-            this.genlockCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.genlockCheckBox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "Genlock", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.genlockCheckBox.Location = new System.Drawing.Point(21, 230);
-            this.genlockCheckBox.Name = "genlockCheckBox";
-            this.genlockCheckBox.Size = new System.Drawing.Size(120, 17);
-            this.genlockCheckBox.TabIndex = 6;
-            this.genlockCheckBox.Text = "Lock to output sync";
-            this.genlockCheckBox.UseVisualStyleBackColor = true;
-            // 
-            // KeepTimingCheckBox
-            // 
-            this.KeepTimingCheckBox.AutoSize = true;
-            this.KeepTimingCheckBox.Checked = global::CoreSettings.CoreSettings.Default.KeepTimingRight;
-            this.KeepTimingCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.KeepTimingCheckBox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "KeepTimingRight", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.KeepTimingCheckBox.Location = new System.Drawing.Point(21, 270);
-            this.KeepTimingCheckBox.Name = "KeepTimingCheckBox";
-            this.KeepTimingCheckBox.Size = new System.Drawing.Size(179, 17);
-            this.KeepTimingCheckBox.TabIndex = 5;
-            this.KeepTimingCheckBox.Text = "Keep exact fps when not locked";
-            this.KeepTimingCheckBox.UseVisualStyleBackColor = true;
-            // 
-            // SendNDICheckBox
-            // 
-            this.SendNDICheckBox.AutoSize = true;
-            this.SendNDICheckBox.Checked = global::CoreSettings.CoreSettings.Default.SendNDI;
-            this.SendNDICheckBox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "SendNDI", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.SendNDICheckBox.Location = new System.Drawing.Point(21, 110);
-            this.SendNDICheckBox.Name = "SendNDICheckBox";
-            this.SendNDICheckBox.Size = new System.Drawing.Size(112, 17);
-            this.SendNDICheckBox.TabIndex = 4;
-            this.SendNDICheckBox.Text = "Send NDI streams";
-            this.SendNDICheckBox.UseVisualStyleBackColor = true;
-            // 
-            // UseTrackingCheckbox
-            // 
-            this.UseTrackingCheckbox.AutoSize = true;
-            this.UseTrackingCheckbox.Checked = global::CoreSettings.CoreSettings.Default.UseTracking;
-            this.UseTrackingCheckbox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "UseTracking", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.UseTrackingCheckbox.Location = new System.Drawing.Point(21, 70);
-            this.UseTrackingCheckbox.Name = "UseTrackingCheckbox";
-            this.UseTrackingCheckbox.Size = new System.Drawing.Size(257, 17);
-            this.UseTrackingCheckbox.TabIndex = 3;
-            this.UseTrackingCheckbox.Text = "Use HTC Vive / OpenVR tracking (needs restart)";
-            this.UseTrackingCheckbox.UseVisualStyleBackColor = true;
-            this.UseTrackingCheckbox.CheckedChanged += new System.EventHandler(this.UseTrackingCheckbox_CheckedChanged);
-            // 
-            // CheckDroppedFramesCheckbox
-            // 
-            this.CheckDroppedFramesCheckbox.AutoSize = true;
-            this.CheckDroppedFramesCheckbox.Checked = global::CoreSettings.CoreSettings.Default.CheckDroppedFrames;
-            this.CheckDroppedFramesCheckbox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "CheckDroppedFrames", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.CheckDroppedFramesCheckbox.Location = new System.Drawing.Point(21, 190);
-            this.CheckDroppedFramesCheckbox.Name = "CheckDroppedFramesCheckbox";
-            this.CheckDroppedFramesCheckbox.Size = new System.Drawing.Size(243, 17);
-            this.CheckDroppedFramesCheckbox.TabIndex = 2;
-            this.CheckDroppedFramesCheckbox.Text = "Add dropped frames checker to video streams";
-            this.CheckDroppedFramesCheckbox.UseVisualStyleBackColor = true;
-            // 
-            // MarkFramesCheckbox
-            // 
-            this.MarkFramesCheckbox.AutoSize = true;
-            this.MarkFramesCheckbox.Checked = global::CoreSettings.CoreSettings.Default.MarkFrames;
-            this.MarkFramesCheckbox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "MarkFrames", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.MarkFramesCheckbox.Location = new System.Drawing.Point(21, 150);
-            this.MarkFramesCheckbox.Name = "MarkFramesCheckbox";
-            this.MarkFramesCheckbox.Size = new System.Drawing.Size(197, 17);
-            this.MarkFramesCheckbox.TabIndex = 1;
-            this.MarkFramesCheckbox.Text = "Mark NDI frames with framenumbers";
-            this.MarkFramesCheckbox.UseVisualStyleBackColor = true;
-            // 
-            // ExitAppCheckbox
-            // 
-            this.ExitAppCheckbox.AutoSize = true;
-            this.ExitAppCheckbox.Checked = global::CoreSettings.CoreSettings.Default.ExitOnTabClosing;
-            this.ExitAppCheckbox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "ExitOnTabClosing", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.ExitAppCheckbox.Location = new System.Drawing.Point(21, 30);
-            this.ExitAppCheckbox.Name = "ExitAppCheckbox";
-            this.ExitAppCheckbox.Size = new System.Drawing.Size(215, 17);
-            this.ExitAppCheckbox.TabIndex = 0;
-            this.ExitAppCheckbox.Text = "Exit application upon closing the last tab";
-            this.ExitAppCheckbox.UseVisualStyleBackColor = true;
-            // 
-            // tabPage1
-            // 
-            this.tabPage1.Controls.Add(this.groupBox1);
-            this.tabPage1.Location = new System.Drawing.Point(4, 22);
-            this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(532, 392);
-            this.tabPage1.TabIndex = 0;
-            this.tabPage1.Text = "Rendering";
-            this.tabPage1.UseVisualStyleBackColor = true;
+            this.tabPageRendering.Controls.Add(this.groupBox1);
+            this.tabPageRendering.Location = new System.Drawing.Point(4, 22);
+            this.tabPageRendering.Name = "tabPageRendering";
+            this.tabPageRendering.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPageRendering.Size = new System.Drawing.Size(532, 392);
+            this.tabPageRendering.TabIndex = 0;
+            this.tabPageRendering.Text = "Rendering";
+            this.tabPageRendering.UseVisualStyleBackColor = true;
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.checkBox1);
+            this.groupBox1.Controls.Add(this.renderBaseScene);
             this.groupBox1.Controls.Add(this.allowDigitalZoom);
             this.groupBox1.Controls.Add(this.comboBoxNdiTexResolution);
             this.groupBox1.Controls.Add(this.label17);
@@ -631,19 +515,6 @@
             this.label17.Size = new System.Drawing.Size(140, 13);
             this.label17.TabIndex = 14;
             this.label17.Text = "Dynamic Texture Resolution";
-            // 
-            // checkBoxBFCulling
-            // 
-            this.checkBoxBFCulling.AutoSize = true;
-            this.checkBoxBFCulling.Checked = global::open3mod.GraphicsSettings.Default.BackFaceCulling;
-            this.checkBoxBFCulling.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::open3mod.GraphicsSettings.Default, "BackFaceCulling", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.checkBoxBFCulling.Location = new System.Drawing.Point(188, 278);
-            this.checkBoxBFCulling.Name = "checkBoxBFCulling";
-            this.checkBoxBFCulling.Size = new System.Drawing.Size(112, 17);
-            this.checkBoxBFCulling.TabIndex = 13;
-            this.checkBoxBFCulling.Text = "Back-Face Culling";
-            this.checkBoxBFCulling.UseVisualStyleBackColor = true;
-            this.checkBoxBFCulling.CheckedChanged += new System.EventHandler(this.checkBoxBFCulling_CheckedChanged);
             // 
             // label6
             // 
@@ -709,20 +580,6 @@
             this.label4.Size = new System.Drawing.Size(102, 13);
             this.label4.TabIndex = 7;
             this.label4.Text = "Rendering Backend";
-            // 
-            // checkBoxLinearMIP
-            // 
-            this.checkBoxLinearMIP.AutoSize = true;
-            this.checkBoxLinearMIP.Checked = global::open3mod.GraphicsSettings.Default.UseMips;
-            this.checkBoxLinearMIP.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxLinearMIP.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::open3mod.GraphicsSettings.Default, "UseMips", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.checkBoxLinearMIP.Location = new System.Drawing.Point(362, 203);
-            this.checkBoxLinearMIP.Name = "checkBoxLinearMIP";
-            this.checkBoxLinearMIP.Size = new System.Drawing.Size(72, 17);
-            this.checkBoxLinearMIP.TabIndex = 6;
-            this.checkBoxLinearMIP.Text = "Use MIPs";
-            this.checkBoxLinearMIP.UseVisualStyleBackColor = true;
-            this.checkBoxLinearMIP.CheckedChanged += new System.EventHandler(this.OnChangeMipSettings);
             // 
             // comboBoxTexResolution
             // 
@@ -795,18 +652,18 @@
             this.comboBoxSetMultiSampling.TabIndex = 2;
             this.comboBoxSetMultiSampling.SelectedIndexChanged += new System.EventHandler(this.OnChangeMultiSamplingMode);
             // 
-            // tabPage2
+            // tabPageImport
             // 
-            this.tabPage2.Controls.Add(this.groupBox4);
-            this.tabPage2.Controls.Add(this.groupBox3);
-            this.tabPage2.Controls.Add(this.groupBox2);
-            this.tabPage2.Location = new System.Drawing.Point(4, 22);
-            this.tabPage2.Name = "tabPage2";
-            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(532, 392);
-            this.tabPage2.TabIndex = 1;
-            this.tabPage2.Text = "Import";
-            this.tabPage2.UseVisualStyleBackColor = true;
+            this.tabPageImport.Controls.Add(this.groupBox4);
+            this.tabPageImport.Controls.Add(this.groupBox3);
+            this.tabPageImport.Controls.Add(this.groupBox2);
+            this.tabPageImport.Location = new System.Drawing.Point(4, 22);
+            this.tabPageImport.Name = "tabPageImport";
+            this.tabPageImport.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPageImport.Size = new System.Drawing.Size(532, 392);
+            this.tabPageImport.TabIndex = 1;
+            this.tabPageImport.Text = "Import";
+            this.tabPageImport.UseVisualStyleBackColor = true;
             // 
             // groupBox4
             // 
@@ -818,32 +675,6 @@
             this.groupBox4.TabIndex = 13;
             this.groupBox4.TabStop = false;
             this.groupBox4.Text = "Optimization";
-            // 
-            // checkBoxmergeDuplicateVertices
-            // 
-            this.checkBoxmergeDuplicateVertices.AutoSize = true;
-            this.checkBoxmergeDuplicateVertices.Checked = global::CoreSettings.CoreSettings.Default.ImportMergeDuplicates;
-            this.checkBoxmergeDuplicateVertices.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxmergeDuplicateVertices.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "ImportMergeDuplicates", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.checkBoxmergeDuplicateVertices.Location = new System.Drawing.Point(26, 55);
-            this.checkBoxmergeDuplicateVertices.Name = "checkBoxmergeDuplicateVertices";
-            this.checkBoxmergeDuplicateVertices.Size = new System.Drawing.Size(248, 17);
-            this.checkBoxmergeDuplicateVertices.TabIndex = 9;
-            this.checkBoxmergeDuplicateVertices.Text = "Merge duplicate vertices (highly recommended)";
-            this.checkBoxmergeDuplicateVertices.UseVisualStyleBackColor = true;
-            // 
-            // checkBoxOptimize
-            // 
-            this.checkBoxOptimize.AutoSize = true;
-            this.checkBoxOptimize.Checked = global::CoreSettings.CoreSettings.Default.ImportOptimize;
-            this.checkBoxOptimize.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxOptimize.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "ImportOptimize", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.checkBoxOptimize.Location = new System.Drawing.Point(26, 32);
-            this.checkBoxOptimize.Name = "checkBoxOptimize";
-            this.checkBoxOptimize.Size = new System.Drawing.Size(246, 17);
-            this.checkBoxOptimize.TabIndex = 8;
-            this.checkBoxOptimize.Text = "Optimize geometry for vertex cache throughput";
-            this.checkBoxOptimize.UseVisualStyleBackColor = true;
             // 
             // groupBox3
             // 
@@ -857,44 +688,6 @@
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Cleanup";
             // 
-            // checkBoxRemoveDegenerates
-            // 
-            this.checkBoxRemoveDegenerates.AutoSize = true;
-            this.checkBoxRemoveDegenerates.Checked = global::CoreSettings.CoreSettings.Default.ImportRemoveDegenerates;
-            this.checkBoxRemoveDegenerates.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxRemoveDegenerates.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "ImportRemoveDegenerates", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.checkBoxRemoveDegenerates.Location = new System.Drawing.Point(26, 19);
-            this.checkBoxRemoveDegenerates.Name = "checkBoxRemoveDegenerates";
-            this.checkBoxRemoveDegenerates.Size = new System.Drawing.Size(169, 17);
-            this.checkBoxRemoveDegenerates.TabIndex = 9;
-            this.checkBoxRemoveDegenerates.Text = "Remove degenerate geometry";
-            this.checkBoxRemoveDegenerates.UseVisualStyleBackColor = true;
-            // 
-            // checkBoxFixWinding
-            // 
-            this.checkBoxFixWinding.AutoSize = true;
-            this.checkBoxFixWinding.Checked = global::CoreSettings.CoreSettings.Default.ImportFixInfacing;
-            this.checkBoxFixWinding.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxFixWinding.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "ImportFixInfacing", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.checkBoxFixWinding.Location = new System.Drawing.Point(26, 42);
-            this.checkBoxFixWinding.Name = "checkBoxFixWinding";
-            this.checkBoxFixWinding.Size = new System.Drawing.Size(271, 17);
-            this.checkBoxFixWinding.TabIndex = 10;
-            this.checkBoxFixWinding.Text = "Attempt to correct face orientation / normal direction";
-            this.checkBoxFixWinding.UseVisualStyleBackColor = true;
-            // 
-            // checkBoxSortByPrimitiveType
-            // 
-            this.checkBoxSortByPrimitiveType.AutoSize = true;
-            this.checkBoxSortByPrimitiveType.Checked = global::CoreSettings.CoreSettings.Default.ImportSortByPType;
-            this.checkBoxSortByPrimitiveType.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "ImportSortByPType", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.checkBoxSortByPrimitiveType.Location = new System.Drawing.Point(26, 65);
-            this.checkBoxSortByPrimitiveType.Name = "checkBoxSortByPrimitiveType";
-            this.checkBoxSortByPrimitiveType.Size = new System.Drawing.Size(288, 17);
-            this.checkBoxSortByPrimitiveType.TabIndex = 7;
-            this.checkBoxSortByPrimitiveType.Text = "Sort meshes by primitive types (i.e. line, points, triangles)";
-            this.checkBoxSortByPrimitiveType.UseVisualStyleBackColor = true;
-            // 
             // groupBox2
             // 
             this.groupBox2.Controls.Add(this.checkBoxGenerateTangentSpace);
@@ -906,44 +699,17 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Derived data";
             // 
-            // checkBoxGenerateTangentSpace
+            // tabPageAnimation
             // 
-            this.checkBoxGenerateTangentSpace.AutoSize = true;
-            this.checkBoxGenerateTangentSpace.Checked = global::CoreSettings.CoreSettings.Default.ImportGenTangents;
-            this.checkBoxGenerateTangentSpace.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxGenerateTangentSpace.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "ImportGenTangents", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.checkBoxGenerateTangentSpace.Location = new System.Drawing.Point(26, 54);
-            this.checkBoxGenerateTangentSpace.Name = "checkBoxGenerateTangentSpace";
-            this.checkBoxGenerateTangentSpace.Size = new System.Drawing.Size(231, 17);
-            this.checkBoxGenerateTangentSpace.TabIndex = 6;
-            this.checkBoxGenerateTangentSpace.Text = "Compute tangent-space for normal mapping";
-            this.checkBoxGenerateTangentSpace.UseVisualStyleBackColor = true;
-            this.checkBoxGenerateTangentSpace.CheckedChanged += new System.EventHandler(this.checkBoxGenerateTangentSpace_CheckedChanged);
-            // 
-            // checkBoxComputeNormals
-            // 
-            this.checkBoxComputeNormals.AutoSize = true;
-            this.checkBoxComputeNormals.Checked = global::CoreSettings.CoreSettings.Default.ImportGenNormals;
-            this.checkBoxComputeNormals.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxComputeNormals.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "ImportGenNormals", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.checkBoxComputeNormals.Location = new System.Drawing.Point(26, 31);
-            this.checkBoxComputeNormals.Name = "checkBoxComputeNormals";
-            this.checkBoxComputeNormals.Size = new System.Drawing.Size(259, 17);
-            this.checkBoxComputeNormals.TabIndex = 5;
-            this.checkBoxComputeNormals.Text = "Compute smooth normals where none are present";
-            this.checkBoxComputeNormals.UseVisualStyleBackColor = true;
-            this.checkBoxComputeNormals.CheckedChanged += new System.EventHandler(this.checkBoxComputeNormals_CheckedChanged);
-            // 
-            // tabPage3
-            // 
-            this.tabPage3.Controls.Add(this.label8);
-            this.tabPage3.Location = new System.Drawing.Point(4, 22);
-            this.tabPage3.Name = "tabPage3";
-            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(532, 392);
-            this.tabPage3.TabIndex = 2;
-            this.tabPage3.Text = "Animation";
-            this.tabPage3.UseVisualStyleBackColor = true;
+            this.tabPageAnimation.Controls.Add(this.label8);
+            this.tabPageAnimation.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.tabPageAnimation.Location = new System.Drawing.Point(4, 22);
+            this.tabPageAnimation.Name = "tabPageAnimation";
+            this.tabPageAnimation.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPageAnimation.Size = new System.Drawing.Size(532, 392);
+            this.tabPageAnimation.TabIndex = 2;
+            this.tabPageAnimation.Text = "Animation";
+            this.tabPageAnimation.UseVisualStyleBackColor = true;
             // 
             // label8
             // 
@@ -967,19 +733,6 @@
             this.tabPageTextures.TabIndex = 3;
             this.tabPageTextures.Text = "Textures";
             this.tabPageTextures.UseVisualStyleBackColor = true;
-            // 
-            // checkBoxLoadTextures
-            // 
-            this.checkBoxLoadTextures.AutoSize = true;
-            this.checkBoxLoadTextures.Checked = global::CoreSettings.CoreSettings.Default.LoadTextures;
-            this.checkBoxLoadTextures.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxLoadTextures.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "LoadTextures", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.checkBoxLoadTextures.Location = new System.Drawing.Point(31, 34);
-            this.checkBoxLoadTextures.Name = "checkBoxLoadTextures";
-            this.checkBoxLoadTextures.Size = new System.Drawing.Size(94, 17);
-            this.checkBoxLoadTextures.TabIndex = 7;
-            this.checkBoxLoadTextures.Text = "Load Textures";
-            this.checkBoxLoadTextures.UseVisualStyleBackColor = true;
             // 
             // label7
             // 
@@ -1066,47 +819,6 @@
             this.ResponsiveLabel.Size = new System.Drawing.Size(63, 13);
             this.ResponsiveLabel.TabIndex = 3;
             this.ResponsiveLabel.Text = "Responsive";
-            // 
-            // RotationSmoothing
-            // 
-            this.RotationSmoothing.AutoSize = true;
-            this.RotationSmoothing.Checked = global::CoreSettings.CoreSettings.Default.Leap_RotationSmoothing;
-            this.RotationSmoothing.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.RotationSmoothing.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "Leap_RotationSmoothing", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.RotationSmoothing.Enabled = false;
-            this.RotationSmoothing.Location = new System.Drawing.Point(19, 55);
-            this.RotationSmoothing.Name = "RotationSmoothing";
-            this.RotationSmoothing.Size = new System.Drawing.Size(139, 17);
-            this.RotationSmoothing.TabIndex = 2;
-            this.RotationSmoothing.Text = "Smooth Hands Rotation";
-            this.RotationSmoothing.UseVisualStyleBackColor = true;
-            // 
-            // trackBarSmoothing
-            // 
-            this.trackBarSmoothing.BackColor = System.Drawing.Color.White;
-            this.trackBarSmoothing.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::CoreSettings.CoreSettings.Default, "Leap_SmoothingWindowSize", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.trackBarSmoothing.Enabled = false;
-            this.trackBarSmoothing.Location = new System.Drawing.Point(9, 88);
-            this.trackBarSmoothing.Maximum = 120;
-            this.trackBarSmoothing.Name = "trackBarSmoothing";
-            this.trackBarSmoothing.Size = new System.Drawing.Size(467, 45);
-            this.trackBarSmoothing.TabIndex = 1;
-            this.trackBarSmoothing.TickFrequency = 10;
-            this.trackBarSmoothing.Value = global::CoreSettings.CoreSettings.Default.Leap_SmoothingWindowSize;
-            // 
-            // TranslationSmoothing
-            // 
-            this.TranslationSmoothing.AutoSize = true;
-            this.TranslationSmoothing.Checked = global::CoreSettings.CoreSettings.Default.Leap_TranslationSmoothing;
-            this.TranslationSmoothing.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.TranslationSmoothing.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "Leap_TranslationSmoothing", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.TranslationSmoothing.Enabled = false;
-            this.TranslationSmoothing.Location = new System.Drawing.Point(19, 32);
-            this.TranslationSmoothing.Name = "TranslationSmoothing";
-            this.TranslationSmoothing.Size = new System.Drawing.Size(154, 17);
-            this.TranslationSmoothing.TabIndex = 0;
-            this.TranslationSmoothing.Text = "Smooth Hands Movements";
-            this.TranslationSmoothing.UseVisualStyleBackColor = true;
             // 
             // tabPageKeying
             // 
@@ -1359,6 +1071,165 @@
             this.labelPleaseRestart.Text = "Please restart the application to see all changes";
             this.labelPleaseRestart.Visible = false;
             // 
+            // UseAllAnglesForOffsetCheckbox
+            // 
+            this.UseAllAnglesForOffsetCheckbox.AutoSize = true;
+            this.UseAllAnglesForOffsetCheckbox.Checked = global::CoreSettings.CoreSettings.Default.UseAllAnglesForOffset;
+            this.UseAllAnglesForOffsetCheckbox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "UseAllAnglesForOffset", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.UseAllAnglesForOffsetCheckbox.Location = new System.Drawing.Point(29, 50);
+            this.UseAllAnglesForOffsetCheckbox.Name = "UseAllAnglesForOffsetCheckbox";
+            this.UseAllAnglesForOffsetCheckbox.Size = new System.Drawing.Size(198, 17);
+            this.UseAllAnglesForOffsetCheckbox.TabIndex = 22;
+            this.UseAllAnglesForOffsetCheckbox.Text = "Use All Angles For Offset Calculation";
+            this.UseAllAnglesForOffsetCheckbox.UseVisualStyleBackColor = true;
+            // 
+            // UseHTCCheckbox
+            // 
+            this.UseHTCCheckbox.AutoSize = true;
+            this.UseHTCCheckbox.Checked = global::CoreSettings.CoreSettings.Default.UseTracking;
+            this.UseHTCCheckbox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "UseTracking", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.UseHTCCheckbox.Location = new System.Drawing.Point(29, 22);
+            this.UseHTCCheckbox.Name = "UseHTCCheckbox";
+            this.UseHTCCheckbox.Size = new System.Drawing.Size(257, 17);
+            this.UseHTCCheckbox.TabIndex = 21;
+            this.UseHTCCheckbox.Text = "Use HTC Vive / OpenVR tracking (needs restart)";
+            this.UseHTCCheckbox.UseVisualStyleBackColor = true;
+            this.UseHTCCheckbox.CheckedChanged += new System.EventHandler(this.UseTrackingCheckbox_CheckedChanged);
+            // 
+            // autoSourceNDI
+            // 
+            this.autoSourceNDI.DataBindings.Add(new System.Windows.Forms.Binding("Text", global::CoreSettings.CoreSettings.Default, "AutoSourceNDI", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.autoSourceNDI.Location = new System.Drawing.Point(150, 307);
+            this.autoSourceNDI.Name = "autoSourceNDI";
+            this.autoSourceNDI.Size = new System.Drawing.Size(100, 20);
+            this.autoSourceNDI.TabIndex = 9;
+            this.autoSourceNDI.Text = global::CoreSettings.CoreSettings.Default.AutoSourceNDI;
+            // 
+            // autoConnectNDI
+            // 
+            this.autoConnectNDI.AutoSize = true;
+            this.autoConnectNDI.Checked = global::CoreSettings.CoreSettings.Default.AutoConnectNDI;
+            this.autoConnectNDI.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.autoConnectNDI.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "AutoConnectNDI", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.autoConnectNDI.Location = new System.Drawing.Point(21, 309);
+            this.autoConnectNDI.Name = "autoConnectNDI";
+            this.autoConnectNDI.Size = new System.Drawing.Size(124, 17);
+            this.autoConnectNDI.TabIndex = 8;
+            this.autoConnectNDI.Text = "Auto connect NDI to";
+            this.autoConnectNDI.UseVisualStyleBackColor = true;
+            // 
+            // autoStartCheckBox
+            // 
+            this.autoStartCheckBox.AutoSize = true;
+            this.autoStartCheckBox.Checked = global::CoreSettings.CoreSettings.Default.AutoStart;
+            this.autoStartCheckBox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "AutoStart", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.autoStartCheckBox.Location = new System.Drawing.Point(21, 269);
+            this.autoStartCheckBox.Name = "autoStartCheckBox";
+            this.autoStartCheckBox.Size = new System.Drawing.Size(242, 17);
+            this.autoStartCheckBox.TabIndex = 7;
+            this.autoStartCheckBox.Text = "Autostart IN + OUT + NDI search + Sync lock";
+            this.autoStartCheckBox.UseVisualStyleBackColor = true;
+            this.autoStartCheckBox.CheckedChanged += new System.EventHandler(this.autoStartCheckBox_CheckedChanged);
+            // 
+            // genlockCheckBox
+            // 
+            this.genlockCheckBox.AutoSize = true;
+            this.genlockCheckBox.Checked = global::CoreSettings.CoreSettings.Default.Genlock;
+            this.genlockCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.genlockCheckBox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "Genlock", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.genlockCheckBox.Location = new System.Drawing.Point(21, 189);
+            this.genlockCheckBox.Name = "genlockCheckBox";
+            this.genlockCheckBox.Size = new System.Drawing.Size(120, 17);
+            this.genlockCheckBox.TabIndex = 6;
+            this.genlockCheckBox.Text = "Lock to output sync";
+            this.genlockCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // KeepTimingCheckBox
+            // 
+            this.KeepTimingCheckBox.AutoSize = true;
+            this.KeepTimingCheckBox.Checked = global::CoreSettings.CoreSettings.Default.KeepTimingRight;
+            this.KeepTimingCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.KeepTimingCheckBox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "KeepTimingRight", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.KeepTimingCheckBox.Location = new System.Drawing.Point(21, 229);
+            this.KeepTimingCheckBox.Name = "KeepTimingCheckBox";
+            this.KeepTimingCheckBox.Size = new System.Drawing.Size(179, 17);
+            this.KeepTimingCheckBox.TabIndex = 5;
+            this.KeepTimingCheckBox.Text = "Keep exact fps when not locked";
+            this.KeepTimingCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // SendNDICheckBox
+            // 
+            this.SendNDICheckBox.AutoSize = true;
+            this.SendNDICheckBox.Checked = global::CoreSettings.CoreSettings.Default.SendNDI;
+            this.SendNDICheckBox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "SendNDI", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.SendNDICheckBox.Location = new System.Drawing.Point(21, 69);
+            this.SendNDICheckBox.Name = "SendNDICheckBox";
+            this.SendNDICheckBox.Size = new System.Drawing.Size(112, 17);
+            this.SendNDICheckBox.TabIndex = 4;
+            this.SendNDICheckBox.Text = "Send NDI streams";
+            this.SendNDICheckBox.UseVisualStyleBackColor = true;
+            // 
+            // CheckDroppedFramesCheckbox
+            // 
+            this.CheckDroppedFramesCheckbox.AutoSize = true;
+            this.CheckDroppedFramesCheckbox.Checked = global::CoreSettings.CoreSettings.Default.CheckDroppedFrames;
+            this.CheckDroppedFramesCheckbox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "CheckDroppedFrames", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.CheckDroppedFramesCheckbox.Location = new System.Drawing.Point(21, 149);
+            this.CheckDroppedFramesCheckbox.Name = "CheckDroppedFramesCheckbox";
+            this.CheckDroppedFramesCheckbox.Size = new System.Drawing.Size(243, 17);
+            this.CheckDroppedFramesCheckbox.TabIndex = 2;
+            this.CheckDroppedFramesCheckbox.Text = "Add dropped frames checker to video streams";
+            this.CheckDroppedFramesCheckbox.UseVisualStyleBackColor = true;
+            // 
+            // MarkFramesCheckbox
+            // 
+            this.MarkFramesCheckbox.AutoSize = true;
+            this.MarkFramesCheckbox.Checked = global::CoreSettings.CoreSettings.Default.MarkFrames;
+            this.MarkFramesCheckbox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "MarkFrames", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.MarkFramesCheckbox.Location = new System.Drawing.Point(21, 109);
+            this.MarkFramesCheckbox.Name = "MarkFramesCheckbox";
+            this.MarkFramesCheckbox.Size = new System.Drawing.Size(197, 17);
+            this.MarkFramesCheckbox.TabIndex = 1;
+            this.MarkFramesCheckbox.Text = "Mark NDI frames with framenumbers";
+            this.MarkFramesCheckbox.UseVisualStyleBackColor = true;
+            // 
+            // ExitAppCheckbox
+            // 
+            this.ExitAppCheckbox.AutoSize = true;
+            this.ExitAppCheckbox.Checked = global::CoreSettings.CoreSettings.Default.ExitOnTabClosing;
+            this.ExitAppCheckbox.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "ExitOnTabClosing", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.ExitAppCheckbox.Location = new System.Drawing.Point(21, 30);
+            this.ExitAppCheckbox.Name = "ExitAppCheckbox";
+            this.ExitAppCheckbox.Size = new System.Drawing.Size(215, 17);
+            this.ExitAppCheckbox.TabIndex = 0;
+            this.ExitAppCheckbox.Text = "Exit application upon closing the last tab";
+            this.ExitAppCheckbox.UseVisualStyleBackColor = true;
+            // 
+            // checkBox1
+            // 
+            this.checkBox1.AutoSize = true;
+            this.checkBox1.Checked = global::CoreSettings.CoreSettings.Default.LockSceneToController;
+            this.checkBox1.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "LockSceneToController", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.checkBox1.Location = new System.Drawing.Point(20, 301);
+            this.checkBox1.Name = "checkBox1";
+            this.checkBox1.Size = new System.Drawing.Size(159, 17);
+            this.checkBox1.TabIndex = 18;
+            this.checkBox1.Text = "Lock Scene to Controller #2";
+            this.checkBox1.UseVisualStyleBackColor = true;
+            // 
+            // renderBaseScene
+            // 
+            this.renderBaseScene.AutoSize = true;
+            this.renderBaseScene.Checked = global::CoreSettings.CoreSettings.Default.RenderBaseScene;
+            this.renderBaseScene.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.renderBaseScene.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "RenderBaseScene", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.renderBaseScene.Location = new System.Drawing.Point(321, 301);
+            this.renderBaseScene.Name = "renderBaseScene";
+            this.renderBaseScene.Size = new System.Drawing.Size(122, 17);
+            this.renderBaseScene.TabIndex = 17;
+            this.renderBaseScene.Text = "Render Base Scene";
+            this.renderBaseScene.UseVisualStyleBackColor = true;
+            // 
             // allowDigitalZoom
             // 
             this.allowDigitalZoom.AutoSize = true;
@@ -1371,6 +1242,180 @@
             this.allowDigitalZoom.TabIndex = 16;
             this.allowDigitalZoom.Text = "Allow Digital Zoom";
             this.allowDigitalZoom.UseVisualStyleBackColor = true;
+            // 
+            // checkBoxBFCulling
+            // 
+            this.checkBoxBFCulling.AutoSize = true;
+            this.checkBoxBFCulling.Checked = global::open3mod.GraphicsSettings.Default.BackFaceCulling;
+            this.checkBoxBFCulling.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxBFCulling.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::open3mod.GraphicsSettings.Default, "BackFaceCulling", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.checkBoxBFCulling.Location = new System.Drawing.Point(188, 278);
+            this.checkBoxBFCulling.Name = "checkBoxBFCulling";
+            this.checkBoxBFCulling.Size = new System.Drawing.Size(112, 17);
+            this.checkBoxBFCulling.TabIndex = 13;
+            this.checkBoxBFCulling.Text = "Back-Face Culling";
+            this.checkBoxBFCulling.UseVisualStyleBackColor = true;
+            this.checkBoxBFCulling.CheckedChanged += new System.EventHandler(this.checkBoxBFCulling_CheckedChanged);
+            // 
+            // checkBoxLinearMIP
+            // 
+            this.checkBoxLinearMIP.AutoSize = true;
+            this.checkBoxLinearMIP.Checked = global::open3mod.GraphicsSettings.Default.UseMips;
+            this.checkBoxLinearMIP.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxLinearMIP.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::open3mod.GraphicsSettings.Default, "UseMips", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.checkBoxLinearMIP.Location = new System.Drawing.Point(362, 203);
+            this.checkBoxLinearMIP.Name = "checkBoxLinearMIP";
+            this.checkBoxLinearMIP.Size = new System.Drawing.Size(72, 17);
+            this.checkBoxLinearMIP.TabIndex = 6;
+            this.checkBoxLinearMIP.Text = "Use MIPs";
+            this.checkBoxLinearMIP.UseVisualStyleBackColor = true;
+            this.checkBoxLinearMIP.CheckedChanged += new System.EventHandler(this.OnChangeMipSettings);
+            // 
+            // checkBoxmergeDuplicateVertices
+            // 
+            this.checkBoxmergeDuplicateVertices.AutoSize = true;
+            this.checkBoxmergeDuplicateVertices.Checked = global::CoreSettings.CoreSettings.Default.ImportMergeDuplicates;
+            this.checkBoxmergeDuplicateVertices.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxmergeDuplicateVertices.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "ImportMergeDuplicates", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.checkBoxmergeDuplicateVertices.Location = new System.Drawing.Point(26, 55);
+            this.checkBoxmergeDuplicateVertices.Name = "checkBoxmergeDuplicateVertices";
+            this.checkBoxmergeDuplicateVertices.Size = new System.Drawing.Size(248, 17);
+            this.checkBoxmergeDuplicateVertices.TabIndex = 9;
+            this.checkBoxmergeDuplicateVertices.Text = "Merge duplicate vertices (highly recommended)";
+            this.checkBoxmergeDuplicateVertices.UseVisualStyleBackColor = true;
+            // 
+            // checkBoxOptimize
+            // 
+            this.checkBoxOptimize.AutoSize = true;
+            this.checkBoxOptimize.Checked = global::CoreSettings.CoreSettings.Default.ImportOptimize;
+            this.checkBoxOptimize.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxOptimize.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "ImportOptimize", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.checkBoxOptimize.Location = new System.Drawing.Point(26, 32);
+            this.checkBoxOptimize.Name = "checkBoxOptimize";
+            this.checkBoxOptimize.Size = new System.Drawing.Size(246, 17);
+            this.checkBoxOptimize.TabIndex = 8;
+            this.checkBoxOptimize.Text = "Optimize geometry for vertex cache throughput";
+            this.checkBoxOptimize.UseVisualStyleBackColor = true;
+            // 
+            // checkBoxRemoveDegenerates
+            // 
+            this.checkBoxRemoveDegenerates.AutoSize = true;
+            this.checkBoxRemoveDegenerates.Checked = global::CoreSettings.CoreSettings.Default.ImportRemoveDegenerates;
+            this.checkBoxRemoveDegenerates.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxRemoveDegenerates.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "ImportRemoveDegenerates", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.checkBoxRemoveDegenerates.Location = new System.Drawing.Point(26, 19);
+            this.checkBoxRemoveDegenerates.Name = "checkBoxRemoveDegenerates";
+            this.checkBoxRemoveDegenerates.Size = new System.Drawing.Size(169, 17);
+            this.checkBoxRemoveDegenerates.TabIndex = 9;
+            this.checkBoxRemoveDegenerates.Text = "Remove degenerate geometry";
+            this.checkBoxRemoveDegenerates.UseVisualStyleBackColor = true;
+            // 
+            // checkBoxFixWinding
+            // 
+            this.checkBoxFixWinding.AutoSize = true;
+            this.checkBoxFixWinding.Checked = global::CoreSettings.CoreSettings.Default.ImportFixInfacing;
+            this.checkBoxFixWinding.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxFixWinding.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "ImportFixInfacing", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.checkBoxFixWinding.Location = new System.Drawing.Point(26, 42);
+            this.checkBoxFixWinding.Name = "checkBoxFixWinding";
+            this.checkBoxFixWinding.Size = new System.Drawing.Size(271, 17);
+            this.checkBoxFixWinding.TabIndex = 10;
+            this.checkBoxFixWinding.Text = "Attempt to correct face orientation / normal direction";
+            this.checkBoxFixWinding.UseVisualStyleBackColor = true;
+            // 
+            // checkBoxSortByPrimitiveType
+            // 
+            this.checkBoxSortByPrimitiveType.AutoSize = true;
+            this.checkBoxSortByPrimitiveType.Checked = global::CoreSettings.CoreSettings.Default.ImportSortByPType;
+            this.checkBoxSortByPrimitiveType.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "ImportSortByPType", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.checkBoxSortByPrimitiveType.Location = new System.Drawing.Point(26, 65);
+            this.checkBoxSortByPrimitiveType.Name = "checkBoxSortByPrimitiveType";
+            this.checkBoxSortByPrimitiveType.Size = new System.Drawing.Size(288, 17);
+            this.checkBoxSortByPrimitiveType.TabIndex = 7;
+            this.checkBoxSortByPrimitiveType.Text = "Sort meshes by primitive types (i.e. line, points, triangles)";
+            this.checkBoxSortByPrimitiveType.UseVisualStyleBackColor = true;
+            // 
+            // checkBoxGenerateTangentSpace
+            // 
+            this.checkBoxGenerateTangentSpace.AutoSize = true;
+            this.checkBoxGenerateTangentSpace.Checked = global::CoreSettings.CoreSettings.Default.ImportGenTangents;
+            this.checkBoxGenerateTangentSpace.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxGenerateTangentSpace.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "ImportGenTangents", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.checkBoxGenerateTangentSpace.Location = new System.Drawing.Point(26, 54);
+            this.checkBoxGenerateTangentSpace.Name = "checkBoxGenerateTangentSpace";
+            this.checkBoxGenerateTangentSpace.Size = new System.Drawing.Size(231, 17);
+            this.checkBoxGenerateTangentSpace.TabIndex = 6;
+            this.checkBoxGenerateTangentSpace.Text = "Compute tangent-space for normal mapping";
+            this.checkBoxGenerateTangentSpace.UseVisualStyleBackColor = true;
+            this.checkBoxGenerateTangentSpace.CheckedChanged += new System.EventHandler(this.checkBoxGenerateTangentSpace_CheckedChanged);
+            // 
+            // checkBoxComputeNormals
+            // 
+            this.checkBoxComputeNormals.AutoSize = true;
+            this.checkBoxComputeNormals.Checked = global::CoreSettings.CoreSettings.Default.ImportGenNormals;
+            this.checkBoxComputeNormals.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxComputeNormals.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "ImportGenNormals", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.checkBoxComputeNormals.Location = new System.Drawing.Point(26, 31);
+            this.checkBoxComputeNormals.Name = "checkBoxComputeNormals";
+            this.checkBoxComputeNormals.Size = new System.Drawing.Size(259, 17);
+            this.checkBoxComputeNormals.TabIndex = 5;
+            this.checkBoxComputeNormals.Text = "Compute smooth normals where none are present";
+            this.checkBoxComputeNormals.UseVisualStyleBackColor = true;
+            this.checkBoxComputeNormals.CheckedChanged += new System.EventHandler(this.checkBoxComputeNormals_CheckedChanged);
+            // 
+            // checkBoxLoadTextures
+            // 
+            this.checkBoxLoadTextures.AutoSize = true;
+            this.checkBoxLoadTextures.Checked = global::CoreSettings.CoreSettings.Default.LoadTextures;
+            this.checkBoxLoadTextures.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxLoadTextures.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "LoadTextures", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.checkBoxLoadTextures.Location = new System.Drawing.Point(31, 34);
+            this.checkBoxLoadTextures.Name = "checkBoxLoadTextures";
+            this.checkBoxLoadTextures.Size = new System.Drawing.Size(94, 17);
+            this.checkBoxLoadTextures.TabIndex = 7;
+            this.checkBoxLoadTextures.Text = "Load Textures";
+            this.checkBoxLoadTextures.UseVisualStyleBackColor = true;
+            // 
+            // RotationSmoothing
+            // 
+            this.RotationSmoothing.AutoSize = true;
+            this.RotationSmoothing.Checked = global::CoreSettings.CoreSettings.Default.Leap_RotationSmoothing;
+            this.RotationSmoothing.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.RotationSmoothing.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "Leap_RotationSmoothing", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.RotationSmoothing.Enabled = false;
+            this.RotationSmoothing.Location = new System.Drawing.Point(19, 55);
+            this.RotationSmoothing.Name = "RotationSmoothing";
+            this.RotationSmoothing.Size = new System.Drawing.Size(139, 17);
+            this.RotationSmoothing.TabIndex = 2;
+            this.RotationSmoothing.Text = "Smooth Hands Rotation";
+            this.RotationSmoothing.UseVisualStyleBackColor = true;
+            // 
+            // trackBarSmoothing
+            // 
+            this.trackBarSmoothing.BackColor = System.Drawing.Color.White;
+            this.trackBarSmoothing.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::CoreSettings.CoreSettings.Default, "Leap_SmoothingWindowSize", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.trackBarSmoothing.Enabled = false;
+            this.trackBarSmoothing.Location = new System.Drawing.Point(9, 88);
+            this.trackBarSmoothing.Maximum = 120;
+            this.trackBarSmoothing.Name = "trackBarSmoothing";
+            this.trackBarSmoothing.Size = new System.Drawing.Size(467, 45);
+            this.trackBarSmoothing.TabIndex = 1;
+            this.trackBarSmoothing.TickFrequency = 10;
+            this.trackBarSmoothing.Value = global::CoreSettings.CoreSettings.Default.Leap_SmoothingWindowSize;
+            // 
+            // TranslationSmoothing
+            // 
+            this.TranslationSmoothing.AutoSize = true;
+            this.TranslationSmoothing.Checked = global::CoreSettings.CoreSettings.Default.Leap_TranslationSmoothing;
+            this.TranslationSmoothing.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.TranslationSmoothing.DataBindings.Add(new System.Windows.Forms.Binding("Checked", global::CoreSettings.CoreSettings.Default, "Leap_TranslationSmoothing", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+            this.TranslationSmoothing.Enabled = false;
+            this.TranslationSmoothing.Location = new System.Drawing.Point(19, 32);
+            this.TranslationSmoothing.Name = "TranslationSmoothing";
+            this.TranslationSmoothing.Size = new System.Drawing.Size(154, 17);
+            this.TranslationSmoothing.TabIndex = 0;
+            this.TranslationSmoothing.Text = "Smooth Hands Movements";
+            this.TranslationSmoothing.UseVisualStyleBackColor = true;
             // 
             // SettingsDialog
             // 
@@ -1387,31 +1432,31 @@
             this.Text = "open3mod Settings";
             this.tabControl.ResumeLayout(false);
             this.tabPageTracking.ResumeLayout(false);
+            this.tabPageTracking.PerformLayout();
             this.groupBox6.ResumeLayout(false);
             this.groupBox6.PerformLayout();
             this.groupBox5.ResumeLayout(false);
             this.groupBox5.PerformLayout();
             this.tabPageGeneral.ResumeLayout(false);
             this.tabPageGeneral.PerformLayout();
-            this.tabPage1.ResumeLayout(false);
+            this.tabPageRendering.ResumeLayout(false);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
-            this.tabPage2.ResumeLayout(false);
+            this.tabPageImport.ResumeLayout(false);
             this.groupBox4.ResumeLayout(false);
             this.groupBox4.PerformLayout();
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
-            this.tabPage3.ResumeLayout(false);
-            this.tabPage3.PerformLayout();
+            this.tabPageAnimation.ResumeLayout(false);
+            this.tabPageAnimation.PerformLayout();
             this.tabPageTextures.ResumeLayout(false);
             this.tabPageTextures.PerformLayout();
             this.tabPageLeapMotion.ResumeLayout(false);
             this.tabPageLeapMotion.PerformLayout();
             this.SmoothingGroup.ResumeLayout(false);
             this.SmoothingGroup.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.trackBarSmoothing)).EndInit();
             this.tabPageKeying.ResumeLayout(false);
             this.tabPageKeying.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trackBarKeyingMatteBlur)).EndInit();
@@ -1422,6 +1467,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.trackBarKeyingColorV)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackBarKeyingColorS)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackBarKeyingColorH)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.trackBarSmoothing)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1430,8 +1476,8 @@
         #endregion
 
         private System.Windows.Forms.TabControl tabControl;
-        private System.Windows.Forms.TabPage tabPage1;
-        private System.Windows.Forms.TabPage tabPage2;
+        private System.Windows.Forms.TabPage tabPageRendering;
+        private System.Windows.Forms.TabPage tabPageImport;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.ComboBox comboBoxSetTextureFilter;
         private System.Windows.Forms.ComboBox comboBoxSetMultiSampling;
@@ -1441,7 +1487,7 @@
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.CheckBox checkBoxLinearMIP;
         private System.Windows.Forms.ComboBox comboBoxTexResolution;
-        private System.Windows.Forms.TabPage tabPage3;
+        private System.Windows.Forms.TabPage tabPageAnimation;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.ComboBox comboBoxSetBackend;
         private System.Windows.Forms.Label label4;
@@ -1477,7 +1523,6 @@
         private System.Windows.Forms.Label ResponsiveLabel;
         private System.Windows.Forms.LinkLabel linkLabelLM;
         private System.Windows.Forms.Label label9;
-        private System.Windows.Forms.CheckBox UseTrackingCheckbox;
         private System.Windows.Forms.CheckBox CheckDroppedFramesCheckbox;
         private System.Windows.Forms.CheckBox MarkFramesCheckbox;
         private System.Windows.Forms.CheckBox SendNDICheckBox;
@@ -1532,5 +1577,9 @@
         private System.Windows.Forms.Button grabCamToVirt;
         private System.Windows.Forms.Label label18;
         private System.Windows.Forms.CheckBox allowDigitalZoom;
+        private System.Windows.Forms.CheckBox renderBaseScene;
+        private System.Windows.Forms.CheckBox UseHTCCheckbox;
+        private System.Windows.Forms.CheckBox UseAllAnglesForOffsetCheckbox;
+        private System.Windows.Forms.CheckBox checkBox1;
     }
 }

@@ -108,12 +108,12 @@ namespace open3mod
         }
 
         /* display lists:
-        0: Background;
-        1: Else (always visible);
+        0: Else (always visible);
+        1: Background;
         2: Foreground;
         3: GreenScreen;
-        4: BackgroundAnimated;
-        5: Else (always visible) Animated;
+        4: Else (always visible) Animated;
+        5: BackgroundAnimated;
         6: ForegroundAnimated;
         7: GreenScreenAnimated;
         Animated - list is refreshed each frame
@@ -123,30 +123,45 @@ namespace open3mod
         /// </summary>   
         protected int GetDispList(string name)
         {
+            if (name.Length < 1) return Owner.IsFront ? 2 : 1;
             switch (name.Substring(0, 1))
             {
-                case "B":
-                    return 0;
                 case "X":
+                    return 0;
+                case "B":
                     return 1;
                 case "F":
                     return 2;
                 case "G":
                     return 3;
-                case "b":
-                    return 4;
                 case "a":
-                    return 5; //animated others
+                    return 4; //animated others
                 case "x":
-                    return 5; //oher animated others
+                    return 4; //other animated others
+                case "b":
+                    return 5;
                 case "f":
                     return 6;
                 case "g":
                     return 7;
                 default:
-                    return 0;//everything else/unnamed goes automatically to BKGD
+                    //everything else/unnamed goes automatically to BKGD; if this is BaseScene and is used, to front
+                    return Owner.IsFront ? 2 : 1;
             }
         }
+
+        /// <summary>
+        /// <sorts geometry based on its name 0-9>
+        /// </summary>   
+        protected int GetDispOrder(string name)
+        {
+            if (name.Length < 2) return 0;
+            bool success = int.TryParse(name.Substring(1, 1), out int order);
+            if (!success) order = 0;
+            return order;
+        }
+
+        protected int MaxOrder = 10;
 
         /// <summary>
         /// Recursive rendering function
@@ -210,7 +225,7 @@ namespace open3mod
         /// <param name="animated">Play animation?</param>
         protected void RecursiveRenderWithAlpha(Node node, Dictionary<Node, List<Mesh>> visibleNodes,
             RenderFlags flags,
-            bool animated, int currDispList)
+            bool animated, int currDispList, int currOrder)
         {
             Matrix4 m;
             if (animated)
@@ -228,14 +243,14 @@ namespace open3mod
             // the following permutations could be compacted into one big loop with lots of
             // condition magic, but at the cost of readability and also performance.
             // we therefore keep it redundant and stupid.
-            if ((node.HasMeshes) && (currDispList == GetDispList(node.Name)))
-                {
+            if ((node.HasMeshes) && (currDispList == GetDispList(node.Name)) && (currOrder == GetDispOrder(node.Name)))
+            {
                 DrawAlphaMeshes(node, visibleNodes, flags, animated);
             }
 
             for (var i = 0; i < node.ChildCount; i++)
             {
-                RecursiveRenderWithAlpha(node.Children[i], visibleNodes, flags, animated, currDispList);
+                RecursiveRenderWithAlpha(node.Children[i], visibleNodes, flags, animated, currDispList, currOrder);
             }
             PopWorld();
         }

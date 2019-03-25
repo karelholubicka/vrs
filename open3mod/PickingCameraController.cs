@@ -40,7 +40,7 @@ namespace open3mod
         private float _digitalZoom = 1f;
         private float _digitalZoomCenter = 0.5f;
         private uint contIndex = 0; //controller OpenVR index
-        private static readonly Vector3 TrackingOffPosition = new Vector3(-0.0f, -0.7f, -1.8f);
+        private static readonly Vector3 TrackingOffPosition = new Vector3(-0.0f, -0.7f, -3.8f);
         private CameraMode _cameraMode;
         private ScenePartMode _scenePartMode = ScenePartMode.All;
 

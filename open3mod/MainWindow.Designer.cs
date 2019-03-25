@@ -124,10 +124,17 @@ namespace open3mod
             this.toolStripButtonShowFPS = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonShowVRModels = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonShowSettings = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparator19 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripSeparator20 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripSeparator9 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripLabelOpenVRError = new System.Windows.Forms.ToolStripLabel();
+            this.toolStripButtonRescanDevices = new System.Windows.Forms.ToolStripButton();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.closeAllButThisToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.makeThisBaseSceneToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.cleanBaseSceneToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.buttonTabClose = new System.Windows.Forms.Button();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.toolStripStatistics = new System.Windows.Forms.ToolStripStatusLabel();
@@ -639,7 +646,12 @@ namespace open3mod
             this.toolStripSeparator5,
             this.toolStripButtonShowFPS,
             this.toolStripButtonShowVRModels,
-            this.toolStripButtonShowSettings});
+            this.toolStripButtonShowSettings,
+            this.toolStripSeparator19,
+            this.toolStripSeparator20,
+            this.toolStripSeparator9,
+            this.toolStripButtonRescanDevices,
+            this.toolStripLabelOpenVRError});
             this.toolStripSelectRenderer.Location = new System.Drawing.Point(0, 24);
             this.toolStripSelectRenderer.Name = "toolStripSelectRenderer";
             this.toolStripSelectRenderer.Size = new System.Drawing.Size(1051, 25);
@@ -894,6 +906,37 @@ namespace open3mod
             this.toolStripButtonShowSettings.ToolTipText = "Open settings dialog";
             this.toolStripButtonShowSettings.Click += new System.EventHandler(this.OnShowSettings);
             // 
+            // toolStripSeparator19
+            // 
+            this.toolStripSeparator19.Name = "toolStripSeparator19";
+            this.toolStripSeparator19.Size = new System.Drawing.Size(6, 25);
+            // 
+            // toolStripSeparator20
+            // 
+            this.toolStripSeparator20.Name = "toolStripSeparator20";
+            this.toolStripSeparator20.Size = new System.Drawing.Size(6, 25);
+            // 
+            // toolStripSeparator9
+            // 
+            this.toolStripSeparator9.Name = "toolStripSeparator9";
+            this.toolStripSeparator9.Size = new System.Drawing.Size(6, 25);
+            // 
+            // toolStripLabelOpenVRError
+            // 
+            this.toolStripLabelOpenVRError.Name = "toolStripLabelOpenVRError";
+            this.toolStripLabelOpenVRError.Size = new System.Drawing.Size(86, 22);
+            this.toolStripLabelOpenVRError.Text = "toolStripLabel1";
+            // 
+            // toolStripButtonRescanDevices
+            // 
+            this.toolStripButtonRescanDevices.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.toolStripButtonRescanDevices.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonRescanDevices.Image")));
+            this.toolStripButtonRescanDevices.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButtonRescanDevices.Name = "toolStripButtonRescanDevices";
+            this.toolStripButtonRescanDevices.Size = new System.Drawing.Size(23, 22);
+            this.toolStripButtonRescanDevices.Text = "toolStripButton2";
+            this.toolStripButtonRescanDevices.Click += new System.EventHandler(this.RescanDevices);
+            // 
             // tabControl1
             // 
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -909,23 +952,39 @@ namespace open3mod
             // 
             this.tabContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.closeToolStripMenuItem,
-            this.closeAllButThisToolStripMenuItem});
+            this.closeAllButThisToolStripMenuItem,
+            this.makeThisBaseSceneToolStripMenuItem,
+            this.cleanBaseSceneToolStripMenuItem});
             this.tabContextMenuStrip.Name = "tabContextMenuStrip";
-            this.tabContextMenuStrip.Size = new System.Drawing.Size(162, 48);
+            this.tabContextMenuStrip.Size = new System.Drawing.Size(186, 92);
             // 
             // closeToolStripMenuItem
             // 
             this.closeToolStripMenuItem.Name = "closeToolStripMenuItem";
-            this.closeToolStripMenuItem.Size = new System.Drawing.Size(161, 22);
+            this.closeToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
             this.closeToolStripMenuItem.Text = "Close";
             this.closeToolStripMenuItem.Click += new System.EventHandler(this.OnCloseTabFromContextMenu);
             // 
             // closeAllButThisToolStripMenuItem
             // 
             this.closeAllButThisToolStripMenuItem.Name = "closeAllButThisToolStripMenuItem";
-            this.closeAllButThisToolStripMenuItem.Size = new System.Drawing.Size(161, 22);
+            this.closeAllButThisToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
             this.closeAllButThisToolStripMenuItem.Text = "Close all but this";
             this.closeAllButThisToolStripMenuItem.Click += new System.EventHandler(this.OnCloseAllTabsButThisFromContextMenu);
+            // 
+            // makeThisBaseSceneToolStripMenuItem
+            // 
+            this.makeThisBaseSceneToolStripMenuItem.Name = "makeThisBaseSceneToolStripMenuItem";
+            this.makeThisBaseSceneToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
+            this.makeThisBaseSceneToolStripMenuItem.Text = "Make this base scene";
+            this.makeThisBaseSceneToolStripMenuItem.Click += new System.EventHandler(this.OnMakeThisBaseSceneFromContextMenu);
+            // 
+            // cleanBaseSceneToolStripMenuItem
+            // 
+            this.cleanBaseSceneToolStripMenuItem.Name = "cleanBaseSceneToolStripMenuItem";
+            this.cleanBaseSceneToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
+            this.cleanBaseSceneToolStripMenuItem.Text = "Clean base scene";
+            this.cleanBaseSceneToolStripMenuItem.Click += new System.EventHandler(this.OnCleanBaseSceneFromContextMenu);
             // 
             // buttonTabClose
             // 
@@ -1194,6 +1253,13 @@ namespace open3mod
         private ToolStripMenuItem showCaptureWindowsToolStripMenuItem;
         private ToolStripMenuItem setDynamicSourceToolStripMenuItem;
         private ToolStripMenuItem resetCaptureWindowsPositionsToolStripMenuItem;
+        private ToolStripMenuItem makeThisBaseSceneToolStripMenuItem;
+        private ToolStripMenuItem cleanBaseSceneToolStripMenuItem;
+        private ToolStripSeparator toolStripSeparator9;
+        private ToolStripSeparator toolStripSeparator19;
+        private ToolStripSeparator toolStripSeparator20;
+        private ToolStripLabel toolStripLabelOpenVRError;
+        private ToolStripButton toolStripButtonRescanDevices;
     }
 }
 

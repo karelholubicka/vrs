@@ -193,7 +193,10 @@ namespace open3mod
                             _displayList[currDispList, 1] = GL.GenLists(1);
                         }
                         GL.NewList(_displayList[currDispList, 1], ListMode.Compile);
-                        RecursiveRenderWithAlpha(Owner.Raw.RootNode, visibleMeshesByNode, flags, animated, currDispList);
+                        for (int order = 0; order < MaxOrder; order++)
+                        {
+                            RecursiveRenderWithAlpha(Owner.Raw.RootNode, visibleMeshesByNode, flags, animated, currDispList, order);
+                        }
                         GL.EndList();
                     }
                     else if (_displayList[currDispList, 1] != 0)
@@ -207,19 +210,19 @@ namespace open3mod
             Owner.NewFrame = false;
             wasAnimated = animated;
             /* display lists:
-            0: Background;
-            1: Else (always visible);
+            0: Else(always visible);
+            1: Background;
             2: Foreground;
             3: GreenScreen;
-            4: BackgroundAnimated;
-            5: ElseAnimated (always visible);
+            4: Else(always visible) Animated;
+            5: BackgroundAnimated;
             6: ForegroundAnimated;
             7: GreenScreenAnimated;
             Animated - list is refreshed each frame
             */
             switch (cam.GetScenePartMode())
             {
-                case ScenePartMode.Background:
+                case ScenePartMode.Others:
                     if (_displayList[0, 0] != 0) GL.CallList(_displayList[0, 0]);
                     if (_displayList[4, 0] != 0) GL.CallList(_displayList[4, 0]);
                     if (_displayList[0, 1] != 0) GL.CallList(_displayList[0, 1]);
@@ -231,7 +234,7 @@ namespace open3mod
                     if (_displayList[2, 1] != 0) GL.CallList(_displayList[2, 1]);
                     if (_displayList[6, 1] != 0) GL.CallList(_displayList[6, 1]);
                     break;
-                case ScenePartMode.Others:
+                case ScenePartMode.Background:
                     if (_displayList[1, 0] != 0) GL.CallList(_displayList[1, 0]);
                     if (_displayList[5, 0] != 0) GL.CallList(_displayList[5, 0]);
                     if (_displayList[1, 1] != 0) GL.CallList(_displayList[1, 1]);
@@ -250,6 +253,16 @@ namespace open3mod
                         if (_displayList[currDispList, 1] != 0) GL.CallList(_displayList[currDispList, 1]);
                     }
                     break;
+                case ScenePartMode.Visible:
+                     if (_displayList[1, 0] != 0) GL.CallList(_displayList[1, 0]);
+                     if (_displayList[5, 0] != 0) GL.CallList(_displayList[5, 0]);
+                     if (_displayList[1, 1] != 0) GL.CallList(_displayList[1, 1]);
+                     if (_displayList[5, 1] != 0) GL.CallList(_displayList[5, 1]);
+                     if (_displayList[2, 0] != 0) GL.CallList(_displayList[2, 0]);
+                     if (_displayList[6, 0] != 0) GL.CallList(_displayList[6, 0]);
+                     if (_displayList[2, 1] != 0) GL.CallList(_displayList[2, 1]);
+                     if (_displayList[6, 1] != 0) GL.CallList(_displayList[6, 1]);
+                     break;
                 default: break;//at other modes we do not render anything
             }
             if (flags.HasFlag(RenderFlags.ShowNormals)) { ErrorCode err = GL.GetError(); } //catch some error from normals rendering

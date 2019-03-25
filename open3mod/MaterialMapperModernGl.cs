@@ -295,7 +295,7 @@ namespace open3mod
             _UseSceneLights = useSceneLights;
             if (_UseSceneLights)
             {
-                if (lightNodes == null) lightNodes = GenerateLightNodes(); //may be slow, need to do it only once, if possible
+               /* if (lightNodes == null)*/ lightNodes = GenerateLightNodes(); //may be slow, need to do it only once, if possible
                 var lights = GenerateLights();
                 _LightCount = LightCount();
                 _GLLights = new GLLight[_LightCount];
@@ -332,7 +332,7 @@ namespace open3mod
                            }*/
 
                         mat1.Transpose();
-                        _scene.SceneAnimator.GetGlobalTransform(node.Name, out mat1); //well.. identical result :-)
+                       // _scene.SceneAnimator.GetGlobalTransform(node.Name, out mat1); //well.. identical result when scene is not Front:-)
                         _GLLights[i].lightType = (int)lights[i].LightType;  //Directional = 0x1,, Point = 0x2, Spot = 0x3,
 
                         //here we move position info into GLLights[i]

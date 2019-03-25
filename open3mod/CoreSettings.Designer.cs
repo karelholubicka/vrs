@@ -784,5 +784,41 @@ namespace CoreSettings {
                 this["AllowDigitalZoom"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool RenderBaseScene {
+            get {
+                return ((bool)(this["RenderBaseScene"]));
+            }
+            set {
+                this["RenderBaseScene"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool UseAllAnglesForOffset {
+            get {
+                return ((bool)(this["UseAllAnglesForOffset"]));
+            }
+            set {
+                this["UseAllAnglesForOffset"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool LockSceneToController {
+            get {
+                return ((bool)(this["LockSceneToController"]));
+            }
+            set {
+                this["LockSceneToController"] = value;
+            }
+        }
     }
 }

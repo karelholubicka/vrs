@@ -41,6 +41,7 @@ namespace open3mod
         private bool m_capturing = false;
         private int m_additionalDelay;
         public readonly object memLock = new object();
+        IDeckLinkVideoConversion frameConverter = new CDeckLinkVideoConversion();
 
         public CapturePreview(MainWindow mainWindow, int numb)
         {
@@ -210,28 +211,16 @@ namespace open3mod
             return m_capturing;
         }
 
-        public void GetNextVideoFrame(out IntPtr videoData, out long dataSize, out IntPtr audioData, out long frameDelay, out bool valid)
+//        public void GetNextVideoFrame(out IntPtr videoData, out long dataSize, out IntPtr audioData, out long frameDelay, out bool valid, bool toRGBA = false)
+        public void GetNextVideoFrame(out IDeckLinkVideoInputFrame videoFrame, out IDeckLinkAudioInputPacket audioPacket, out long frameDelay, out long difference)
         {
-            valid = false;
-            audioData = (IntPtr)0;
-            videoData = (IntPtr)0;
             frameDelay = 0;
-            dataSize = 0;
+            videoFrame = null;
+            audioPacket = null;
+            difference = 0;
             if (m_selectedDevice == null) return;
-            m_selectedDevice.getNextFrame(out IDeckLinkVideoInputFrame videoFrame, out IDeckLinkAudioInputPacket audioPacket, out frameDelay, out long difference);
-            if (videoFrame == null)
-            {
-                valid = false;
-            }
-            else
-            {
-                valid = true;
-                videoFrame.GetBytes(out videoData);
-                dataSize = videoFrame.GetRowBytes() * videoFrame.GetHeight();
-            }
-            if (audioPacket == null) { valid = false; } else { audioPacket.GetBytes(out audioData); }
-          // if (IsCapturing()) m_mainWindow.Renderer.syncTrack(true, "TiF " + frameDelay.ToString("00") + " diff " + difference.ToString(), 5);
-            if (difference < 0) valid = false;
+            m_selectedDevice.getNextFrame(out videoFrame, out audioPacket, out frameDelay, out difference);
+            // if (IsCapturing()) m_mainWindow.Renderer.syncTrack(true, "TiF " + frameDelay.ToString("00") + " diff " + difference.ToString(), 5);
         }
 
         public void skipNextFrame()

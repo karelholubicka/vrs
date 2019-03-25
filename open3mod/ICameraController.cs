@@ -51,16 +51,19 @@ namespace open3mod
     public enum ScenePartMode
     {
         //these modes require special handling in renderer
-        Background = 0,
-        GreenScreen = 1, //No camera overlay
+        Others = 0,
+        Background = 1,
         Foreground = 2,
-        Others = 3,
-        All = 4, //No camera overlay
+        Visible = 3,
+        GreenScreen = 4, //No camera overlay
+        All = 5, //No camera overlay
         //these modes require special handling in renderer
-        Output = 5,// Regular output = Bkgd + Canvas textured with Camera + Foreground
-        Camera = 6,
-        CameraCancelColor = 7,
-        Keying = 8,
+        Output = 6,// Regular output = Bkgd + Canvas textured with Camera + Foreground
+        Camera = 7,
+        CameraCancelColor = 8,
+        Keying = 9,
+        _Max = 10,
+
     }
 
     /// <summary>
@@ -141,19 +144,19 @@ namespace open3mod
         CameraMode GetCameraMode();
 
         /// <summary>
-        /// Obtains current field of view
+        /// Sets field of view
         /// </summary>
         /// <returns>field of view for Y in radians</returns>
         void SetFOV(float value);
 
         /// <summary>
-        /// Obtains current digital zoom value
+        /// Sets digital zoom value
         /// </summary>
         /// <returns>zoom value (usually usable from 1/2 to 2)</returns>
         void SetDigitalZoom(float value);
 
         /// <summary>
-        /// Obtains current digital zoom center
+        /// Sets digital zoom center
         /// </summary>
         /// <returns>aligment of digital zoom - 0 towards left, 1 towards right</returns>
         void SetDigitalZoomCenter(float value);

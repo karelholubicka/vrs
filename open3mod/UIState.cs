@@ -123,6 +123,7 @@ namespace open3mod
             Tabs = new List<Tab> { defaultTab };
 
             ActiveTab = defaultTab;
+            BaseTab = null;
         }
 
 
@@ -133,6 +134,15 @@ namespace open3mod
         /// a selected tab, even if it is just the dummy tab.
         /// </summary>
         public Tab ActiveTab {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Current base tab. May be null.
+        /// </summary>
+        public Tab BaseTab
+        {
             get;
             private set;
         }
@@ -173,13 +183,12 @@ namespace open3mod
             return Tabs.FirstOrDefault(ts => ts.Id == id);
         }
 
-
         /// <summary>
         /// Set a particular tab as selected. This sets the "ActiveTab"
         /// property to the tab object. This does *not* update the UI.
         /// </summary>
         /// <param name="id">Unique id of the tab to be selected</param>
-        public void SelectTab(object id)
+        public void SelectActiveTab(object id)
         {
             foreach (var ts in Tabs.Where(ts => ts.Id == id))
             {
@@ -190,10 +199,30 @@ namespace open3mod
             Debug.Assert(false, "tab with id not found: " + id.ToString());
         }
 
+        /// <summary>
+        /// Set a particular tab as selected. This sets the "BaseTab"
+        /// property to the tab object. This does *not* update the UI.
+        /// </summary>
+        /// <param name="id">Unique id of the tab to be selected</param>
+        public void SelectBaseTab(object id)
+        {
+            foreach (var ts in Tabs.Where(ts => ts.Id == id))
+            {
+                BaseTab = ts;
+                return;
+            }
+
+            Debug.Assert(false, "tab with id not found: " + id.ToString());
+        }
+
+        public void CleanBaseTab()
+        {
+            BaseTab = null;
+        }
 
         public void SelectTab(Tab tab)
         {
-            SelectTab(tab.Id);
+            SelectActiveTab(tab.Id);
         }
 
 

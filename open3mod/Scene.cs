@@ -66,6 +66,7 @@ namespace open3mod
         private Renderer _renderer;
         private readonly UndoStack _undoStack = new UndoStack();
         private readonly Dictionary<Mesh, Mesh> _overrideMeshes = new Dictionary<Mesh, Mesh>();
+        private bool _isFront = false;
 /*        private Matrix4 _offsetMatrix = Matrix4.Identity;
 
         /// <summary>
@@ -168,6 +169,11 @@ namespace open3mod
         public TextureSet TextureSet
         {
             get { return _textureSet; }
+        }
+
+        public bool IsFront
+        {
+            get { return _isFront; }
         }
 
 
@@ -494,6 +500,14 @@ namespace open3mod
         public void Render(UiState inState, ICameraController cam, Renderer target, int toVideo, bool VRModel = false)
         {
             var state = inState;
+            if (state.BaseTab != null)
+            {
+                _isFront = ((state.BaseTab.ActiveScene == this) || (!CoreSettings.CoreSettings.Default.RenderBaseScene)) ? false : true;
+            }
+            else
+            {
+                _isFront = false;
+            }
             RenderFlags flags = 0;
             if (state.ShowNormals && toVideo == 0)
             {

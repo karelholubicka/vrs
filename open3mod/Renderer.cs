@@ -77,6 +77,7 @@ namespace open3mod
         private Scene _hmd;
         private Scene _camera;
         private VRModelCameraController _tracker;
+        private VRModelCameraController _hlpTracker;
         static int numUnpackBuffers = MainWindow.inputs * 2 + MainWindow.receivers * 2;
         int[] pixelUnpackBuffer = new int[numUnpackBuffers];
         static private int _maxCameras = MainWindow.inputs;
@@ -113,12 +114,14 @@ namespace open3mod
         public const int usedModernGLTextureTypeCount = 6;  //TextureType 1..6
         public static int[] modernGLTextureType = new int[usedModernGLTextureTypeCount];
         private const int _ModernGLTextureSize = 16;
-        private int videoSizeX = 1920;
-        private int videoSizeY = 1080;
-        private int byteDepth = 4;
-        private int stride = 1920 * 4;
-        int YUVwidth = 1920 / 2;
-        uint YUVstride = (uint)1920 * 4 / 2;
+
+        private static int byteDepth = 4;
+        private static int byteDepthYUV = 2;
+        private static int videoSizeX = 1920;
+        private static int videoSizeY = 1080;
+        private int stride = videoSizeX * byteDepth;
+        int YUVwidth = videoSizeX / 2;
+        uint YUVstride = (uint)videoSizeX * (uint)byteDepthYUV;
 
         public readonly object renderParameterLock = new object();
         public readonly object renderTargetLock = new object();
@@ -276,13 +279,17 @@ namespace open3mod
             return camera;
         }
 
-        public ICameraController cameraController(uint contIndex)
+        public ICameraController cameraControllerFromIndex(uint contIndex)
         {
             int camera = cameraAtContIndex(contIndex);
             if (camera == -1) return null;
             return _cameraController[camera]; 
         }
 
+        public ICameraController cameraControllerFromCamera(int camera)
+        {
+            return _cameraController[camera];
+        }
 
         /// <summary>
         /// Construct a renderer given a valid and fully loaded MainWindow
@@ -297,7 +304,7 @@ namespace open3mod
             videoSizeY = MainWindow.videoSize.Height;
             stride = videoSizeX * byteDepth;
             YUVwidth = videoSizeX / 2;
-            YUVstride = (uint)stride / 2;
+            YUVstride = (uint)videoSizeX * (uint)byteDepthYUV;
             LoadHudImages();
             _textOverlay = new TextOverlay(this);
 
@@ -319,6 +326,7 @@ namespace open3mod
                 filePath = modelPath + "standard_camera\\standard_camera.obj";
                 _camera = File.Exists(filePath) ? new Scene(filePath, this) : null;
                 _tracker = new VRModelCameraController(CameraMode.HMD, MainWindow.fovPreset, ScenePartMode.All);
+                _hlpTracker = new VRModelCameraController(CameraMode.HMD, MainWindow.fovPreset, ScenePartMode.All);
             }
             _renderClock.Reset();
             _renderClock.Start();
@@ -353,7 +361,7 @@ namespace open3mod
 
             for (int i = 0; i < _maxCameras; i++)
             {
-                MainWindow.LoadFovAndZoom(0, out float loadedFov, out float loadedDigZoom, out float loadedDigZoomCenter);
+                MainWindow.LoadFovAndZoom(i, out float loadedFov, out float loadedDigZoom, out float loadedDigZoomCenter);
                 _cameraController[i].SetFOV(loadedFov);
                 _cameraController[i].SetDigitalZoom(loadedDigZoom);
                 _cameraController[i].SetDigitalZoomCenter(loadedDigZoomCenter);
@@ -772,29 +780,55 @@ namespace open3mod
             GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
         }
 
-        public void UploadCameraFromVideoFrameToBuffer(int camera, int shift)
+        public void UploadCameraFromVideoFrameToBuffer(int camera, int shift, bool copyBGRAtoo)
         {
             //upload camera from videoframe to buffer. Whole uploading takes only 1-2 ms, so we go for older frames only when timeFrame was in 0-5ms ahead
             //       MainWindow.outputGenerator.GetHardwareReferenceClock(out long hardwareTime, out long timeInFrame, out long ticksPerFrame);
-            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[2 * camera + shift]);
             lock (MainWindow.capturePreview[camera].memLock)
             {
-                MainWindow.capturePreview[camera].GetNextVideoFrame(out IntPtr videoData, out long dataSize, out IntPtr audioData, out long frameDelay, out bool valid);
-                if (valid)
+
+                MainWindow.capturePreview[camera].GetNextVideoFrame(out IDeckLinkVideoInputFrame videoFrame, out IDeckLinkAudioInputPacket audioPacket, out long frameDelay, out long difference);
+
+                bool valid = true;
+                IntPtr audioData = IntPtr.Zero;
+                IntPtr videoData = IntPtr.Zero;
+                if (audioPacket == null) { valid = false; } else { audioPacket.GetBytes(out audioData); }
+                if (difference < 0) valid = false;
+                if (videoFrame == null) { valid = false; } else { videoFrame.GetBytes(out videoData); }
+                if (valid && (videoFrame.GetWidth() == videoSizeX) && (videoFrame.GetHeight() == videoSizeY))
                 {
+                    GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[2 * camera + shift]);
+                    int dataSize = videoFrame.GetRowBytes() * videoFrame.GetHeight();
                     if (dataSize > (int)YUVstride * videoSizeY) dataSize = (int)YUVstride * videoSizeY;
                     GL.BufferData(BufferTarget.PixelUnpackBuffer, (int)dataSize, videoData, BufferUsageHint.DynamicDraw);
+                    GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
+
+                    if (copyBGRAtoo)
+                    {
+                        if (MainWindow.outputGenerator != null)
+                        {
+                            IDeckLinkVideoFrame videoConvFrame = MainWindow.outputGenerator.Convert(videoFrame, _BMDPixelFormat.bmdFormat8BitBGRA);
+                            videoConvFrame.GetBytes(out videoData);
+                            dataSize = videoConvFrame.GetRowBytes() * videoConvFrame.GetHeight();
+                            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[_maxCameras * 2 + 2 * 1 + shift]);//first NDI#1  buffer only now
+                            if (dataSize > (int)stride * videoSizeY) dataSize = (int)stride * videoSizeY;
+                            GL.BufferData(BufferTarget.PixelUnpackBuffer, (int)dataSize, videoData, BufferUsageHint.DynamicDraw);
+                            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
+                        }
+                    }
+
                     //  MainWindow.outputGenerator.addAudioFrame(audioData);
-                    MainWindow.outputGenerator.copyAudioFrameChannelPair(audioData, 0, (uint)camera*2);
+                    int channelpair = camera - 1;
+                    if (channelpair < 0) channelpair = 3;
+                    MainWindow.outputGenerator.copyAudioFrameChannelPair(audioData, 0, (uint)(channelpair *2));
                     if (ActiveCamera == camera) actualFrameDelay = frameDelay;
                 }
                 else
                 {
-                    MainWindow.outputGenerator.addBufferedAudioFrame(); //later use the later one...
+                  //  MainWindow.outputGenerator.addBufferedAudioFrame(); //later use the later one... ...well, better just skip these, valid audio seems to come with valid video only...
                     if (MainWindow.capturePreview[camera].IsCapturing()) syncTrack(true, "UploadFr"+camera.ToString(), 5);
                 }
             }
-            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
         }
 
         /// <summary>
@@ -809,20 +843,26 @@ namespace open3mod
                 if ((scene.dynamicTexture[i] != null) && (_NDIReceiver[i].ConnectedSource != null) && (dynTextureSize[i].Width != 0))
                 {
                     dynTexture[i] = scene.dynamicTexture[i].Gl;//upload from buffer to texture
-                    GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[_maxCameras + 2 * i + 1 - shift]);
+                    GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[_maxCameras * 2 + 2 * i + 1 - shift]);
                     GL.BindTexture(TextureTarget.Texture2D, dynTexture[i]);
                     GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba8, dynTextureSize[i].Width, dynTextureSize[i].Height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, (IntPtr)0);
                     GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
                 }
             }
-
-            for (int i = 0; i < _maxCameras; i++) UploadCameraFromVideoFrameToBuffer(i, shift);
-
-
-            UploadCameraFromVideoFrameToBuffer(0, shift);
-            UploadCameraFromVideoFrameToBuffer(1, shift);
-            UploadCameraFromVideoFrameToBuffer(2, shift);
-            UploadCameraFromVideoFrameToBuffer(3, shift);
+            
+            //temporary feature  - overwrite NDI with camera inputs 1 and 2
+            for (int i = 1; i < MainWindow.receivers; i++)
+            {
+                if (scene.dynamicTexture[i] != null) 
+                {
+                    dynTexture[i] = scene.dynamicTexture[i].Gl;//upload from buffer to texture
+                    GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[_maxCameras * 2 + 2 * i + 1 - shift]);
+                    GL.BindTexture(TextureTarget.Texture2D, dynTexture[i]);
+                    GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba8, videoSizeX, videoSizeY, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, (IntPtr)0);
+                    GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+                }
+            }
+            for (int i = 0; i < _maxCameras; i++) UploadCameraFromVideoFrameToBuffer(i, shift, (i == 1)|| (i == 2));
 
             //upload dynamic texture from receiver bitmap to buffer
             for (int i = 0; i < MainWindow.receivers; i++)
@@ -836,7 +876,7 @@ namespace open3mod
                         if (NDIReceived != null)
                         {
                             var recdData = NDIReceived.LockBits(new Rectangle(0, 0, NDIReceived.Width, NDIReceived.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-                            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[_maxCameras + 2 * i + shift]);
+                            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelUnpackBuffer[_maxCameras * 2 + 2 * i + shift]);
                             GL.BufferData(BufferTarget.PixelUnpackBuffer, NDIReceived.Width * NDIReceived.Height * 4, recdData.Scan0, BufferUsageHint.DynamicDraw);
                             GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
                             NDIReceived.UnlockBits(recdData);
@@ -856,9 +896,9 @@ namespace open3mod
         {
             timeTrack("10-RendComposStart");
             if (activeTab.ActiveScene == null) return;
+
             //render canvas to FBO #2, move to SS#3 and move to texture
             renderingController.SetScenePartMode(ScenePartMode.GreenScreen);
-            //            return;
             DrawScene(activeTab.ActiveScene, renderingController, 1);
             timeTrack("11-GSDrawed");
             renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoSSCompat);
@@ -867,8 +907,8 @@ namespace open3mod
             renderControl.CopyVideoFramebuffers(1, 2);//from MS to SS
             renderControl.ReBindFrameBuffer(2);
             timeTrack("12-GSMoved");
-            // Bitmap testBmp = renderControl.ReadVideoTextureTest();
-            // testBmp.Dispose();
+            //Bitmap testBmp1 = renderControl.ReadVideoTextureTest();
+            //testBmp1.Dispose();
 
             //render frgd to FBO #2, move to SS#3 and move to texture
             renderingController.SetScenePartMode(ScenePartMode.Foreground);
@@ -907,8 +947,8 @@ namespace open3mod
             GL.Viewport(0, 0, videoSizeX, videoSizeY);
             DrawChromakey(renderingController, false, _activeCamera, 1);
             timeTrack("17-Keyed");
-            //testBmp = renderControl.ReadFramebufferTest();
-            //testBmp.Dispose();
+            // Bitmap testBmp = renderControl.ReadFramebufferTest();
+            // testBmp.Dispose();
 
             //and immediatelly start transfer to CPU memory / buffer
             renderControl.SetRenderTarget((RenderControl.RenderTarget)((int)(RenderControl.RenderTarget.VideoSSCompat) + (int)GraphicsSettings.Default.RenderingBackend));
@@ -1424,6 +1464,16 @@ namespace open3mod
             _textOverlay.Resize();
         }
 
+        public int SelectedCamera()
+        {
+            var activeTab = MainWindow.UiState.ActiveTab;
+            int selectedCamera = _activeCamera; //the one which is rendering
+            if ((int)activeTab.ActiveViewIndex < _maxCameras) //i.e. index 0-3 returns camera number, index 4 returns active camera number
+                selectedCamera = (int)activeTab.ActiveViewIndex;
+            return selectedCamera;
+        }
+
+
         private int CameraToDraw(Tab.ViewIndex index)
         {
             int drawedCamera = _activeCamera;
@@ -1458,11 +1508,13 @@ namespace open3mod
                     int drawedCamera = CameraToDraw(index);
                     if (view.GetScenePartMode() == ScenePartMode.Output) drawedCamera = ActiveCamera;
                     renderControl.SetRenderTarget(RenderControl.RenderTarget.ScreenCore);
-                    //view.SetFOV(_cameraController[drawedCamera].GetFOV());
+
+                    // view.SetFOV(_cameraController[drawedCamera].GetFOV()); we need only forward Zoom values to the Chromakey renderer
                     view.SetDigitalZoom(_cameraController[drawedCamera].GetDigitalZoom());
                     view.SetDigitalZoomCenter(_cameraController[drawedCamera].GetDigitalZoomCenter());
+
                     DrawChromakey(view, true, drawedCamera, 0);
-                    if ((OpenVRInterface.EVRerror == EVRInitError.None) && (MainWindow.UiState.ShowVRModels)) DrawVRModels(_cameraController[drawedCamera]);
+                    if ((OpenVRInterface.EVRerror == EVRInitError.None) && (MainWindow.UiState.ShowVRModels)) DrawVRModels(_cameraController[drawedCamera], true);
                 }
                 else
                 {
@@ -1471,7 +1523,7 @@ namespace open3mod
                     {
                         DrawScene(activeTab.ActiveScene, view, 0);//contains Video/Screen/Core/Compat switch and back
                     }
-                    if ((OpenVRInterface.EVRerror == EVRInitError.None) && (MainWindow.UiState.ShowVRModels)) DrawVRModels(view);
+                    if ((OpenVRInterface.EVRerror == EVRInitError.None) && (MainWindow.UiState.ShowVRModels)) DrawVRModels(view, false);
                 }
                 RenderControl.GLError("ViewportEnd");
             }
@@ -1493,6 +1545,7 @@ namespace open3mod
          //   GL.BindTexture(TextureTarget.Texture2D, _cameraTexture[3 - activeCamera]);//do not need it currently, solve also activeCam=0;
             GL.ActiveTexture(TextureUnit.Texture3);
             GL.BindTexture(TextureTarget.Texture2D, _foregroundTexture);
+
             switch (view.GetScenePartMode())
             {
                 case ScenePartMode.Camera: md = 3; break;
@@ -1501,9 +1554,10 @@ namespace open3mod
                 case ScenePartMode.Output:
                     md = 0;
                     if (useCompositeTexture)
-                    { //replace foreground with composite - it overlays full viewport
+                    { // replace foreground with composite
                       GL.ActiveTexture(TextureUnit.Texture3);
                       GL.BindTexture(TextureTarget.Texture2D, _compositeTexture);
+                    md = 4;
                     }
                     break;
                 default: break;
@@ -1558,6 +1612,7 @@ namespace open3mod
 
             //GL.VertexAttrib1(2, (float)_time);
             GL.Enable(EnableCap.Blend);
+
             GL.BlendFuncSeparate(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha, BlendingFactorSrc.SrcAlpha, BlendingFactorDest.One);
             GL.DepthMask(false);
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
@@ -1590,14 +1645,15 @@ namespace open3mod
             if (_hmd != null) _hmd.RecreateRenderingBackend();
         }
 
-        private void DrawVRModels(ICameraController view)
+        private void DrawVRModels(ICameraController view, bool applyDigitalZoom)
         {
             {
                 if (_tracker == null) return;
                 if  (OpenVR.System == null) return;
+                int toVideo = 0;
+                if (applyDigitalZoom && (view.GetDigitalZoom() != 1)) return; //not applied yet
                 var modelView = new Matrix4();
                 var modelPosition = new Matrix4();
-                int toVideo = 0;
                 for (uint i = 0; i < OpenVRInterface.totalDevices; i++)
                 {
 
@@ -1644,6 +1700,7 @@ namespace open3mod
                 }
             }
         }
+
         private void DrawViewportPost(double xs, double ys, double xe,
                                   double ye, bool active = false)
         {
@@ -1739,22 +1796,49 @@ namespace open3mod
                 float keepFOV = view.GetFOV();
                 if (toVideo == 1)
                 {
+                    GL.Viewport(0, 0, videoSizeX, videoSizeY);
                     if (CoreSettings.CoreSettings.Default.AllowDigitalZoom)
                     {
                         SetVideoViewport(view);
-                        view.SetFOV(keepFOV * 2.4f);
-                    }
-                    else
-                    {
-                        GL.Viewport(0, 0, videoSizeX, videoSizeY);
+                        view.SetFOV((float)(2 * Math.Atan(3 * Math.Tan(keepFOV / 2)))); // for Zoom=1 we upsize viewport 3x 
                     }
                     GL.DepthMask(true);
-                    GL.ClearColor(BackgroundColor);
+                    GL.ClearColor(Color.Transparent);
+                    if (view.GetScenePartMode() == ScenePartMode.Background) GL.ClearColor(BackgroundColor);
                     GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
                 }
                 Debug.Assert(scene != null);
                 if (GraphicsSettings.Default.RenderingBackend == 0) toVideo = 0;//for GL2 we cannot use toVideoFlag, too slow then; also toVideo is not used for Core distinguish
-                scene.Render(MainWindow.UiState, view, this, toVideo, VRModel);
+
+                bool baseDrawed = false;
+                Scene _baseScene = MainWindow.UiState.BaseTab != null ? MainWindow.UiState.BaseTab.ActiveScene : null;
+                if ((_baseScene != null) && CoreSettings.CoreSettings.Default.RenderBaseScene && (_baseScene != scene) && !VRModel)
+                {
+                    _baseScene.Render(MainWindow.UiState, view, this, toVideo, VRModel);
+                    baseDrawed = true;
+                }
+                if (CoreSettings.CoreSettings.Default.LockSceneToController && !VRModel && baseDrawed)
+                {
+                    if (_hlpTracker == null) return;
+                    var modelView = new Matrix4();
+                    var modelPosition = new Matrix4();
+                    modelPosition = Matrix4.Identity;
+                    var modelOffset = new Matrix4();
+                    modelOffset = Matrix4.Identity;
+                    modelOffset = Matrix4.CreateTranslation(0, 0, -0.5f);
+                    modelPosition = OpenVRInterface.trackedPositions[OpenVRInterface.indexOfDevice[2]];
+                    modelPosition = modelOffset * modelPosition;
+                    modelView = modelPosition * view.GetViewNoOffset();
+                    _hlpTracker.SetView(modelView);
+                    _hlpTracker.SetParam(view.GetFOV(), view.GetScenePartMode(), view.GetCameraMode());
+                    _hlpTracker.SetDigitalZoom(view.GetDigitalZoom());
+                    _hlpTracker.SetDigitalZoomCenter(view.GetDigitalZoomCenter());
+                    scene.Render(MainWindow.UiState, _hlpTracker, this, toVideo, VRModel);
+                }
+                else
+                {
+                    scene.Render(MainWindow.UiState, view, this, toVideo, VRModel);
+                }
                 view.SetFOV(keepFOV);
             }
             GL.UseProgram(0);
@@ -1925,7 +2009,8 @@ namespace open3mod
                         valueFOV = (float)(renderingController.GetFOV() * 360 / Math.PI);
                         zoomXfov = "ZOOM: " + FOVtoZoom(valueFOV, _activeCamera).ToString();
                         strScenePartMode = strScenePartMode + " " + _cameraController[_activeCamera].GetCameraName();
-                        digZoom = " | DGZOOM: " + _cameraController[_activeCamera].GetDigitalZoom().ToString("0.0") + " / " + _cameraController[_activeCamera].GetDigitalZoomCenter().ToString("0.0");
+                        digZoom = " DGZOOM: " + _cameraController[_activeCamera].GetDigitalZoom().ToString("0.00") + " / " + _cameraController[_activeCamera].GetDigitalZoomCenter().ToString("0.00");
+                        if (!CoreSettings.CoreSettings.Default.AllowDigitalZoom) digZoom = " DGZOOM off ";
                     }
                     string currStreamName = "";
                 //    if ((int)indexFOV < streamName.Count()) { currStreamName = streamName[((int)indexFOV)]; } else currStreamName = "";
@@ -1936,7 +2021,8 @@ namespace open3mod
                         valueFOV = (float)(_cameraController[cameraToDraw].GetFOV() * 360 / Math.PI);
                         zoomXfov = "";//"FOV: " + ((int)valueFOV).ToString(); //checking FOV-Zoom ratio
                         zoomXfov = zoomXfov + " " + "ZOOM: " + FOVtoZoom(valueFOV, cameraToDraw).ToString();
-                        digZoom = " | DGZOOM: " + _cameraController[cameraToDraw].GetDigitalZoom().ToString("0.0") + " / " + _cameraController[cameraToDraw].GetDigitalZoomCenter().ToString("0.0");
+                        digZoom = " DGZOOM: " + _cameraController[cameraToDraw].GetDigitalZoom().ToString("0.00") + " / " + _cameraController[cameraToDraw].GetDigitalZoomCenter().ToString("0.00");
+                        if (!CoreSettings.CoreSettings.Default.AllowDigitalZoom) digZoom = " DGZOOM off ";
                     }
                     //Tab.ViewIndex index
                     switch (cam.GetCameraMode())

@@ -44,6 +44,9 @@ namespace open3mod
         private bool _digZoomCenterLeftPressed;
         private bool _digZoomCenterRightPressed;
         private bool _shiftPressed;
+        private int digZoomSpeed = 0;
+        private int digZoomSpeedCenter = 0;
+
 
         private int _previousMousePosX = -1;
         private int _previousMousePosY = -1;
@@ -100,13 +103,14 @@ namespace open3mod
             if (changed) cam.MovementKey(x, y, z);
 
             float step = 1.005f;
-            float stepCenter = 0.01f;
+            int stepSpeed = 1;
+            int speedMax = 20;
             if (_shiftPressed) step = 1.05f;
 
 
             if ((cam.GetScenePartMode() > ScenePartMode.All))
             {
-                cam = _renderer.renderingController;
+                cam = Renderer.cameraControllerFromCamera(Renderer.SelectedCamera());
             }
 
             float fov = cam.GetFOV();
@@ -127,25 +131,71 @@ namespace open3mod
             if (_digZoomUpPressed)
             {
                 changedz = true;
-                digZoom = digZoom * (step + stepCenter);
+                if (digZoomSpeed < speedMax) digZoomSpeed = digZoomSpeed + stepSpeed;
             }
+            else
+            {
+                if (digZoomSpeed > 0)
+                {
+                    changedz = true;
+                    digZoomSpeed = digZoomSpeed - stepSpeed;
+                }
+            }
+
             if (_digZoomDownPressed)
             {
                 changedz = true;
-                digZoom = digZoom / (step + stepCenter);
+                if (digZoomSpeed > -speedMax) digZoomSpeed = digZoomSpeed - stepSpeed;
+            }
+            else
+            {
+                if (digZoomSpeed < 0)
+                {
+                    changedz = true;
+                    digZoomSpeed = digZoomSpeed + stepSpeed;
+                }
             }
 
             if (_digZoomCenterLeftPressed)
             {
                 changedz = true;
-                digZoomCenter = digZoomCenter - stepCenter;
+                if (digZoomSpeedCenter < speedMax) digZoomSpeedCenter = digZoomSpeedCenter + stepSpeed;
             }
+            else
+            {
+                if (digZoomSpeedCenter > 0)
+                {
+                    changedz = true;
+                    digZoomSpeedCenter = digZoomSpeedCenter - stepSpeed;
+                }
+            }
+
+
             if (_digZoomCenterRightPressed)
             {
                 changedz = true;
-                digZoomCenter = digZoomCenter + stepCenter;
+                if (digZoomSpeedCenter > -speedMax) digZoomSpeedCenter = digZoomSpeedCenter - stepSpeed;
+            }
+            else
+            {
+                if (digZoomSpeedCenter < 0)
+                {
+                    changedz = true;
+                    digZoomSpeedCenter = digZoomSpeedCenter + stepSpeed;
+                }
             }
 
+
+            if (digZoomSpeed !=0)
+            {
+                changedz = true;
+                digZoom = digZoom * (1 + (float)digZoomSpeed/10000f);
+            }
+            if (digZoomSpeedCenter != 0)
+            {
+                changedz = true;
+                digZoomCenter = digZoomCenter + ((float)digZoomSpeedCenter / 2000f);
+            }
 
             if (!changedz)
             {
@@ -513,9 +563,25 @@ namespace open3mod
                     break;
 
                 case Keys.R:
-                    // reset camera immediatelly
-                    UiState.ActiveTab.ResetActiveCameraController();
-                    break;
+                        // reset camera immediatelly
+                        var cam = UiState.ActiveTab.ActiveCameraController;
+                        if (cam == null)
+                        {
+                            return;
+                        }
+                        if ((cam.GetScenePartMode() > ScenePartMode.All))
+                        {
+                            cam = Renderer.cameraControllerFromCamera(Renderer.SelectedCamera());
+                            cam.SetFOV(fovPreset);
+                            cam.SetDigitalZoom(1f);
+                            cam.SetDigitalZoomCenter(0.5f);
+                        }
+                        else
+                        {
+                            UiState.ActiveTab.ResetActiveCameraController();
+                        }
+
+                        break;
 
                 case Keys.O:
                     //reset offset
@@ -551,7 +617,7 @@ namespace open3mod
                     if (_settings == null || _settings.IsDisposed) _settings = new SettingsDialog { MainWindow = this };
                     _settings.ChangeRenderingBackend();
                     break;
-                case Keys.V:
+                case Keys.N:
                     // reset NDI streams
                     if (useIO) _renderer.FlushNDI();
                     break;
@@ -564,6 +630,9 @@ namespace open3mod
                         break;
                     case Keys.F:
                         if (_renderer.renderIO && (UiState.ActiveTab.ActiveCameraController != null)) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.Foreground);
+                        break;
+                    case Keys.V:
+                        if (_renderer.renderIO && (UiState.ActiveTab.ActiveCameraController != null)) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.Visible);
                         break;
                     case Keys.X:
                         if (_renderer.renderIO && (UiState.ActiveTab.ActiveCameraController != null)) UiState.ActiveTab.ActiveCameraController.SetScenePartMode(ScenePartMode.Others);
@@ -592,15 +661,20 @@ namespace open3mod
                         e.Handled = true;
                         break;
                     case Keys.NumPad0:
+                        if (_ui.ActiveTab.ActiveViewIndex != Tab.ViewIndex.Index4) _ui.ActiveTab.ActiveViewIndex = Tab.ViewIndex.Index0;
+                        //Todo : index switching for 2 views only
                         Renderer.SwitchToCamera(0);
                         break;
                     case Keys.NumPad1:
+                        if (_ui.ActiveTab.ActiveViewIndex != Tab.ViewIndex.Index4) _ui.ActiveTab.ActiveViewIndex = Tab.ViewIndex.Index1;
                         Renderer.SwitchToCamera(1);
                         break;
                     case Keys.NumPad2:
+                        if (_ui.ActiveTab.ActiveViewIndex != Tab.ViewIndex.Index4) _ui.ActiveTab.ActiveViewIndex = Tab.ViewIndex.Index2;
                         Renderer.SwitchToCamera(2);
                         break;
                     case Keys.NumPad3:
+                        if (_ui.ActiveTab.ActiveViewIndex != Tab.ViewIndex.Index4) _ui.ActiveTab.ActiveViewIndex = Tab.ViewIndex.Index3;
                         Renderer.SwitchToCamera(3);
                         break;
                     case Keys.NumPad4:

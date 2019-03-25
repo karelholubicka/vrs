@@ -229,7 +229,7 @@ namespace open3mod
 
             // Set the video input mode
             //For upload to GPU we need 8bitYUV
-            //   m_deckLinkInput.EnableVideoInput(newDisplayMode.GetDisplayMode(), pixelFormat, _BMDVideoInputFlags.bmdVideoInputEnableFormatDetection);
+            // m_deckLinkInput.EnableVideoInput(newDisplayMode.GetDisplayMode(), pixelFormat, _BMDVideoInputFlags.bmdVideoInputEnableFormatDetection);
             m_deckLinkInput.EnableVideoInput(newDisplayMode.GetDisplayMode(), _BMDPixelFormat.bmdFormat8BitYUV, _BMDVideoInputFlags.bmdVideoInputEnableFormatDetection);
             m_deckLinkInput.EnableAudioInput(_BMDAudioSampleRate.bmdAudioSampleRate48kHz, _BMDAudioSampleType.bmdAudioSampleType16bitInteger, 16);
 

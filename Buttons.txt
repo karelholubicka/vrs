@@ -12,15 +12,19 @@ W, A, S, D, Up, Down: movement
 R: Reset camera view immediatelly
 O: Reset offset
 
-Subtract: FOV-
-Add: FOV +
-Multiply: shift FOV speed
+NumPad8:FOV-
+NumPad5:FOV+
+NumPad7:Digital Zoom Center L
+NumPad9:Digital Zoom Center R
+NumMultiply: shift FOV speed
+
 
 E: Switch backend
-V: Reset NDI streams
+N: Reset NDI streams
 
 B: Background
 F:Foreground
+V:Visible (BG+FG)
 G: GreenScreen
 X:Others
 L:All
@@ -33,3 +37,6 @@ K: Keying
 U: Advance-
 I: Advance+
 
+grip (HORNÍ VEPØEDU)+ simultaneously lower pad = offset set
+
+touchpadL/R + U/D digital zoom -

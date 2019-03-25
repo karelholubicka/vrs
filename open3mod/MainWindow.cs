@@ -52,6 +52,7 @@ namespace open3mod
    //    public const bool useIO = false;
 
         public static string exePath = "e:\\vr-software\\vrs\\open3mod\\";
+        string TrackingErrorLabelPrefix = "Track error: ";
         public static string[] recentDataSeparator = new string[] { "::" };
         public static string[] recentItemSeparator = new string[] { ";;" };
         public static NewTek.NDI.Finder NDIFinder;
@@ -140,7 +141,7 @@ namespace open3mod
 
         public MainWindow()
         {
-
+            CoreSettings.CoreSettings.Default.UseTracking = false;
             exePath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase);
             exePath = exePath.Substring(6);
             string remove = "\\bin\\Debug";
@@ -164,6 +165,8 @@ namespace open3mod
             InitializeComponent();
             _captionStub = Text;
             _openVRInterface = new OpenVRInterface();
+            toolStripLabelOpenVRError.Text = TrackingErrorLabelPrefix + OpenVRInterface.EVRerror.ToString();
+            toolStripLabelOpenVRError.Invalidate();
             OpenVRInterface.fPredictedSecondsToPhotonsFromNow = CoreSettings.CoreSettings.Default.SecondsToPhotons;
             _fps = new FpsTracker();
 
@@ -692,6 +695,27 @@ namespace open3mod
 
 
         /// <summary>
+        /// Select a given tab in the UI as base scene
+        /// </summary>
+        /// <param name="tab"></param>
+        public void MakeTabBase(TabPage tab)
+        {
+            Debug.Assert(tab != null);
+            var outer = UiState.TabForId(tab);
+            UiState.SelectBaseTab(outer.Id);
+            // TODO set it also in GUI so we can see the selection on the tab
+        }
+
+        /// <summary>
+        /// Cleans base scene
+        /// </summary>
+        /// <param name="tab"></param>
+        public void CleanBase(TabPage tab)
+        {
+            Debug.Assert(tab != null);
+            UiState.CleanBaseTab();
+        }
+        /// <summary>
         /// Select a given tab in the UI
         /// </summary>
         /// <param name="tab"></param>
@@ -701,43 +725,42 @@ namespace open3mod
             CoreSettings.CoreSettings.Default.ViewsStatus = _ui.ActiveTab.getViewsStatusString();//save previous tab last status 
             Matrix4 oldSingleView = Matrix4.Identity;
             var camIn = UiState.ActiveTab.ActiveCameraControllerForView(Tab.ViewIndex.Index4);
-            if (camIn != null) oldSingleView = UiState.ActiveTab.ActiveCameraControllerForView(Tab.ViewIndex.Index4).GetViewNoOffset(); 
-
+            if (camIn != null) oldSingleView = UiState.ActiveTab.ActiveCameraControllerForView(Tab.ViewIndex.Index4).GetViewNoOffset();
 
             tabControl1.SelectedTab = tab;
 
             var outer = UiState.TabForId(tab);
             Debug.Assert(outer != null);
             // update internal housekeeping
-            UiState.SelectTab(tab);
+            UiState.SelectActiveTab(tab);
 
             _ui.ActiveTab.loadViewsStatusString();
 
             // update UI check boxes
             var vm = _ui.ActiveTab.ActiveViewMode;
-            fullViewToolStripMenuItem.CheckState = toolStripButtonFullView.CheckState = 
-                vm == Tab.ViewMode.Single 
-                ? CheckState.Checked 
+            fullViewToolStripMenuItem.CheckState = toolStripButtonFullView.CheckState =
+                vm == Tab.ViewMode.Single
+                ? CheckState.Checked
                 : CheckState.Unchecked;
-            twoViewsAToolStripMenuItem.CheckState = toolStripButtonTwoViewsA.CheckState = 
+            twoViewsAToolStripMenuItem.CheckState = toolStripButtonTwoViewsA.CheckState =
                 vm == Tab.ViewMode.AAHorizontal
-                ? CheckState.Checked 
+                ? CheckState.Checked
                 : CheckState.Unchecked;
             twoViewsBToolStripMenuItem.CheckState = toolStripButtonTwoViewsB.CheckState =
                 vm == Tab.ViewMode.BBHorizontal
                 ? CheckState.Checked
                 : CheckState.Unchecked;
-            fourViewsToolStripMenuItem.CheckState = toolStripButtonFourViews.CheckState = 
-                vm == Tab.ViewMode.Four 
-                ? CheckState.Checked 
+            fourViewsToolStripMenuItem.CheckState = toolStripButtonFourViews.CheckState =
+                vm == Tab.ViewMode.Four
+                ? CheckState.Checked
                 : CheckState.Unchecked;
 
             // some other UI housekeeping, this also injects the GL panel into the tab
             ActivateUiTab(tab);
             var camOut = UiState.ActiveTab.ActiveCameraControllerForView(Tab.ViewIndex.Index4);
-            if ((camIn != null)&& (camOut != null)) camOut.SetViewNoOffset(oldSingleView);
+            if ((camIn != null) && (camOut != null)) camOut.SetViewNoOffset(oldSingleView);
             var insp = UiForTab(_ui.ActiveTab).GetInspector();
-         //   if (insp != null) insp.SelectPlaybackView();
+            //   if (insp != null) insp.SelectPlaybackView();
             string statusText = CoreSettings.CoreSettings.Default.UseSceneLights ? "" : " | Keep right mouse button pressed to move light source";
             if (outer.ActiveScene != null)
             {
@@ -750,7 +773,6 @@ namespace open3mod
             }
 
         }
-
 
         private static int _tabCounter;
         private TabPage _tabContextMenuOwner;
@@ -963,10 +985,16 @@ namespace open3mod
         private void RenderScreen()
         {
             Renderer.syncTrack(false, "ScrStrt",8);
+//            string oldStatus = OpenVRInterface.EVRerror.ToString();
             lock (Renderer.renderParameterLock)
             {
                 OpenVRInterface.ProcessAllButtons(Renderer);
                 ProcessKeys();
+            }
+//            if (oldStatus != OpenVRInterface.EVRerror.ToString())
+            {
+                toolStripLabelOpenVRError.Text = TrackingErrorLabelPrefix + OpenVRInterface.EVRerror.ToString() + " | Device: Status/Activity | " + OpenVRInterface.StatusReport();
+                toolStripLabelOpenVRError.Invalidate();
             }
 
             Renderer.DrawScreen(_ui.ActiveTab);
@@ -1235,6 +1263,17 @@ namespace open3mod
             }
         }
 
+        private void OnMakeThisBaseSceneFromContextMenu(object sender, EventArgs e)
+        {
+            Debug.Assert(_tabContextMenuOwner != null);
+            MakeTabBase(_tabContextMenuOwner);
+        }
+
+        private void OnCleanBaseSceneFromContextMenu(object sender, EventArgs e)
+        {
+            Debug.Assert(_tabContextMenuOwner != null);
+            CleanBase(_tabContextMenuOwner);
+        }
 
         private void OnCloseTab(object sender, EventArgs e)
         {
@@ -1445,18 +1484,12 @@ namespace open3mod
         {
             if (useIO)
             {
+                SavePositionsAndFovAndZoom();
                 for (int i = 0; i < inputs; i++)
                 {
                     capturePreview[i].StopCapture();
-                    float fov = fovPreset;
-                    if (Renderer.cameraController((uint)i) != null) fov = Renderer.cameraController((uint)i).GetFOV();
-                    float digZoom = Renderer.cameraController((uint)i) != null ? Renderer.cameraController((uint)i).GetDigitalZoom() : 1f;
-                    float digZoomCenter = Renderer.cameraController((uint)i) != null ? Renderer.cameraController((uint)i).GetDigitalZoomCenter() : 0.5f;
-                    SaveInputPosition(i, capturePreview[i].Location, fov, digZoom, digZoomCenter);
                 }
                 outputGenerator.StopRunning();
-                CoreSettings.CoreSettings.Default.LocationOutput = outputGenerator.Location;
-                CoreSettings.CoreSettings.Default.Save();
             }
 
             CoreSettings.CoreSettings.Default.ViewsStatus = _ui.ActiveTab.getViewsStatusString();//read status 
@@ -1823,14 +1856,25 @@ namespace open3mod
                 int lastPos = 0;
                 for (int i = 0; i < inputs; i++)
                 {
-                    float fov = Renderer.cameraController((uint)i) != null ? Renderer.cameraController((uint)i).GetFOV() : fovPreset;
-                    float digZoom = Renderer.cameraController((uint)i) != null ? Renderer.cameraController((uint)i).GetDigitalZoom() : 1f;
-                    float digZoomCenter = Renderer.cameraController((uint)i) != null ? Renderer.cameraController((uint)i).GetDigitalZoomCenter() : 0.5f;
                     capturePreview[i].Location = new Point(0, distance * i);
-                    SaveInputPosition(i, capturePreview[i].Location, fov, digZoom, digZoomCenter);
                     lastPos = distance * i;
                 }
                 outputGenerator.Location = new Point(0, lastPos + distance);
+                SavePositionsAndFovAndZoom();
+            }
+        }
+
+        private void SavePositionsAndFovAndZoom()
+        {
+            if (useIO)
+            {
+                for (int i = 0; i < inputs; i++)
+                {
+                    float fov = Renderer.cameraControllerFromCamera(i) != null ? Renderer.cameraControllerFromCamera(i).GetFOV() : fovPreset;
+                    float digZoom = Renderer.cameraControllerFromCamera(i) != null ? Renderer.cameraControllerFromCamera(i).GetDigitalZoom() : 1f;
+                    float digZoomCenter = Renderer.cameraControllerFromCamera(i) != null ? Renderer.cameraControllerFromCamera(i).GetDigitalZoomCenter() : 0.5f;
+                    SaveInputPosition(i, capturePreview[i].Location, fov, digZoom, digZoomCenter);
+                }
                 CoreSettings.CoreSettings.Default.LocationOutput = outputGenerator.Location;
                 CoreSettings.CoreSettings.Default.Save();
             }
@@ -1902,7 +1946,7 @@ namespace open3mod
             string[] savedData;
             string SN = id.ToString();
             Point outPoint = new Point(0, 240 * id);
-            outFov = 80;
+            outFov = fovPreset;
             outDigZoom = 1f;
             outDigZoomCenter = 0.5f;
             CheckBoundsFloat(ref outFov, fovLimitLower, fovLimitUpper);
@@ -1953,6 +1997,11 @@ namespace open3mod
                 valid = false;
             }
             return valid;
+        }
+
+        private void RescanDevices(object sender, EventArgs e)
+        {
+            OpenVRInterface.SetupDevices();
         }
     }
 }

@@ -104,11 +104,12 @@ namespace open3mod
             int count = 1;
             switch (cam.GetScenePartMode())
             {
-                case ScenePartMode.Background: currDispList = 0;break;
-                case ScenePartMode.Others: currDispList = 1; break;
+                case ScenePartMode.Others: currDispList = 0; break;
+                case ScenePartMode.Background: currDispList = 1;break;
                 case ScenePartMode.Foreground: currDispList = 2; break;
                 case ScenePartMode.GreenScreen: currDispList = 3; break;
                 case ScenePartMode.All: currDispList = 0;count = 4; break;
+                case ScenePartMode.Visible: currDispList = 1; count = 2; break;
                 default: break;//at other modes we do not render anything
             }
 
@@ -124,12 +125,18 @@ namespace open3mod
                 if (needAlpha)
                 {
                     // handle semi-transparent geometry              
-                    RecursiveRenderWithAlpha(Owner.Raw.RootNode, visibleMeshesByNode, flags, animated, currDispList);
+                    for (int order = 0; order < MaxOrder; order++)
+                    {
+                        RecursiveRenderWithAlpha(Owner.Raw.RootNode, visibleMeshesByNode, flags, animated, currDispList, order);
+                    }
                 }
                 if (needAlphaAnim)
                 {
                     // handle semi-transparent geometry              
-                    RecursiveRenderWithAlpha(Owner.Raw.RootNode, visibleMeshesByNode, flags, animated, currDispList + 4);
+                    for (int order = 0; order < MaxOrder; order++)
+                    {
+                        RecursiveRenderWithAlpha(Owner.Raw.RootNode, visibleMeshesByNode, flags, animated, currDispList + 4, order);
+                    }
                 }
                 currDispList++;
 

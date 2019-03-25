@@ -201,31 +201,36 @@ namespace open3mod
 
         public int LightCount()
         {
-            return _scene.Raw.LightCount;
+            //when scene is front it assures Basetab is not null
+            var sourceScene = _scene.IsFront ? _scene.Renderer.MainWindow.UiState.BaseTab.ActiveScene : _scene;
+            return sourceScene.Raw.LightCount;
         }
 
         public Light[] GenerateLights()
         {
-            Light[] Lights = new Light[_scene.Raw.LightCount];
-            for (var j = 0; j < _scene.Raw.LightCount; ++j)
+            var sourceScene = _scene.IsFront ? _scene.Renderer.MainWindow.UiState.BaseTab.ActiveScene : _scene;
+            Light[] Lights = new Light[sourceScene.Raw.LightCount];
+            for (var j = 0; j < sourceScene.Raw.LightCount; ++j)
             {
-                Lights[j] = _scene.Raw.Lights[j];
+                Lights[j] = sourceScene.Raw.Lights[j];
             }
             return Lights;
         }
 
         public Node[] GenerateLightNodes()
         {
-            Node[] _LightNodes = new Node[_scene.Raw.LightCount];
-            FindLightNodes(_scene.Raw.RootNode, ref _LightNodes);
+            var sourceScene = _scene.IsFront ? _scene.Renderer.MainWindow.UiState.BaseTab.ActiveScene : _scene;
+            Node[] _LightNodes = new Node[sourceScene.Raw.LightCount];
+            FindLightNodes(sourceScene.Raw.RootNode, ref _LightNodes);
             return _LightNodes;
         }
 
         public void FindLightNodes(Node node, ref Node[] _LightNodes)
         {
-            for (var i = 0; i < _scene.Raw.LightCount; ++i)
+            var sourceScene = _scene.IsFront ? _scene.Renderer.MainWindow.UiState.BaseTab.ActiveScene : _scene;
+            for (var i = 0; i < sourceScene.Raw.LightCount; ++i)
             {
-                if (_scene.Raw.Lights[i].Name == node.Name)
+                if (sourceScene.Raw.Lights[i].Name == node.Name)
                 {
                     _LightNodes[i] = node;
                     break;

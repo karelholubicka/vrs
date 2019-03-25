@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -28,10 +29,13 @@ namespace open3mod
         public static uint totalDevices = OpenVR.k_unMaxTrackedDeviceCount + virtualDevices;
         public static Matrix4[,] allPositions = new Matrix4[maxPositionsBuffer, OpenVR.k_unMaxTrackedDeviceCount];//memory buffer only for real devices
 
-        public static Matrix4[] trackedPositions = new Matrix4[totalDevices]; 
+        public static Matrix4[] trackedPositions = new Matrix4[totalDevices];
         public static bool[] activePositions = new bool[totalDevices]; //only active trackers
+        public static bool[] validOfActivePositions = new bool[totalDevices]; 
         public static Matrix4[] lensToGround = new Matrix4[totalDevices]; //shift from lens to the ground for each device wanted during reset
         public static Matrix4[] trackerToCamera = new Matrix4[totalDevices];
+        public static int[] digZoomSpeed = new int[totalDevices];
+        public static int[] digZoomSpeedCenter = new int[totalDevices];
 
         public static ETrackedDeviceClass[] deviceClasses = new ETrackedDeviceClass[totalDevices]; //what sits at which index
         public static string[] deviceSNs = new string[totalDevices];
@@ -152,6 +156,12 @@ namespace open3mod
 
         public static void SetupDevices()
         {
+          /*  EVRSettingsError err = EVRSettingsError.None;
+            OpenVR.Settings.SetFloat(OpenVR.k_pch_Power_Section, OpenVR.k_pch_Power_TurnOffControllersTimeout_Float, 0f, ref err); 
+            OpenVR.Settings.SetFloat(OpenVR.k_pch_Power_Section, OpenVR.k_pch_Power_TurnOffScreensTimeout_Float, 5f, ref err);// "turnOffScreensTimeout"
+            float timeCont = OpenVR.Settings.GetFloat(OpenVR.k_pch_Power_Section, OpenVR.k_pch_Power_TurnOffControllersTimeout_Float, ref err); //0
+            float timeScr = OpenVR.Settings.GetFloat(OpenVR.k_pch_Power_Section, OpenVR.k_pch_Power_TurnOffScreensTimeout_Float, ref err); //5
+*/
             var vrMatrix = new HmdMatrix34_t();
             TrackedDevicePose_t[] pTrackedDevicePoseArray = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
             for (uint i = 0; i < indexOfDevice.Length; i++) indexOfDevice[i] = totalDevices + 1;
@@ -180,6 +190,7 @@ namespace open3mod
                                 allPositions[j, i] = trackedPositions[i];//pre-fill
                         }
                         activePositions[i] = true;
+                        validOfActivePositions[i] = true;
                     }
                     deviceSNs[i] = GetStringProperty(i, (ETrackedDeviceProperty)1002);
                     deviceClasses[i] = OpenVR.System.GetTrackedDeviceClass(i);
@@ -226,6 +237,7 @@ namespace open3mod
                     }
                     if (deviceClasses[i] == ETrackedDeviceClass.HMD)
                     {
+                        Debug.Assert(i == OpenVR.k_unTrackedDeviceIndex_Hmd);
                         deviceName[i] = "EXT";
                         if (indexOfDevice[0] > totalDevices) indexOfDevice[0] = i;
                         lensToGround[i] = Matrix4.CreateTranslation(0, 0, 0);
@@ -297,6 +309,70 @@ namespace open3mod
             trackedPositions[indexOfDevice[3]] = trackedPositions[indexOfDevice[1]];
         }
 
+        public static string controllerStatusReport(int id)
+        {
+            if (OpenVR.System == null) return "OFF";
+            if (indexOfDevice[id] >= OpenVR.k_unMaxTrackedDeviceCount) return "VIRT";
+            if (deviceClasses[indexOfDevice[id]] != ETrackedDeviceClass.Controller) return "N/A";
+            string status = "";
+            if (!validOfActivePositions[indexOfDevice[id]])
+            {
+                return status + "NG";
+            }
+            uint stateSize = 64;
+            VRControllerState_t controllerState = new VRControllerState_t();
+            bool validState = OpenVR.System.GetControllerState(indexOfDevice[id], ref controllerState, stateSize);
+
+            if (validState)
+            {
+                string addStatus = "OK";
+                if (controllerState.ulButtonTouched != 0) addStatus = "TO";
+                if (controllerState.ulButtonPressed != 0) addStatus = "PR";
+                //addStatus += controllerState.unPacketNum.ToString();
+                status += addStatus;
+            }
+            else
+            {
+                status += "??";
+            }
+            return status;
+        }
+
+        public static string activityStatusReport(int id)
+        {
+            if (OpenVR.System == null) return "OFF";
+            if (id >= OpenVR.k_unMaxTrackedDeviceCount) return "VIRT";
+             var activity = OpenVR.System.GetTrackedDeviceActivityLevel(indexOfDevice[id]);
+            string status = "";
+            switch (activity)
+            {
+                case EDeviceActivityLevel.k_EDeviceActivityLevel_Idle: status = "IDL"; break;
+                case EDeviceActivityLevel.k_EDeviceActivityLevel_Standby: status = "STB"; break;
+                case EDeviceActivityLevel.k_EDeviceActivityLevel_Unknown: status = "??"; break;
+                case EDeviceActivityLevel.k_EDeviceActivityLevel_UserInteraction: status = "OK"; break;
+                case EDeviceActivityLevel.k_EDeviceActivityLevel_UserInteraction_Timeout: status = "TMO"; break;
+            }
+            return status;
+        }
+
+        public static string StatusReport()
+        {
+
+            string status = "HMD: ";
+            if (indexOfDevice[0] >= OpenVR.k_unMaxTrackedDeviceCount)
+            {
+                status += "VIRT";
+            }
+            else
+            {
+                status += validOfActivePositions[indexOfDevice[0]] ? "OK" : "NG";
+            }
+            status += "/" + activityStatusReport(0);
+            status += " |  #1: " + controllerStatusReport(1) + "/" + activityStatusReport(1);
+            status += " |  #2: " + controllerStatusReport(2) + "/" + activityStatusReport(2);
+            return status;
+        }
+
         public static void ScanPositions(long frameDelay)// frame delay positive values subtract from seconds to photons
         {
             var vrMatrix = new HmdMatrix34_t();
@@ -313,6 +389,7 @@ namespace open3mod
                 if (activePositions[i] == true)
                 {
                     OpenVR.System.GetDeviceToAbsoluteTrackingPose(eOrg, fPredictedSecondsToPhotonsFromNow - (float)frameDelay/1000, pTrackedDevicePoseArray);
+                    validOfActivePositions[i] = pTrackedDevicePoseArray[i].bPoseIsValid;
                     if (pTrackedDevicePoseArray[i].bPoseIsValid)
                     {
                         vrMatrix = pTrackedDevicePoseArray[i].mDeviceToAbsoluteTracking;
@@ -350,6 +427,7 @@ namespace open3mod
             }
         }
         public const float Tau = 2.0f * (float)Math.PI;
+
         public static Vector3 FromRotMatToEulerZYXInt(Matrix4 mat)
         {
             //x''', y''', z''' are stored in rows of mat
@@ -368,6 +446,7 @@ namespace open3mod
             }
             return angles;
         }
+
         public static void ProcessAllButtons(Renderer renderer)
         {
             if (EVRerror != EVRInitError.None) return;
@@ -383,47 +462,59 @@ namespace open3mod
         public static void ProcessButtons(uint contIndex, Renderer renderer)
         {
             // 4294967296 pad
-            // 8589934592 shoot (even just partially)
-            // 2 upper button - EVRButtonId.k_EButton_Gri
-            // 4 side button - EVRButtonId.k_EButton_DPad_Up
-            // status button nothing - switches to room mode, ALL IS OFF then!! Todo: check
-            VRControllerState_t controllerState = new VRControllerState_t();
+//        public static EVRButtonId EVRButton = EVRButtonId.k_EButton_ProximitySensor;
+
+        // 8589934592 shoot (even just partially)
+        // 2 upper button - EVRButtonId.k_EButton_Gri
+        // 4 side button - EVRButtonId.k_EButton_DPad_Up
+        // status button nothing - switches to room mode, ALL IS OFF then!! Todo: check
+        VRControllerState_t controllerState = new VRControllerState_t();
             //uint stateSize = sizeof(VRControllerState_t);
             uint stateSize = 64;
-            OpenVR.System.GetControllerState(contIndex, ref controllerState, stateSize);
+            bool stateOK = OpenVR.System.GetControllerState(contIndex, ref controllerState, stateSize);
+            if (!stateOK) return;
+            var cam = renderer.cameraControllerFromIndex(contIndex);
+            if (cam == null) return;
             ulong buttons = controllerState.ulButtonPressed;
+            int stepSpeed = 1;
+            int speedMax = 20;
             if (buttons == 4294967296)
             {
-
+                float centerTouch = 0.2f;
+                float centerNoTouch = 0.6f;
+                if ((controllerState.rAxis0.x > -centerNoTouch) && (controllerState.rAxis0.x < centerNoTouch))
                 {
-                    var cam = renderer.cameraController(contIndex);
-                    if (cam != null)
-                    {
-                        float _digitalZoom = cam.GetDigitalZoom();
-                        float _digitalZoomCenter = cam.GetDigitalZoomCenter();
-                        float step = 1.01f;
-                        float centerTouch = 0.2f;
-                        float centerNoTouch = 0.6f;
-                        float stepCenter = 0.03f;
-                        if ((controllerState.rAxis0.x > -centerNoTouch) && (controllerState.rAxis0.x < centerNoTouch))
-                        {
-                            if (controllerState.rAxis0.y < -centerTouch) _digitalZoom = _digitalZoom / step;
-                            if (controllerState.rAxis0.y > centerTouch) _digitalZoom = _digitalZoom * step;
-                        }
-                        if ((controllerState.rAxis0.y > -centerNoTouch) && (controllerState.rAxis0.y < centerNoTouch))
-                        {
-                            if (controllerState.rAxis0.x < -centerTouch) _digitalZoomCenter = _digitalZoomCenter - stepCenter;
-                            if (controllerState.rAxis0.x > centerTouch) _digitalZoomCenter = _digitalZoomCenter + stepCenter;
-                        }
-                        MainWindow.CheckBoundsFloat(ref _digitalZoom, MainWindow.digitalZoomLimitLower, MainWindow.digitalZoomLimitUpper);
-                        MainWindow.CheckBoundsFloat(ref _digitalZoomCenter, 0f, 1f);
-                        lock (renderer.renderParameterLock)
-                        {
-                            cam.SetDigitalZoom(_digitalZoom);
-                            cam.SetDigitalZoomCenter(_digitalZoomCenter);
-                        }
-                    }
+                    if ((controllerState.rAxis0.y >  centerTouch) && (digZoomSpeed[contIndex] <  speedMax)) digZoomSpeed[contIndex] = digZoomSpeed[contIndex] + stepSpeed;
+                    if ((controllerState.rAxis0.y < -centerTouch) && (digZoomSpeed[contIndex] > -speedMax)) digZoomSpeed[contIndex] = digZoomSpeed[contIndex] - stepSpeed;
                 }
+                if ((controllerState.rAxis0.y > -centerNoTouch) && (controllerState.rAxis0.y < centerNoTouch))
+                {
+                    if ((controllerState.rAxis0.x < -centerTouch) && (digZoomSpeedCenter[contIndex] < speedMax)) digZoomSpeedCenter[contIndex] = digZoomSpeedCenter[contIndex] + stepSpeed;
+                    if ((controllerState.rAxis0.x > centerTouch) && (digZoomSpeedCenter[contIndex] > -speedMax)) digZoomSpeedCenter[contIndex] = digZoomSpeedCenter[contIndex] - stepSpeed;
+                }
+            }
+            else
+            {
+                if (digZoomSpeed[contIndex] > 0) digZoomSpeed[contIndex] = digZoomSpeed[contIndex] - stepSpeed;
+                if (digZoomSpeed[contIndex] < 0) digZoomSpeed[contIndex] = digZoomSpeed[contIndex] + stepSpeed;
+                if (digZoomSpeedCenter[contIndex] > 0) digZoomSpeedCenter[contIndex] = digZoomSpeedCenter[contIndex] - stepSpeed;
+                if (digZoomSpeedCenter[contIndex] < 0) digZoomSpeedCenter[contIndex] = digZoomSpeedCenter[contIndex] + stepSpeed;
+            }
+            float _digitalZoom;
+            if (digZoomSpeed[contIndex] != 0)
+            {
+                _digitalZoom = cam.GetDigitalZoom();
+                _digitalZoom = _digitalZoom * (1 + (float)digZoomSpeed[contIndex] / 10000f);
+                MainWindow.CheckBoundsFloat(ref _digitalZoom, MainWindow.digitalZoomLimitLower, MainWindow.digitalZoomLimitUpper);
+                cam.SetDigitalZoom(_digitalZoom); //whole ProcessButtons is locked, do not need to lock it again
+            }
+            float _digitalZoomCenter;
+            if (digZoomSpeedCenter[contIndex] != 0)
+            {
+                _digitalZoomCenter = cam.GetDigitalZoomCenter();
+                _digitalZoomCenter = _digitalZoomCenter + ((float)digZoomSpeedCenter[contIndex] / 2000f);
+                MainWindow.CheckBoundsFloat(ref _digitalZoomCenter, 0f, 1f);
+                cam.SetDigitalZoomCenter(_digitalZoomCenter);
             }
 
             if ((buttons & (ulong)EVRButtonId.k_EButton_Grip) == (ulong)EVRButtonId.k_EButton_Grip)
@@ -433,13 +524,21 @@ namespace open3mod
                 {
                     viewOffsetShift = lensToGround[contIndex] * trackerToCamera[contIndex];
                     viewOffset = viewOffsetShift * trackedPositions[contIndex];
-                   // viewOffset = Matrix4.Invert(GetViewFromPosition(viewOffsetPosition));
+                    if (!CoreSettings.CoreSettings.Default.UseAllAnglesForOffset)
+                    {
+                        Matrix4 rotation = viewOffset.ClearTranslation();
+                        Vector3 testVector = new Vector3(0f, 0f, 1f);
+                        Vector3.TransformNormal(ref testVector, ref rotation, out Vector3 orientation);
+                        float groundRotation = (float)Math.Atan2(orientation.X, orientation.Z);
+                        viewOffset = Matrix4.CreateRotationY(groundRotation) * viewOffset.ClearRotation();
+                    }
+                    // viewOffset = Matrix4.Invert(GetViewFromPosition(viewOffsetPosition));
                     string saveStr = "ViewOffset" + MainWindow.recentDataSeparator[0] + Matrix4ToString(viewOffset);
                     CoreSettings.CoreSettings.Default.ViewOffset = saveStr;
                     saveStr = "ViewOffsetShift" + MainWindow.recentDataSeparator[0] + Matrix4ToString(viewOffsetShift); //need to save because may be different for different controllers
                     CoreSettings.CoreSettings.Default.ViewOffsetShift = saveStr;
                     CoreSettings.CoreSettings.Default.Save();
-                                    }
+                }
             }
         }
 
