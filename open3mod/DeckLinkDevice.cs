@@ -40,7 +40,7 @@ namespace open3mod
         private bool                m_applyDetectedInputMode = true;
         private bool                m_currentlyCapturing = false;
         private bool                m_validInputSignal = false;
-        const int                   m_memSize = 30;
+        const int                   m_memSize = 6;
         private int                 m_lastUsedVideoMem = -1;
         private int                 m_lastUsedAudioMem = -1;
         private int                 m_additionalDelay = 0;

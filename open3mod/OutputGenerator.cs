@@ -390,16 +390,16 @@ namespace open3mod
                 // Pixel formats are different
                 int bpp = 4;
                 if (destFormat == _BMDPixelFormat.bmdFormat8BitYUV) bpp = 2;
-                m_selectedDevice.deckLinkOutput.CreateVideoFrame(srcFrame.GetWidth(), srcFrame.GetHeight(), srcFrame.GetWidth()*bpp, destFormat, srcFrame.GetFlags(), out IDeckLinkMutableVideoFrame destFrame);
                 try
                 {
+                    m_selectedDevice.deckLinkOutput.CreateVideoFrame(srcFrame.GetWidth(), srcFrame.GetHeight(), srcFrame.GetWidth() * bpp, destFormat, srcFrame.GetFlags(), out IDeckLinkMutableVideoFrame destFrame);
                     frameConverter.ConvertFrame(srcFrame, destFrame);
+                    return destFrame;
                 }
                 catch
                 {
                     return srcFrame;
                 }
-                return destFrame;
             }
         }
 

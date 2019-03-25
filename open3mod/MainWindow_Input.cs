@@ -689,6 +689,23 @@ namespace open3mod
                         OpenVRInterface.fPredictedSecondsToPhotonsFromNow = OpenVRInterface.fPredictedSecondsToPhotonsFromNow + (step - 1) / 1f;
                         if (OpenVRInterface.fPredictedSecondsToPhotonsFromNow > OpenVRInterface.maxAdvance) OpenVRInterface.fPredictedSecondsToPhotonsFromNow = OpenVRInterface.maxAdvance;
                         break;
+                    case Keys.T:
+                        if (capturePreview[Renderer.ActiveCamera] != null)
+                        {
+                            var delay = capturePreview[Renderer.ActiveCamera].GetAdditionalDelay();
+                            delay++;
+                            capturePreview[Renderer.ActiveCamera].SetAdditionalDelay(delay);
+                        }
+                        break;
+                    case Keys.Y:
+                    case Keys.Z:
+                        if (capturePreview[Renderer.ActiveCamera] != null)
+                        {
+                            var delay = capturePreview[Renderer.ActiveCamera].GetAdditionalDelay();
+                            delay--;
+                            capturePreview[Renderer.ActiveCamera].SetAdditionalDelay(delay);
+                        }
+                        break;
                 }
             }
         }

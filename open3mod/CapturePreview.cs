@@ -141,6 +141,12 @@ namespace open3mod
             if (m_selectedDevice == null)
                 return;
             m_selectedDevice.additionalDelay = m_additionalDelay;
+            m_additionalDelay = m_selectedDevice.additionalDelay;//may be clipped
+        }
+
+        public int GetAdditionalDelay()
+        {
+            return m_additionalDelay;
         }
 
         public void StartCapture()

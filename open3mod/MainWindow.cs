@@ -141,7 +141,7 @@ namespace open3mod
 
         public MainWindow()
         {
-            CoreSettings.CoreSettings.Default.UseTracking = false;
+            //CoreSettings.CoreSettings.Default.UseTracking = false;
             exePath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase);
             exePath = exePath.Substring(6);
             string remove = "\\bin\\Debug";

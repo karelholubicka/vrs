@@ -1978,7 +1978,10 @@ namespace open3mod
 
             int advanceMs = (int)(OpenVRInterface.fPredictedSecondsToPhotonsFromNow * 1000);
             string rb = GraphicsSettings.Default.RenderingBackend == 0 ? rb = " / GL2.0" : " / GL4.5";
-            string cs = MainWindow.useIO ? " / Camera #" + ActiveCamera.ToString() +" "+ camName + " Delayed " + actualFrameDelay.ToString() + "ms" : "";
+            string addDelay = "";
+            if (MainWindow.useIO && (MainWindow.capturePreview[ActiveCamera] != null)) addDelay = "+" + MainWindow.capturePreview[ActiveCamera].GetAdditionalDelay().ToString() + "frm";
+
+            string cs = MainWindow.useIO ? " / Camera #" + ActiveCamera.ToString() +" "+ camName + " Delayed " + actualFrameDelay.ToString() + "ms" + addDelay: "";
             string tm = " \nV:" + lastVideoDrawed.ToString("00") +"ms / M:" + lastRenderVideo.ToString("00") + "ms / S:" + lastRenderScreen.ToString("00") + "ms";
             graphics.DrawString("FPS: " + _displayFps.ToString("000.0") + rb + cs +tm + " / Advance: " + advanceMs + " ms ", MainWindow.UiState.DefaultFont16,
                                 new SolidBrush(Color.Red), 5, 5);
