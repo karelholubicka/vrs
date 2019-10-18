@@ -24,7 +24,7 @@ namespace open3mod
         public static float trackerAsideOfLens = 0.013f; //distance between controllers and lens centers
         public static float trackerOffXAxis = 0.1f; //radians - angle between controllers and lens Z axis 
         public static float lensAboveGround = 0.06f; //height of camera lens center above ground
-        public static int maxPositionsBuffer = 5;
+        public static int maxPositionsBuffer = 4; //this delay we need for NX video to get load in sync
         public static uint virtualDevices = 1;
         public static uint totalDevices = OpenVR.k_unMaxTrackedDeviceCount + virtualDevices;
         public static Matrix4[,] allPositions = new Matrix4[maxPositionsBuffer, OpenVR.k_unMaxTrackedDeviceCount];//memory buffer only for real devices
