@@ -56,8 +56,11 @@ namespace open3mod
         private int _activeAnim = -2;
         private double _animPlaybackSpeed = 1.0;
         private double _animCursor = 0.0;
+       // private bool _loop = false;
         private bool _loop = true;
         private AnimEvaluator _evaluator;
+        private float _stopInterval = 5;
+        private bool _useStopInterval = false;
 
         private readonly Dictionary<string, NodeState> _nodeStateByName;
         private NodeState _tree;
@@ -157,7 +160,7 @@ namespace open3mod
                 Debug.Assert(value >= 0);
                 _animCursor = value;
 
-                if (!Loop && _animCursor > AnimationDuration)
+                if (!_loop && _animCursor > AnimationDuration)
                 {
                     _animCursor = AnimationDuration;
                     _isInEndPosition = true;
@@ -245,6 +248,31 @@ namespace open3mod
             }
         }
 
+        /// <summary>
+        /// Specifies length of the stop interval
+        /// </summary>
+        public float StopInterval
+        {
+            get { return _stopInterval; }
+            set {  _stopInterval = value; }
+        }
+
+        /// <summary>
+        /// Specifies whether the animation stops
+        /// after the stop interval
+        /// </summary>
+        public bool UseStopInterval
+        {
+            get { return _useStopInterval; }
+            set
+            {
+                if (_useStopInterval == value)
+                {
+                    return;
+                }
+                _useStopInterval = value;
+            }
+        }
 
         /// <summary>
         /// Check if a real animation is active. This is equivalent to 
@@ -272,7 +300,15 @@ namespace open3mod
         /// <param name="delta">Real-world time delta, in seconds</param>
         public void Update(double delta)
         {
-            AnimationCursor += delta*AnimationPlaybackSpeed;
+            if ((int)(AnimationCursor / _stopInterval) < (int)((AnimationCursor + delta * AnimationPlaybackSpeed) / _stopInterval) && _useStopInterval)
+            {
+                AnimationCursor = (int)((AnimationCursor + delta * AnimationPlaybackSpeed) / _stopInterval) * _stopInterval;
+                AnimationPlaybackSpeed = 0.0; //not stopping animation timer anyway
+            }
+            else
+            {
+                AnimationCursor += delta * AnimationPlaybackSpeed;
+            }
         }
 
 
@@ -439,6 +475,15 @@ namespace open3mod
         {
             _nodeStateByName[newName] = _nodeStateByName[oldName];
             _nodeStateByName.Remove(oldName);
+        }
+
+        /// <summary>
+        /// Checks presence of node.
+        /// </summary>
+        /// <param name="name"></param>
+        public bool NodeExists(string name)
+        {
+            return _nodeStateByName.ContainsKey(name);
         }
     }
 }

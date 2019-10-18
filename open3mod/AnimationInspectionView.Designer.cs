@@ -36,17 +36,21 @@
             this.label3 = new System.Windows.Forms.Label();
             this.listBoxAnimations = new System.Windows.Forms.ListBox();
             this.panelAnimTools = new System.Windows.Forms.Panel();
+            this.labelStopIntervalError = new System.Windows.Forms.Label();
+            this.label1 = new System.Windows.Forms.Label();
+            this.textBoxStopInterval = new System.Windows.Forms.TextBox();
+            this.checkBoxStopInterval = new System.Windows.Forms.CheckBox();
             this.labelGotoError = new System.Windows.Forms.Label();
             this.labelSpeedValue = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.labelSpeed = new System.Windows.Forms.Label();
-            this.contextMenuStripAnims = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.renameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.buttonFaster = new System.Windows.Forms.Button();
             this.buttonSlower = new System.Windows.Forms.Button();
             this.buttonPlay = new System.Windows.Forms.Button();
+            this.labelSpeed = new System.Windows.Forms.Label();
             this.timeSlideControl = new open3mod.TimeSlideControl();
+            this.contextMenuStripAnims = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.renameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.panelAnimTools.SuspendLayout();
             this.panel1.SuspendLayout();
             this.contextMenuStripAnims.SuspendLayout();
@@ -107,6 +111,10 @@
             this.panelAnimTools.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.panelAnimTools.Controls.Add(this.labelStopIntervalError);
+            this.panelAnimTools.Controls.Add(this.label1);
+            this.panelAnimTools.Controls.Add(this.textBoxStopInterval);
+            this.panelAnimTools.Controls.Add(this.checkBoxStopInterval);
             this.panelAnimTools.Controls.Add(this.labelGotoError);
             this.panelAnimTools.Controls.Add(this.labelSpeedValue);
             this.panelAnimTools.Controls.Add(this.panel1);
@@ -119,6 +127,42 @@
             this.panelAnimTools.Name = "panelAnimTools";
             this.panelAnimTools.Size = new System.Drawing.Size(332, 458);
             this.panelAnimTools.TabIndex = 18;
+            // 
+            // labelStopIntervalError
+            // 
+            this.labelStopIntervalError.AutoSize = true;
+            this.labelStopIntervalError.Location = new System.Drawing.Point(172, 250);
+            this.labelStopIntervalError.Name = "labelStopIntervalError";
+            this.labelStopIntervalError.Size = new System.Drawing.Size(0, 13);
+            this.labelStopIntervalError.TabIndex = 25;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(221, 226);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(47, 13);
+            this.label1.TabIndex = 24;
+            this.label1.Text = "seconds";
+            // 
+            // textBoxStopInterval
+            // 
+            this.textBoxStopInterval.Location = new System.Drawing.Point(169, 223);
+            this.textBoxStopInterval.Name = "textBoxStopInterval";
+            this.textBoxStopInterval.Size = new System.Drawing.Size(44, 20);
+            this.textBoxStopInterval.TabIndex = 23;
+            this.textBoxStopInterval.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnStopInterval);
+            // 
+            // checkBoxStopInterval
+            // 
+            this.checkBoxStopInterval.AutoSize = true;
+            this.checkBoxStopInterval.Location = new System.Drawing.Point(7, 225);
+            this.checkBoxStopInterval.Name = "checkBoxStopInterval";
+            this.checkBoxStopInterval.Size = new System.Drawing.Size(155, 17);
+            this.checkBoxStopInterval.TabIndex = 22;
+            this.checkBoxStopInterval.Text = "Pause animation after each";
+            this.checkBoxStopInterval.UseVisualStyleBackColor = true;
+            this.checkBoxStopInterval.CheckedChanged += new System.EventHandler(this.OnChangeUseStopInterval);
             // 
             // labelGotoError
             // 
@@ -147,39 +191,6 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(242, 77);
             this.panel1.TabIndex = 19;
-            // 
-            // labelSpeed
-            // 
-            this.labelSpeed.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.labelSpeed.AutoSize = true;
-            this.labelSpeed.Location = new System.Drawing.Point(251, 2);
-            this.labelSpeed.Name = "labelSpeed";
-            this.labelSpeed.Size = new System.Drawing.Size(41, 13);
-            this.labelSpeed.TabIndex = 18;
-            this.labelSpeed.Text = "Speed:";
-            // 
-            // contextMenuStripAnims
-            // 
-            this.contextMenuStripAnims.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.deleteToolStripMenuItem,
-            this.renameToolStripMenuItem});
-            this.contextMenuStripAnims.Name = "contextMenuStripAnims";
-            this.contextMenuStripAnims.Size = new System.Drawing.Size(118, 48);
-            // 
-            // deleteToolStripMenuItem
-            // 
-            this.deleteToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("deleteToolStripMenuItem.Image")));
-            this.deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
-            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(117, 22);
-            this.deleteToolStripMenuItem.Text = "Delete";
-            this.deleteToolStripMenuItem.Click += new System.EventHandler(this.OnDeleteAnimation);
-            // 
-            // renameToolStripMenuItem
-            // 
-            this.renameToolStripMenuItem.Name = "renameToolStripMenuItem";
-            this.renameToolStripMenuItem.Size = new System.Drawing.Size(117, 22);
-            this.renameToolStripMenuItem.Text = "Rename";
-            this.renameToolStripMenuItem.Click += new System.EventHandler(this.OnRenameAnimation);
             // 
             // buttonFaster
             // 
@@ -226,6 +237,16 @@
             this.buttonPlay.Click += new System.EventHandler(this.OnPlay);
             this.buttonPlay.PreviewKeyDown += new System.Windows.Forms.PreviewKeyDownEventHandler(this.buttonPlay_PreviewKeyDown);
             // 
+            // labelSpeed
+            // 
+            this.labelSpeed.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.labelSpeed.AutoSize = true;
+            this.labelSpeed.Location = new System.Drawing.Point(251, 2);
+            this.labelSpeed.Name = "labelSpeed";
+            this.labelSpeed.Size = new System.Drawing.Size(41, 13);
+            this.labelSpeed.TabIndex = 18;
+            this.labelSpeed.Text = "Speed:";
+            // 
             // timeSlideControl
             // 
             this.timeSlideControl.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
@@ -238,6 +259,29 @@
             this.timeSlideControl.RangeMin = 0D;
             this.timeSlideControl.Size = new System.Drawing.Size(332, 67);
             this.timeSlideControl.TabIndex = 17;
+            // 
+            // contextMenuStripAnims
+            // 
+            this.contextMenuStripAnims.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.deleteToolStripMenuItem,
+            this.renameToolStripMenuItem});
+            this.contextMenuStripAnims.Name = "contextMenuStripAnims";
+            this.contextMenuStripAnims.Size = new System.Drawing.Size(118, 48);
+            // 
+            // deleteToolStripMenuItem
+            // 
+            this.deleteToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("deleteToolStripMenuItem.Image")));
+            this.deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
+            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(117, 22);
+            this.deleteToolStripMenuItem.Text = "Delete";
+            this.deleteToolStripMenuItem.Click += new System.EventHandler(this.OnDeleteAnimation);
+            // 
+            // renameToolStripMenuItem
+            // 
+            this.renameToolStripMenuItem.Name = "renameToolStripMenuItem";
+            this.renameToolStripMenuItem.Size = new System.Drawing.Size(117, 22);
+            this.renameToolStripMenuItem.Text = "Rename";
+            this.renameToolStripMenuItem.Click += new System.EventHandler(this.OnRenameAnimation);
             // 
             // AnimationInspectionView
             // 
@@ -276,5 +320,9 @@
         private System.Windows.Forms.Button buttonFaster;
         private System.Windows.Forms.Button buttonSlower;
         private System.Windows.Forms.Button buttonPlay;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.TextBox textBoxStopInterval;
+        private System.Windows.Forms.CheckBox checkBoxStopInterval;
+        private System.Windows.Forms.Label labelStopIntervalError;
     }
 }

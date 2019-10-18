@@ -213,7 +213,7 @@ namespace open3mod
         }
 
         /// <summary>
-        /// Gets NDI stream number from texture location. If there is no name to be decoded, returns "0"
+        /// Gets NDI stream number from texture location. If there is no name to be decoded, returns "0" and uses basic stream selected from UI
         /// </summary>
         public int NDIStreamNumber
         {

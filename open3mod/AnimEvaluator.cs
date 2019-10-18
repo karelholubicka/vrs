@@ -216,8 +216,26 @@ namespace open3mod
                         frame++;
                     }
 
-                    // TODO: (thom) interpolation maybe? This time maybe even logarithmic, not linear
-                    presentScaling = channel.ScalingKeys[frame].Value;
+                    // interpolate between this frame's value and next frame's value, linear
+                    var nextFrame = (frame + 1) % channel.ScalingKeyCount;
+                    var key = channel.ScalingKeys[frame];
+                    var nextKey = channel.ScalingKeys[nextFrame];
+                    var diffTime = nextKey.Time - key.Time;
+                    if (diffTime < 0.0)
+                    {
+                        diffTime += _animation.DurationInTicks;
+                    }
+
+                    if (diffTime > 0)
+                    {
+                        var factor = (float)((time - key.Time) / diffTime);
+                        presentScaling = key.Value + (nextKey.Value - key.Value) * factor;
+                    }
+                    else
+                    {
+                        presentScaling = key.Value;
+                    }
+
                     _lastPositions[a].Item3 = frame;
                 }
 

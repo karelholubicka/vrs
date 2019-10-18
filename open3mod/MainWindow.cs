@@ -57,7 +57,7 @@ namespace open3mod
         public static string[] recentItemSeparator = new string[] { ";;" };
         public static NewTek.NDI.Finder NDIFinder;
         public static float digitalZoomLimitUpper = 1.2f;
-        public static float digitalZoomLimitLower = 0.7f;
+        public static float digitalZoomLimitLower = 0.5f;
         public static float fovPreset = MathHelper.PiOver4 * 78 / 90;
         public static float fovLimitUpper = MathHelper.PiOver4 * 150 / 90;
         public static float fovLimitLower = MathHelper.PiOver4 * 30 / 90;
@@ -76,11 +76,13 @@ namespace open3mod
         public CapturePreview[] capturePreview = new CapturePreview[inputs];
         public OutputGenerator outputGenerator;
 
+
         private readonly UiState _ui;
         private Renderer _renderer;
         private readonly FpsTracker _fps;
         private LogViewer _logViewer;
         private OpenVRInterface _openVRInterface;
+        public Stopwatch _lockClock = new Stopwatch();
 
         private delegate void DelegateSelectTab(TabPage tab);
         private readonly DelegateSelectTab _delegateSelectTab;
@@ -93,6 +95,7 @@ namespace open3mod
 #endif
 
         private readonly bool _initialized;
+        private bool _shutdown = false;
 
 #if !USE_APP_IDLE
         private System.Windows.Forms.Timer _timer;
@@ -135,13 +138,17 @@ namespace open3mod
         {
             get { return _selectedNDISource; }
         }
+
+        public bool TextBoxFocused
+        {
+            get { return UiForTab(_ui.ActiveTab).TextBoxFocused; }
+        }
+
         public const int MaxRecentItems = 12;
-
-
 
         public MainWindow()
         {
-            CoreSettings.CoreSettings.Default.UseTracking = false;
+            //CoreSettings.CoreSettings.Default.UseTracking = false;
             exePath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase);
             exePath = exePath.Substring(6);
             string remove = "\\bin\\Debug";
@@ -188,8 +195,18 @@ namespace open3mod
 
             if (useIO)
             {
+               //CoreSettings.CoreSettings.Default.InputDeviceName.Clear(); //clearing inputs
                 for (int i = 0; i < inputs ; i++)
                 {
+                    if (CoreSettings.CoreSettings.Default.InputDeviceName == null)
+                    {
+                        CoreSettings.CoreSettings.Default.InputDeviceName = new StringCollection();
+                    }
+                    if (i == CoreSettings.CoreSettings.Default.InputDeviceName.Count)
+                    {
+                        CoreSettings.CoreSettings.Default.InputDeviceName.Add("");//make sure at least #input strings are ready
+                    }
+                    CoreSettings.CoreSettings.Default.Save();
                     capturePreview[i] = new CapturePreview(this, i);
                     capturePreview[i].Location = LoadInputPosition(i);
                 }
@@ -324,9 +341,9 @@ namespace open3mod
                     DelayExecution(TimeSpan.FromMilliseconds(delay + 100+100*i), capturePreview[i].StartCapture);
                 }
                 DelayExecution(TimeSpan.FromMilliseconds(delay + 300), SearchDynamicSources);//we need NDI sources to be already discovered
-              //  DelayExecution(TimeSpan.FromMilliseconds(delay + 1000), ShowSettings);
-                DelayExecution(TimeSpan.FromMilliseconds(delay + 5000), OpenVRInterface.SetupDevices);//rescan
                 DelayExecution(TimeSpan.FromMilliseconds(delay + 2500), Renderer.SyncTrackEnable);//error logging
+                DelayExecution(TimeSpan.FromMilliseconds(delay + 5000), RescanDevicesNoArg);//rescan
+                // DelayExecution(TimeSpan.FromMilliseconds(delay + 8000), ShowSettings);//must be after rescan to load proper values
             }
         }
 
@@ -771,7 +788,21 @@ namespace open3mod
             {
                 toolStripStatistics.Text = statusText;
             }
+            ResetAnimations();
+        }
 
+        void ResetAnimations()
+        {
+            var anim = UiForTab(_ui.ActiveTab).GetInspector().Animations;
+            if (anim != null)
+            {
+                var scene = UiState.ActiveTab.ActiveScene;
+                if (scene == null) return;
+                if (scene.SceneAnimator.Loop) return;
+                anim.SetTime(0.01f); //reset or replay
+                anim.SetTime(0); //reset or replay
+                anim.OnStop();
+            }
         }
 
         private static int _tabCounter;
@@ -976,7 +1007,7 @@ namespace open3mod
             {
                 if (tab.ActiveScene != null)
                 {
-                    tab.ActiveScene.Update(delta, tab != UiState.ActiveTab);
+                    tab.ActiveScene.Update(delta, (tab != UiState.ActiveTab) && (tab != UiState.BaseTab));
                 }
             }
         }
@@ -985,9 +1016,12 @@ namespace open3mod
         private void RenderScreen()
         {
             Renderer.syncTrack(false, "ScrStrt",8);
-//            string oldStatus = OpenVRInterface.EVRerror.ToString();
+            //            string oldStatus = OpenVRInterface.EVRerror.ToString();
+            Renderer._parameterLockClock.Reset();
+            Renderer._parameterLockClock.Start();
             lock (Renderer.renderParameterLock)
             {
+                Renderer.lockTrack(false, "RS");
                 OpenVRInterface.ProcessAllButtons(Renderer);
                 ProcessKeys();
             }
@@ -1018,7 +1052,8 @@ namespace open3mod
             Renderer.syncTrack(false, "RendStrt", 4);
             FrameUpdate();
             Renderer.syncTrack(false, "DrawStrt", 5);
-            Renderer.DrawVideo(_ui.ActiveTab);
+            if (_shutdown) return;
+            Renderer.lastUpload = Renderer.DrawVideo(_ui.ActiveTab);
             Renderer.syncTrack(false, "Drawed", 5);
             if (useIO)
             {
@@ -1335,6 +1370,7 @@ namespace open3mod
 
         private void OnCloseForm(object sender, FormClosedEventArgs e)
         {
+            _shutdown = true;
             if (useIO)
             {
                 for (int i = 0; i < inputs; i++)
@@ -1343,7 +1379,6 @@ namespace open3mod
                 }
                 outputGenerator.Dispose();
             }
-
             UiState.Dispose();
             _renderer.Dispose();
         }
@@ -1813,7 +1848,7 @@ namespace open3mod
                 }
                 if (_NDISources.Count() > 0)
                 {
-                    setDynamicSourceToolStripMenuItem.Text = "Choose Dynamic Source";
+                    setDynamicSourceToolStripMenuItem.Text = "Choose Dynamic Source for NDI#0";
                     if (CoreSettings.CoreSettings.Default.AutoConnectNDI) selectDynamicSource(CoreSettings.CoreSettings.Default.AutoSourceNDI,0);
                 }
                 else setDynamicSourceToolStripMenuItem.Text = "Find Dynamic Sources";
@@ -1872,17 +1907,13 @@ namespace open3mod
                 {
                     float fov = Renderer.cameraControllerFromCamera(i) != null ? Renderer.cameraControllerFromCamera(i).GetFOV() : fovPreset;
                     float digZoom = Renderer.cameraControllerFromCamera(i) != null ? Renderer.cameraControllerFromCamera(i).GetDigitalZoom() : 1f;
-                    float digZoomCenter = Renderer.cameraControllerFromCamera(i) != null ? Renderer.cameraControllerFromCamera(i).GetDigitalZoomCenter() : 0.5f;
-                    SaveInputPosition(i, capturePreview[i].Location, fov, digZoom, digZoomCenter);
+                    float digZoomCenterX = Renderer.cameraControllerFromCamera(i) != null ? Renderer.cameraControllerFromCamera(i).GetDigitalZoomCenterX() : 0.5f;
+                    float digZoomCenterY = Renderer.cameraControllerFromCamera(i) != null ? Renderer.cameraControllerFromCamera(i).GetDigitalZoomCenterY() : 0.5f;
+                    SaveInputPosition(i, capturePreview[i].Location, fov, digZoom, digZoomCenterX, digZoomCenterY);
                 }
                 CoreSettings.CoreSettings.Default.LocationOutput = outputGenerator.Location;
                 CoreSettings.CoreSettings.Default.Save();
             }
-        }
-
-        private void OnKeyPress(object sender, System.Windows.Forms.KeyPressEventArgs e)
-        {
-            e.Handled = true;
         }
 
         public static void CheckBoundsFloat(ref float value, float min, float max)
@@ -1892,9 +1923,9 @@ namespace open3mod
         }
 
 
-        public static void SaveInputPosition(int id, Point location, float fov, float digZoom, float digZoomCenter)
+        public static void SaveInputPosition(int id, Point location, float fov, float digZoom, float digZoomCenterX, float digZoomCenterY)
         {
-            string saveStr = id.ToString() + MainWindow.recentDataSeparator[0] + locationAndFovAndZoomToString(location, fov, digZoom, digZoomCenter);
+            string saveStr = id.ToString() + MainWindow.recentDataSeparator[0] + locationAndFovAndZoomToString(location, fov, digZoom, digZoomCenterX, digZoomCenterY);
             var saved = CoreSettings.CoreSettings.Default.LocationInput;
             if (saved == null)
             {
@@ -1933,14 +1964,14 @@ namespace open3mod
                     savedData = s.Split(MainWindow.recentDataSeparator, StringSplitOptions.None);
                     if (savedData[0] == SN)
                     {
-                        bool valid = stringToLocationAndFovAndZoom(savedData[1], out outPoint, out float fov, out float outDigZoom, out float outDigZoomCenter);//we do not care about validity here
+                        bool valid = stringToLocationAndFovAndZoom(savedData[1], out outPoint, out float fov, out float outDigZoom, out float outDigZoomCenterX , out float outDigZoomCenterY);//we do not care about validity here
                     }
                 }
             }
             return outPoint;
         }
 
-        public static void LoadFovAndZoom(int id, out float outFov, out float outDigZoom, out float outDigZoomCenter)
+        public static void LoadFovAndZoom(int id, out float outFov, out float outDigZoom, out float outDigZoomCenterX, out float outDigZoomCenterY)
         {
             var saved = CoreSettings.CoreSettings.Default.LocationInput;
             string[] savedData;
@@ -1948,7 +1979,8 @@ namespace open3mod
             Point outPoint = new Point(0, 240 * id);
             outFov = fovPreset;
             outDigZoom = 1f;
-            outDigZoomCenter = 0.5f;
+            outDigZoomCenterX = 0.5f;
+            outDigZoomCenterY = 0.5f;
             CheckBoundsFloat(ref outFov, fovLimitLower, fovLimitUpper);
             if (saved != null)
             {
@@ -1957,40 +1989,44 @@ namespace open3mod
                     savedData = s.Split(MainWindow.recentDataSeparator, StringSplitOptions.None);
                     if (savedData[0] == SN)
                     {
-                        bool valid = stringToLocationAndFovAndZoom(savedData[1], out outPoint, out outFov, out outDigZoom, out outDigZoomCenter);//we do not care about validity here
+                        bool valid = stringToLocationAndFovAndZoom(savedData[1], out outPoint, out outFov, out outDigZoom, out outDigZoomCenterX, out outDigZoomCenterY);//we do not care about validity here
                         CheckBoundsFloat(ref outFov, fovLimitLower, fovLimitUpper);
                         CheckBoundsFloat(ref outDigZoom, digitalZoomLimitLower, digitalZoomLimitUpper);
-                        CheckBoundsFloat(ref outDigZoomCenter, 0f, 1f);
+                        CheckBoundsFloat(ref outDigZoomCenterX, 0f, 1f);
+                        CheckBoundsFloat(ref outDigZoomCenterY, 0f, 1f);
                     }
                 }
             }
         }
 
-        public static string locationAndFovAndZoomToString(Point src, float fov, float digZoom, float digZoomCenter)
+        public static string locationAndFovAndZoomToString(Point src, float fov, float digZoom, float digZoomCenterX, float digZoomCenterY)
         {
             string outStr = src.X.ToString(System.Globalization.CultureInfo.InvariantCulture);
             outStr = outStr + MainWindow.recentItemSeparator[0] + src.Y.ToString(System.Globalization.CultureInfo.InvariantCulture);
             outStr = outStr + MainWindow.recentItemSeparator[0] + fov.ToString(System.Globalization.CultureInfo.InvariantCulture);
             outStr = outStr + MainWindow.recentItemSeparator[0] + digZoom.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            outStr = outStr + MainWindow.recentItemSeparator[0] + digZoomCenter.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            outStr = outStr + MainWindow.recentItemSeparator[0] + digZoomCenterX.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            outStr = outStr + MainWindow.recentItemSeparator[0] + digZoomCenterY.ToString(System.Globalization.CultureInfo.InvariantCulture);
             return outStr;
         }
 
-        public static bool stringToLocationAndFovAndZoom(string src, out Point outPoint, out float fov, out float digZoom, out float digZoomCenter)
+        public static bool stringToLocationAndFovAndZoom(string src, out Point outPoint, out float fov, out float digZoom, out float digZoomCenterX, out float digZoomCenterY)
         {
             string[] itemStrings = src.Split(MainWindow.recentItemSeparator, StringSplitOptions.None);
             bool valid = true;
             outPoint = Point.Empty;
             fov = fovPreset;
             digZoom = 1f;
-            digZoomCenter = 0.5f;
+            digZoomCenterX = 0.5f;
+            digZoomCenterY = 0.5f;
             try
             {
                 outPoint.X = int.Parse(itemStrings[0], System.Globalization.CultureInfo.InvariantCulture);
                 outPoint.Y = int.Parse(itemStrings[1], System.Globalization.CultureInfo.InvariantCulture);
                 fov = float.Parse(itemStrings[2], System.Globalization.CultureInfo.InvariantCulture);
                 digZoom = float.Parse(itemStrings[3], System.Globalization.CultureInfo.InvariantCulture);
-                digZoomCenter = float.Parse(itemStrings[4], System.Globalization.CultureInfo.InvariantCulture);
+                digZoomCenterX = float.Parse(itemStrings[4], System.Globalization.CultureInfo.InvariantCulture);
+                digZoomCenterY = float.Parse(itemStrings[5], System.Globalization.CultureInfo.InvariantCulture);
             }
             catch
             {
@@ -1999,9 +2035,16 @@ namespace open3mod
             return valid;
         }
 
-        private void RescanDevices(object sender, EventArgs e)
+        public void RescanDevicesNoArg()
         {
             OpenVRInterface.SetupDevices();
+            if (_renderer != null) _renderer.resetVRIndexes();
+        }
+
+        public void RescanDevices(object sender, EventArgs e)
+        {
+            OpenVRInterface.SetupDevices();
+            if (_renderer != null) _renderer.resetVRIndexes();
         }
     }
 }

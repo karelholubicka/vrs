@@ -293,6 +293,7 @@ namespace open3mod
         public override void BeginScene(Renderer renderer, bool useSceneLights = true)
         {
             _UseSceneLights = useSceneLights;
+            var sourceScene = _scene.IsFront ? _scene.Renderer.MainWindow.UiState.BaseTab.ActiveScene : _scene;
             if (_UseSceneLights)
             {
                /* if (lightNodes == null)*/ lightNodes = GenerateLightNodes(); //may be slow, need to do it only once, if possible
@@ -302,7 +303,7 @@ namespace open3mod
                 for (var i = 0; i < _LightCount; i++)
                 {
                     Node node = lightNodes[i];
-                    if ((node != null) && ((node == _scene.ActiveLight) || (null == _scene.ActiveLight)))
+                    if ((node != null) && ((node == sourceScene.ActiveLight) || (null == sourceScene.ActiveLight)))
                     {
                         var mat1 = Matrix4.Identity;
                         var cur = node;
@@ -318,7 +319,7 @@ namespace open3mod
                         while (cur != null)
                         {
                             var trafo = AssimpToOpenTk.FromMatrix(cur.Transform);
-                            //_scene.SceneAnimator.GetLocalTransform(node.Name, out trafo);
+                            //sourceScene.SceneAnimator.GetLocalTransform(node.Name, out trafo);
                             trafo.Transpose();
                             mat1 = trafo * mat1;
                             cur = cur.Parent;
@@ -332,7 +333,7 @@ namespace open3mod
                            }*/
 
                         mat1.Transpose();
-                       // _scene.SceneAnimator.GetGlobalTransform(node.Name, out mat1); //well.. identical result when scene is not Front:-)
+                        sourceScene.SceneAnimator.GetGlobalTransform(node.Name, out mat1);  // but needed to animate spots
                         _GLLights[i].lightType = (int)lights[i].LightType;  //Directional = 0x1,, Point = 0x2, Spot = 0x3,
 
                         //here we move position info into GLLights[i]
@@ -350,8 +351,8 @@ namespace open3mod
 
                         _GLLights[i].constant = lights[i].AttenuationConstant;
                         _GLLights[i].constant = 1.0f;//Well - AttenuationConstant does not bring any information, an we need to keep light attenuation at zero distance at 1.0
-                        _GLLights[i].linear = lights[i].AttenuationLinear * _scene.Scale;
-                        _GLLights[i].quadratic = lights[i].AttenuationQuadratic * _scene.Scale * _scene.Scale;
+                        _GLLights[i].linear = lights[i].AttenuationLinear * sourceScene.Scale;
+                        _GLLights[i].quadratic = lights[i].AttenuationQuadratic * sourceScene.Scale * sourceScene.Scale;
                         _GLLights[i].outerCutOff = lights[i].AngleOuterCone;
                         _GLLights[i].cutOff = lights[i].AngleInnerCone;
                     }

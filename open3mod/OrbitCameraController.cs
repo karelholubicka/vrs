@@ -39,7 +39,8 @@ namespace open3mod
         private CameraMode _cameraMode;
         private float _fovy = MainWindow.fovPreset;
         private float _digitalZoom = 1f;
-        private float _digitalZoomCenter = 0.5f;
+        private float _digitalZoomCenterX = 0.5f;
+        private float _digitalZoomCenterY = 0.5f;
 
         private bool _dirty = true;
 
@@ -106,13 +107,14 @@ namespace open3mod
             SetOrbitOrConstrainedMode(mode, false);
         }
 
-        public void SetAllParam(float fovy, float digitalZoom, float digitalZoomCenter, ScenePartMode scenePartMode, CameraMode mode)
+        public void SetAllParam(float fovy, float digitalZoom, float digitalZoomCenterX, float digitalZoomCenterY, ScenePartMode scenePartMode, CameraMode mode)
         {
             _scenePartMode = scenePartMode;
             _cameraMode = mode;
             _fovy = fovy;
             _digitalZoom = digitalZoom;
-            _digitalZoomCenter = digitalZoomCenter;
+            _digitalZoomCenterX = digitalZoomCenterX;
+            _digitalZoomCenterY = digitalZoomCenterY;
         }
 
         public float GetFOV()
@@ -125,9 +127,14 @@ namespace open3mod
             return _digitalZoom;
         }
 
-        public float GetDigitalZoomCenter()
+        public float GetDigitalZoomCenterX()
         {
-            return _digitalZoomCenter;
+            return _digitalZoomCenterX;
+        }
+
+        public float GetDigitalZoomCenterY()
+        {
+            return _digitalZoomCenterY;
         }
 
         public CameraMode GetCameraMode()
@@ -150,9 +157,14 @@ namespace open3mod
             _digitalZoom = value;
         }
 
-        public void SetDigitalZoomCenter(float value)
+        public void SetDigitalZoomCenterX(float value)
         {
-            _digitalZoomCenter = value;
+            _digitalZoomCenterX = value;
+        }
+
+        public void SetDigitalZoomCenterY(float value)
+        {
+            _digitalZoomCenterY = value;
         }
 
         public void SetScenePartMode(ScenePartMode value)

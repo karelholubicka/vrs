@@ -225,25 +225,14 @@ namespace open3mod
                             deviceAdditionalDelay[i] = 1;
                             indexOfDevice[2] = i;
                         }
-
-                        lensToGround[i] = Matrix4.CreateTranslation(0, -lensAboveGround , 0);
-                        trackerToCamera[i] = Matrix4.CreateTranslation(-trackerAsideOfLens, -trackerAboveLens, trackerBeforeLens); //first we want it NOT to be zero
-                        trackerToCamera[i] = Matrix4.CreateRotationX(trackerOffXAxis) * trackerToCamera[i]; //camera moved first from controller, then rotated
-                                                                                                            //trackerToCamera[i] = trackerToCamera[i]* Matrix4.CreateRotationZ(0.5f); //camera turned first, then moved
-                        if (indexOfDevice[1] == i)  trackerToCamera[i] = Matrix4.CreateRotationY(0.02f) * trackerToCamera[i] ; //NX need slight shift
-                        viewOffsetShift = lensToGround[i] * trackerToCamera[i]; //this value should be saved with viewOffset
-                        // LoadTrackerToCamera(i);we use just preset values here
-
+                        InitDeviceMatrix(i);
                     }
                     if (deviceClasses[i] == ETrackedDeviceClass.HMD)
                     {
                         Debug.Assert(i == OpenVR.k_unTrackedDeviceIndex_Hmd);
                         deviceName[i] = "EXT";
                         if (indexOfDevice[0] > totalDevices) indexOfDevice[0] = i;
-                        lensToGround[i] = Matrix4.CreateTranslation(0, 0, 0);
-                        trackerToCamera[i] = Matrix4.CreateTranslation(-trackerAsideOfLens, -trackerAboveLens, trackerBeforeLens); 
-                        trackerToCamera[i] = Matrix4.CreateRotationX(trackerOffXAxis) * trackerToCamera[i]; //camera moved first from HMD, then rotated
-                        LoadTrackerToCamera(i);//overwrites preset
+                        InitDeviceMatrix(i);
                     }
                 }
             }
@@ -257,6 +246,7 @@ namespace open3mod
             deviceSNs[index] = "VTCAM0";
             deviceName[index] = "Virt";
             indexOfDevice[3] = index;
+            InitDeviceMatrix(index);
 
             Matrix4 savedSettingsTest;
             bool valid = StringToMatrix4(CoreSettings.CoreSettings.Default.ViewOffset, out savedSettingsTest, out string dummyString);
@@ -265,7 +255,37 @@ namespace open3mod
             if (valid) viewOffsetShift = savedSettingsTest;
             valid = StringToMatrix4(CoreSettings.CoreSettings.Default.HMDRefPos, out savedSettingsTest, out dummyString);
             if (valid) hmdRefPos = savedSettingsTest;
+            //ResetReferenceMatrix();//only when reset is needed
 
+        }
+
+        public static void InitDeviceMatrix(uint i)
+        {
+            float usedLensAboveGround = 0; 
+            if ((indexOfDevice[1] == i) || (indexOfDevice[2] == i)) usedLensAboveGround = lensAboveGround;//lensAboveGround  only for Controllers
+            lensToGround[i] = Matrix4.CreateTranslation(0, -usedLensAboveGround, 0);
+            trackerToCamera[i] = Matrix4.CreateTranslation(-trackerAsideOfLens, -trackerAboveLens, trackerBeforeLens); //first we want it NOT to be zero
+            trackerToCamera[i] = Matrix4.CreateRotationX(trackerOffXAxis) * trackerToCamera[i]; //camera moved first from controller, then rotated
+                                                                                                //trackerToCamera[i] = trackerToCamera[i]* Matrix4.CreateRotationZ(0.5f); //camera turned first, then moved
+            if (indexOfDevice[1] == i) trackerToCamera[i] = Matrix4.CreateRotationY(0.02f) * trackerToCamera[i]; //NX need slight shift
+            if ((indexOfDevice[1] == i) || (indexOfDevice[2] == i)) viewOffsetShift = lensToGround[i] * trackerToCamera[i]; //this value should be saved with viewOffset
+            if (indexOfDevice[0] == i) LoadTrackerToCamera(i);//overwrites preset, skipped for Controllers, we use just preset values there
+            if (indexOfDevice[3] == i) LoadTrackerToCamera(i);//loads position
+        }
+
+        public static void ResetReferenceMatrix()
+        {
+            Matrix4 lensToGroundTemp = Matrix4.CreateTranslation(0, -lensAboveGround, 0);
+            Matrix4 trackerToCameraTemp = Matrix4.CreateTranslation(-trackerAsideOfLens, -trackerAboveLens, trackerBeforeLens); //first we want it NOT to be zero
+            trackerToCameraTemp = Matrix4.CreateRotationX(trackerOffXAxis) * trackerToCameraTemp;
+            viewOffsetShift = lensToGroundTemp * trackerToCameraTemp; 
+            viewOffset = Matrix4.Identity;
+            hmdRefPos = Matrix4.Identity;
+            string saveStr = "HMDRefPos" + MainWindow.recentDataSeparator[0] + Matrix4ToString(hmdRefPos);
+            CoreSettings.CoreSettings.Default.HMDRefPos = saveStr;
+            saveStr = "ViewOffset" + MainWindow.recentDataSeparator[0] + Matrix4ToString(viewOffset);
+            CoreSettings.CoreSettings.Default.ViewOffset = saveStr;
+            CoreSettings.CoreSettings.Default.Save();
         }
 
         public static Matrix4 GetViewFromPosition(Matrix4 position)
@@ -302,11 +322,19 @@ namespace open3mod
             SaveTrackerToCamera(indexOfDevice[0]);
         }
 
-        public static void GrabCamToVirt()
+        public static void SetCam3Position(Matrix4 cam3Position)
         {
-            if (indexOfDevice[1] >= trackedPositions.Length) return;
-           // if (indexOfDevice[3] >= trackedPositions.Length) return; //this shoulf be always OK, camera exists
-            trackedPositions[indexOfDevice[3]] = trackedPositions[indexOfDevice[1]];
+            trackedPositions[indexOfDevice[3]] = Matrix4.Identity;
+            trackerToCamera[indexOfDevice[3]] = cam3Position;
+            SaveTrackerToCamera(indexOfDevice[3]);
+        }
+
+        public static void GrabCamToVirt(int index)
+        {
+            if (indexOfDevice[index] >= trackedPositions.Length) return;
+            // if (indexOfDevice[3] >= trackedPositions.Length) return; //this should be always OK, camera exists
+            Matrix4 position = trackerToCamera[indexOfDevice[index]] * trackedPositions[indexOfDevice[index]];
+            SetCam3Position(position);
         }
 
         public static string controllerStatusReport(int id)
@@ -508,13 +536,13 @@ namespace open3mod
                 MainWindow.CheckBoundsFloat(ref _digitalZoom, MainWindow.digitalZoomLimitLower, MainWindow.digitalZoomLimitUpper);
                 cam.SetDigitalZoom(_digitalZoom); //whole ProcessButtons is locked, do not need to lock it again
             }
-            float _digitalZoomCenter;
+            float _digitalZoomCenterX;
             if (digZoomSpeedCenter[contIndex] != 0)
             {
-                _digitalZoomCenter = cam.GetDigitalZoomCenter();
-                _digitalZoomCenter = _digitalZoomCenter + ((float)digZoomSpeedCenter[contIndex] / 2000f);
-                MainWindow.CheckBoundsFloat(ref _digitalZoomCenter, 0f, 1f);
-                cam.SetDigitalZoomCenter(_digitalZoomCenter);
+                _digitalZoomCenterX = cam.GetDigitalZoomCenterX();
+                _digitalZoomCenterX = _digitalZoomCenterX + ((float)digZoomSpeedCenter[contIndex] / 2000f);
+                MainWindow.CheckBoundsFloat(ref _digitalZoomCenterX, 0f, 1f);
+                cam.SetDigitalZoomCenterX(_digitalZoomCenterX);
             }
 
             if ((buttons & (ulong)EVRButtonId.k_EButton_Grip) == (ulong)EVRButtonId.k_EButton_Grip)

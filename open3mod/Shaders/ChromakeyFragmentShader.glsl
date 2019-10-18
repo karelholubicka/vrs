@@ -19,8 +19,9 @@ uniform vec3      iWeightsKeying;          //keying distance
 uniform float     iTresholdKeying;         // treshold for keying
 uniform float     iPowerCanceling;         // treshold for keying
 uniform float     digitalZoom;         // zoom
-uniform float     digitalZoomCenter;         // zoom
-uniform bool      iWellDone;     //canceling process
+uniform float     digitalZoomCenterX;         // zoom
+uniform float     digitalZoomCenterY;         // zoom
+uniform bool      iWellDone;     //color canceling process
 uniform int       iMatteBlur;     //size of blur pixels
 uniform int       iMode;     // 0:normal composition 1: camera+key (no fgd+mask) 2:camera+cancel color (no fgd+mask) 3: camera natural 4: foreground (composite) only
 
@@ -230,7 +231,11 @@ void main(void)
 	//texPos2: noscale, upside down
     ivec2 texPos2 = ivec2((gl_FragCoord.x - 0.5),  iTextureResolution.y -1-(gl_FragCoord.y - 0.5));
 
-    vec2 tc = vec2((gl_FragCoord.x - 0.5)-iViewportStart.x - (iViewportSize.x * (1-digitalZoom))*digitalZoomCenter , iViewportStart.y+(iViewportSize.y)* digitalZoom - (gl_FragCoord.y - 0.5)); 
+//    vec2 tc = vec2((gl_FragCoord.x - 0.5)-iViewportStart.x - (iViewportSize.x * (1-digitalZoom))*digitalZoomCenterX , iViewportStart.y+(iViewportSize.y)* digitalZoom - (gl_FragCoord.y - 0.5)); 
+
+    // float digitalZoomCenterY = 0.5f; // now set externally
+    // float digitalZoomCenterY = 0.0f;
+	vec2 tc = vec2((gl_FragCoord.x - 0.5)-iViewportStart.x - (iViewportSize.x * (1-digitalZoom))*digitalZoomCenterX , iViewportStart.y+(iViewportSize.y)* digitalZoom + (1-digitalZoom)*digitalZoomCenterY*iViewportSize.y - (gl_FragCoord.y - 0.5)); 
     tc.x = tc.x/2; //UYVY vs RGBA texture size
 	tc = tc/scale;
     tc = tc/digitalZoom; 

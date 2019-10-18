@@ -115,7 +115,7 @@ namespace open3mod
 
             float fov = cam.GetFOV();
             float digZoom = cam.GetDigitalZoom();
-            float digZoomCenter = cam.GetDigitalZoomCenter();
+            float digZoomCenterX = cam.GetDigitalZoomCenterX();
 
             if (_fovyUpPressed)
             {
@@ -194,7 +194,7 @@ namespace open3mod
             if (digZoomSpeedCenter != 0)
             {
                 changedz = true;
-                digZoomCenter = digZoomCenter + ((float)digZoomSpeedCenter / 2000f);
+                digZoomCenterX = digZoomCenterX + ((float)digZoomSpeedCenter / 2000f);
             }
 
             if (!changedz)
@@ -204,10 +204,10 @@ namespace open3mod
 
             CheckBoundsFloat(ref fov, fovLimitLower, fovLimitUpper);
             CheckBoundsFloat(ref digZoom, digitalZoomLimitLower, digitalZoomLimitUpper);
-            CheckBoundsFloat(ref digZoomCenter, 0f, 1f);
+            CheckBoundsFloat(ref digZoomCenterX, 0f, 1f);
             cam.SetFOV(fov);
             cam.SetDigitalZoom(digZoom);
-            cam.SetDigitalZoomCenter(digZoomCenter);
+            cam.SetDigitalZoomCenterX(digZoomCenterX);
 
         }
 
@@ -485,19 +485,26 @@ namespace open3mod
 
         protected override bool IsInputKey(Keys keyData)
         {
-            return true;
+           return true;
         }
 
+        private void OnKeyPress(object sender, System.Windows.Forms.KeyPressEventArgs e)
+        {
+         //   e.Handled = true; 
+        }
 
         partial void OnPreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
         {
-            e.IsInputKey = true;
+           e.IsInputKey = true;
         }
-
 
         partial void OnKeyDown(object sender, KeyEventArgs e)
         {
             if (Renderer == null) return;
+
+            if (TextBoxFocused) return;
+            e.Handled = true;
+
             lock (Renderer.renderParameterLock)
             {
                 float step = 1.001f;
@@ -520,13 +527,8 @@ namespace open3mod
 
                 case Keys.F5:
                 case Keys.Escape:
-                        var anim = UiForTab(_ui.ActiveTab).GetInspector().Animations;
-                        if (anim != null)
-                        {
-                            anim.SetTime(0); //reset or replay
-                            anim.OnPlay(sender, e);
-                        }
-
+                       // ResetAnimations();
+                        UiForTab(_ui.ActiveTab).GetInspector().Animations.OnPlay(sender, e);
                         break;
 
                 case Keys.OemPeriod:
@@ -574,7 +576,8 @@ namespace open3mod
                             cam = Renderer.cameraControllerFromCamera(Renderer.SelectedCamera());
                             cam.SetFOV(fovPreset);
                             cam.SetDigitalZoom(1f);
-                            cam.SetDigitalZoomCenter(0.5f);
+                            cam.SetDigitalZoomCenterX(0.5f);
+                            cam.SetDigitalZoomCenterY(0.5f);
                         }
                         else
                         {

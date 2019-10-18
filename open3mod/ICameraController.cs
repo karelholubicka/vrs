@@ -108,7 +108,7 @@ namespace open3mod
         /// <summary>
         /// Sets controller view parameters
         /// </summary>
-        void SetAllParam(float fovy, float digitalZoom, float digitalZoomCenter, ScenePartMode scenePartMode, CameraMode mode);
+        void SetAllParam(float fovy, float digitalZoom, float digitalZoomCenterX, float digitalZoomCenterY, ScenePartMode scenePartMode, CameraMode mode);
 
         /// <summary>
         /// Obtains current field of view
@@ -123,10 +123,16 @@ namespace open3mod
         float GetDigitalZoom();
 
         /// <summary>
-        /// Obtains current digital zoom center
+        /// Obtains current digital zoom center X value
         /// </summary>
         /// <returns>aligment of digital zoom - 0 towards left, 1 towards right</returns>
-        float GetDigitalZoomCenter();
+        float GetDigitalZoomCenterX();
+
+        /// <summary>
+        /// Obtains current digital zoom center Y value
+        /// </summary>
+        /// <returns>aligment of digital zoom - 0 towards ground, 0.5 towards center</returns>
+        float GetDigitalZoomCenterY();
 
         /// <summary>
         /// Gets the mode of displaying
@@ -156,10 +162,16 @@ namespace open3mod
         void SetDigitalZoom(float value);
 
         /// <summary>
-        /// Sets digital zoom center
+        /// Sets digital zoom center X
         /// </summary>
         /// <returns>aligment of digital zoom - 0 towards left, 1 towards right</returns>
-        void SetDigitalZoomCenter(float value);
+        void SetDigitalZoomCenterX(float value);
+
+        /// <summary>
+        /// Sets digital zoom center Y
+        /// </summary>
+        /// <returns>aligment of digital zoom - 0 towards left, 1 towards right</returns>
+        void SetDigitalZoomCenterY(float value);
 
         /// <summary>
         /// Sets the mode of displaying

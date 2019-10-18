@@ -65,6 +65,8 @@ namespace open3mod
             }
 
             checkBoxLoop.Checked = _scene.SceneAnimator.Loop;
+            checkBoxStopInterval.Checked = _scene.SceneAnimator.UseStopInterval;
+            textBoxStopInterval.Text = _scene.SceneAnimator.StopInterval.ToString();
             _imagePlay = ImageFromResource.Get("open3mod.Images.PlayAnim.png");
             _imageStop = ImageFromResource.Get("open3mod.Images.StopAnim.png");
             buttonPlay.Image = _imagePlay;
@@ -103,6 +105,10 @@ namespace open3mod
             get { return _scene.Raw.AnimationCount == 0; }
         }
 
+        public bool TextBoxFocused
+        {
+            get { return textBoxStopInterval.Focused || textBoxGoto.Focused; }
+        }
 
         public bool Playing
         {
@@ -193,6 +199,7 @@ namespace open3mod
                         d %= _duration;
                     }
                     timeSlideControl.Position = d;
+                    if (_scene.SceneAnimator.AnimationPlaybackSpeed == 0.0) OnStop(); // Animator stopped itself
                 };
                 _timer.Start();
             }
@@ -251,6 +258,11 @@ namespace open3mod
             buttonPlay.Image = Playing ? _imageStop : _imagePlay;
         }
 
+        public void OnStop()
+        {
+            Playing = false;
+            buttonPlay.Image = _imagePlay;
+        }
 
         private void OnSlower(object sender, EventArgs e)
         {
@@ -396,6 +408,38 @@ namespace open3mod
             {
                 e.IsInputKey = true;
             }
+        }
+
+        private void OnChangeUseStopInterval(object sender, EventArgs e)
+        {
+            _scene.SceneAnimator.UseStopInterval = checkBoxStopInterval.Checked;
+        }
+
+        private void OnStopInterval(object sender, KeyEventArgs e)
+        {
+            labelStopIntervalError.Text = "";
+            if (e.KeyCode != Keys.Enter)
+            {
+                return;
+            }
+
+            var text = textBoxStopInterval.Text;
+            int pos;
+            try
+            {
+                pos = int.Parse(text);
+                if (pos <= 0 || pos > _duration)
+                {
+                    throw new FormatException();
+                }
+            }
+            catch (FormatException)
+            {
+                labelStopIntervalError.Text = "Not a valid time";
+                return;
+            }
+            Debug.Assert(pos > 0);
+            _scene.SceneAnimator.StopInterval = pos;
         }
     }
 }

@@ -153,7 +153,8 @@ namespace open3mod
                     controllerStr = intCamMode.ToString(System.Globalization.CultureInfo.InvariantCulture) +
                               MainWindow.recentItemSeparator[0] + cam.GetFOV().ToString(System.Globalization.CultureInfo.InvariantCulture) +
                               MainWindow.recentItemSeparator[0] + cam.GetDigitalZoom().ToString(System.Globalization.CultureInfo.InvariantCulture) +
-                              MainWindow.recentItemSeparator[0] + cam.GetDigitalZoomCenter().ToString(System.Globalization.CultureInfo.InvariantCulture) +
+                              MainWindow.recentItemSeparator[0] + cam.GetDigitalZoomCenterX().ToString(System.Globalization.CultureInfo.InvariantCulture) +
+                              MainWindow.recentItemSeparator[0] + cam.GetDigitalZoomCenterY().ToString(System.Globalization.CultureInfo.InvariantCulture) +
                               MainWindow.recentItemSeparator[0] + ((int)cam.GetScenePartMode()).ToString(System.Globalization.CultureInfo.InvariantCulture);
                     viewportStr = viewportStr + controllerStr + MainWindow.recentDataSeparator[0];
                 }
@@ -170,7 +171,8 @@ namespace open3mod
         {
             float[] _fovyA = { MainWindow.fovPreset, MainWindow.fovPreset, MainWindow.fovPreset, MainWindow.fovPreset, MainWindow.fovPreset };
             float[] _digitalZoomA = { 1f,1f,1f,1f,1f };
-            float[] _digitalZoomCenterA = { 0.5f, 0.5f, 0.5f, 0.5f, 0.5f };
+            float[] _digitalZoomCenterXA = { 0.5f, 0.5f, 0.5f, 0.5f, 0.5f };
+            float[] _digitalZoomCenterYA = { 0.5f, 0.5f, 0.5f, 0.5f, 0.5f };
             ScenePartMode[] _scenePartMode = { ScenePartMode.Background, ScenePartMode.Background, ScenePartMode.Foreground, ScenePartMode.Foreground, ScenePartMode.All };
             CameraMode[] cameraModes = { CameraMode.Cont1, CameraMode.Cont1, CameraMode.Cont2, CameraMode.Cont2, CameraMode.Orbit };
             string[] recentData;
@@ -196,15 +198,19 @@ namespace open3mod
                         if (!String.IsNullOrEmpty(recentItems[2])) _digitalZoomA[i] = float.Parse(recentItems[2], System.Globalization.CultureInfo.InvariantCulture);
                         MainWindow.CheckBoundsFloat(ref _digitalZoomA[i], MainWindow.digitalZoomLimitLower, MainWindow.digitalZoomLimitUpper);
 
-                        if (!String.IsNullOrEmpty(recentItems[3])) _digitalZoomCenterA[i] = float.Parse(recentItems[3], System.Globalization.CultureInfo.InvariantCulture);
-                        MainWindow.CheckBoundsFloat(ref _digitalZoomCenterA[i], 0f, 1f);
+                        if (!String.IsNullOrEmpty(recentItems[3])) _digitalZoomCenterXA[i] = float.Parse(recentItems[3], System.Globalization.CultureInfo.InvariantCulture);
+                        MainWindow.CheckBoundsFloat(ref _digitalZoomCenterXA[i], 0f, 1f);
 
-                        if (!String.IsNullOrEmpty(recentItems[4])) _scenePartMode[i] = (ScenePartMode)int.Parse(recentItems[4], System.Globalization.CultureInfo.InvariantCulture);
+                        if (!String.IsNullOrEmpty(recentItems[4])) _digitalZoomCenterYA[i] = float.Parse(recentItems[4], System.Globalization.CultureInfo.InvariantCulture);
+                        MainWindow.CheckBoundsFloat(ref _digitalZoomCenterYA[i], 0f, 1f);
+
+                        if (!String.IsNullOrEmpty(recentItems[5])) _scenePartMode[i] = (ScenePartMode)int.Parse(recentItems[5], System.Globalization.CultureInfo.InvariantCulture);
                         ChangeCameraModeForView((ViewIndex)i, cameraModes[i]);
 
                         cam.SetFOV(_fovyA[i]);
                         cam.SetDigitalZoom(_digitalZoomA[i]);
-                        cam.SetDigitalZoomCenter(_digitalZoomCenterA[i]);
+                        cam.SetDigitalZoomCenterX(_digitalZoomCenterXA[i]);
+                        cam.SetDigitalZoomCenterY(_digitalZoomCenterYA[i]);
                     }
                 }
                 catch
@@ -229,7 +235,8 @@ namespace open3mod
                 {
                     float[] _fovyA = { MainWindow.fovPreset, MainWindow.fovPreset, MainWindow.fovPreset, MainWindow.fovPreset, MainWindow.fovPreset };
                     float[] _digitalZoomA = { 1f, 1f, 1f, 1f, 1f };
-                    float[] _digitalZoomCenterA = { 0.5f, 0.5f, 0.5f, 0.5f, 0.5f };
+                    float[] _digitalZoomCenterXA = { 0.5f, 0.5f, 0.5f, 0.5f, 0.5f };
+                    float[] _digitalZoomCenterYA = { 0.5f, 0.5f, 0.5f, 0.5f, 0.5f };
                     ScenePartMode[] _scenePartMode = {ScenePartMode.All, ScenePartMode.All, ScenePartMode.All, ScenePartMode.All, ScenePartMode.All };
                     string[] recentData;
                     string[] recentItems;
@@ -249,10 +256,13 @@ namespace open3mod
                             if (!String.IsNullOrEmpty(recentItems[2])) _digitalZoomA[i] = float.Parse(recentItems[2], System.Globalization.CultureInfo.InvariantCulture);
                             MainWindow.CheckBoundsFloat(ref _digitalZoomA[i], MainWindow.digitalZoomLimitLower, MainWindow.digitalZoomLimitUpper);
 
-                            if (!String.IsNullOrEmpty(recentItems[3])) _digitalZoomCenterA[i] = float.Parse(recentItems[3], System.Globalization.CultureInfo.InvariantCulture);
-                            MainWindow.CheckBoundsFloat(ref _digitalZoomCenterA[i], 0f, 1f);
+                            if (!String.IsNullOrEmpty(recentItems[3])) _digitalZoomCenterXA[i] = float.Parse(recentItems[3], System.Globalization.CultureInfo.InvariantCulture);
+                            MainWindow.CheckBoundsFloat(ref _digitalZoomCenterXA[i], 0f, 1f);
 
-                            if (!String.IsNullOrEmpty(recentItems[4])) _scenePartMode[i] = (ScenePartMode)int.Parse(recentItems[4], System.Globalization.CultureInfo.InvariantCulture);
+                            if (!String.IsNullOrEmpty(recentItems[4])) _digitalZoomCenterYA[i] = float.Parse(recentItems[4], System.Globalization.CultureInfo.InvariantCulture);
+                            MainWindow.CheckBoundsFloat(ref _digitalZoomCenterYA[i], 0f, 1f);
+
+                            if (!String.IsNullOrEmpty(recentItems[5])) _scenePartMode[i] = (ScenePartMode)int.Parse(recentItems[5], System.Globalization.CultureInfo.InvariantCulture);
                         }
                         catch
                         {

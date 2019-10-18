@@ -70,13 +70,28 @@ namespace open3mod
                 comboBoxInputDevice.EndUpdate();
                 deckLink.SetID(this, m_mainWindow, m_number);
 
-                int ignoreDevices = -1;
-                if (comboBoxInputDevice.Items.Count == m_number + ignoreDevices + 1)
+                /*   int ignoreDevices = -1;
+                   if (comboBoxInputDevice.Items.Count == m_number + ignoreDevices + 1)
+                   {
+                       comboBoxInputDevice.SelectedIndex = m_number + ignoreDevices;
+                   }
+   */
+                comboBoxInputDevice.SelectedIndex = -1;
+                foreach (StringObjectPair<DeckLinkInputDevice> item in comboBoxInputDevice.Items)
                 {
-                    comboBoxInputDevice.SelectedIndex = m_number + ignoreDevices;
+                    if (item.ToString() == CoreSettings.CoreSettings.Default.InputDeviceName[m_number])
+                    {
+                        comboBoxInputDevice.SelectedItem = item;
+                        break;
+                    }
                 }
-                EnableInterface(true);
-                buttonStartStop.Enabled = true;
+                bool enableButton = true;
+                if (comboBoxInputDevice.SelectedItem != null)
+                {
+                    if (comboBoxInputDevice.SelectedItem.ToString() == "") enableButton = false;
+                }
+                EnableInterface(enableButton);
+                buttonStartStop.Enabled = enableButton;
             }
         }
 
@@ -174,6 +189,16 @@ namespace open3mod
             buttonStartStop.Text = "Stop Capture";
             EnableInterface(false);
             SetAdditionalDelay(m_additionalDelay);
+            if (m_number < CoreSettings.CoreSettings.Default.InputDeviceName.Count)
+            {
+                string selectedDevice = ((StringObjectPair<DeckLinkInputDevice>)comboBoxInputDevice.SelectedItem).ToString();
+                if (CoreSettings.CoreSettings.Default.InputDeviceName.IndexOf(selectedDevice) != m_number)
+                {
+                    CoreSettings.CoreSettings.Default.InputDeviceName.RemoveAt(m_number);
+                    CoreSettings.CoreSettings.Default.InputDeviceName.Insert(m_number, selectedDevice);
+                    CoreSettings.CoreSettings.Default.Save();
+                }
+            }
             m_capturing = true;
         }
 

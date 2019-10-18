@@ -12,7 +12,7 @@ namespace CoreSettings {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.6.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.9.0.0")]
     internal sealed partial class CoreSettings : global::System.Configuration.ApplicationSettingsBase {
         
         private static CoreSettings defaultInstance = ((CoreSettings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new CoreSettings())));
@@ -818,6 +818,89 @@ namespace CoreSettings {
             }
             set {
                 this["LockSceneToController"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool NDI1override {
+            get {
+                return ((bool)(this["NDI1override"]));
+            }
+            set {
+                this["NDI1override"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool NDI2override {
+            get {
+                return ((bool)(this["NDI2override"]));
+            }
+            set {
+                this["NDI2override"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public byte NDI1overrideSource {
+            get {
+                return ((byte)(this["NDI1overrideSource"]));
+            }
+            set {
+                this["NDI1overrideSource"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public byte NDI2overrideSource {
+            get {
+                return ((byte)(this["NDI2overrideSource"]));
+            }
+            set {
+                this["NDI2overrideSource"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::System.Collections.Specialized.StringCollection InputDeviceName {
+            get {
+                return ((global::System.Collections.Specialized.StringCollection)(this["InputDeviceName"]));
+            }
+            set {
+                this["InputDeviceName"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool ConnectDigitalZoom {
+            get {
+                return ((bool)(this["ConnectDigitalZoom"]));
+            }
+            set {
+                this["ConnectDigitalZoom"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("X-DigitalZoom")]
+        public string DigitalZoomObject {
+            get {
+                return ((string)(this["DigitalZoomObject"]));
+            }
+            set {
+                this["DigitalZoomObject"] = value;
             }
         }
     }

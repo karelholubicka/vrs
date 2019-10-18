@@ -235,11 +235,13 @@ namespace open3mod
         {
             IGraphicsContext currentContext = GraphicsContext.CurrentContext;
             int[] CurrentViewport = new int[4];
+          //  float[] CurrentViewportf = new float[4];
             bool validVp = false;
             if (currentContext != null)
             {
                 RenderControl.GLError("BeforeTargetChange");
                 GL.GetInteger(GetPName.Viewport, CurrentViewport);
+              //  GL.GetFloat(GetPName.Viewport, CurrentViewportf);
                 validVp = true;
                // GL.Finish();
             }
@@ -294,6 +296,7 @@ namespace open3mod
             if (validVp)
             {
                 GL.Viewport(CurrentViewport[0], CurrentViewport[1], CurrentViewport[2], CurrentViewport[3]);//We copy viewport to the context we switched to..
+              //  GL.ViewportIndexed(0, CurrentViewportf[0], CurrentViewportf[1], CurrentViewportf[2], CurrentViewportf[3]);
                 RenderControl.GLError("AfterTargetChange");
             }
         }

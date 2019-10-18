@@ -41,17 +41,6 @@ namespace open3mod
     {
         private const int _displayListCount = 8;
         private int[,] _displayList = new int[_displayListCount,2];
-        /* display lists:
-        0: Background;
-        1: Else (always visible);
-        2: Foreground;
-        3: GreenScreen;
-        4: BackgroundAnimated;
-        5: ElseAnimated (always visible);
-        6: ForegroundAnimated;
-        7: GreenScreenAnimated;
-        Animated - list is refreshed each frame
-        */
         private RenderFlags _lastFlags;
         private bool wasAnimated;
 
@@ -209,17 +198,7 @@ namespace open3mod
             
             Owner.NewFrame = false;
             wasAnimated = animated;
-            /* display lists:
-            0: Else(always visible);
-            1: Background;
-            2: Foreground;
-            3: GreenScreen;
-            4: Else(always visible) Animated;
-            5: BackgroundAnimated;
-            6: ForegroundAnimated;
-            7: GreenScreenAnimated;
-            Animated - list is refreshed each frame
-            */
+
             switch (cam.GetScenePartMode())
             {
                 case ScenePartMode.Others:
@@ -228,17 +207,17 @@ namespace open3mod
                     if (_displayList[0, 1] != 0) GL.CallList(_displayList[0, 1]);
                     if (_displayList[4, 1] != 0) GL.CallList(_displayList[4, 1]);
                     break;
-                case ScenePartMode.Foreground:
-                    if (_displayList[2, 0] != 0) GL.CallList(_displayList[2, 0]);
-                    if (_displayList[6, 0] != 0) GL.CallList(_displayList[6, 0]);
-                    if (_displayList[2, 1] != 0) GL.CallList(_displayList[2, 1]);
-                    if (_displayList[6, 1] != 0) GL.CallList(_displayList[6, 1]);
-                    break;
                 case ScenePartMode.Background:
                     if (_displayList[1, 0] != 0) GL.CallList(_displayList[1, 0]);
                     if (_displayList[5, 0] != 0) GL.CallList(_displayList[5, 0]);
                     if (_displayList[1, 1] != 0) GL.CallList(_displayList[1, 1]);
                     if (_displayList[5, 1] != 0) GL.CallList(_displayList[5, 1]);
+                    break;
+                case ScenePartMode.Foreground:
+                    if (_displayList[2, 0] != 0) GL.CallList(_displayList[2, 0]);
+                    if (_displayList[6, 0] != 0) GL.CallList(_displayList[6, 0]);
+                    if (_displayList[2, 1] != 0) GL.CallList(_displayList[2, 1]);
+                    if (_displayList[6, 1] != 0) GL.CallList(_displayList[6, 1]);
                     break;
                 case ScenePartMode.GreenScreen:
                     if (_displayList[3, 0] != 0) GL.CallList(_displayList[3, 0]);

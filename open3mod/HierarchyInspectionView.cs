@@ -855,6 +855,10 @@ namespace open3mod
             }
         }
 
+        public bool TextBoxFocused
+        {
+            get { return textBoxFilter.Focused; }
+        }
 
         private void OnKeyPress(object sender, KeyPressEventArgs e)
         {

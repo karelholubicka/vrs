@@ -38,6 +38,7 @@ namespace open3mod
         private GraphicsSettings _gSettings;
         private MainWindow _mainWindow;
         IFormatProvider _provider = CultureInfo.CreateSpecificCulture("en-US");
+        private string cam3offsRollText = "0";
 
         public SettingsDialog()
         {
@@ -45,7 +46,15 @@ namespace open3mod
             _gSettings.Reload();
 
             InitializeComponent();
-
+            this.cam0offsX.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
+            this.cam0offsY.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
+            this.cam0offsZ.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
+            this.cam0offsPitch.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
+            this.cam3offsX.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
+            this.cam3offsY.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
+            this.cam3offsZ.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
+            this.cam3offsPitch.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
+            this.cam3offsYaw.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
 
             InitTexResolution();
             InitTexFilter();
@@ -53,7 +62,9 @@ namespace open3mod
             InitLightingQuality();
             InitRenderingBackend();
             InitCam0Offset();
+            InitCam3Position();
             InitHMDOffset();
+            InitNDIoverride();
 
             if (CoreSettings.CoreSettings.Default.AdditionalTextureFolders != null)
             {
@@ -82,10 +93,28 @@ namespace open3mod
             set { _mainWindow = value; }
         }
 
+        private void box_MouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)
+        {
+            boxOK = true;
+            float test = readFloat((sender as TextBox).Text);
+            if (!boxOK)
+            {
+                return;
+            }
+            boxOK = true;
+            test = test + e.Delta / 120;
+            (sender as TextBox).Text = test.ToString(_provider);
+            OpenVRInterface.SetCam0Offset(cam0offs);
+            OpenVRInterface.SetCam3Position(cam3pos);
+        }
+
+
 
         private void OnOk(object sender, EventArgs e)
         {
             _gSettings.Save();
+            OpenVRInterface.SetCam0Offset(cam0offs);
+            OpenVRInterface.SetCam3Position(cam3pos);
             if (_mainWindow == null)
             {
                 Close();
@@ -327,6 +356,20 @@ namespace open3mod
             cam0offsPitch.Text = (angles.X*180/(float)Math.PI).ToString("0.###", _provider);
         }
 
+        private void InitCam3Position()
+        {
+            if (OpenVRInterface.indexOfDevice[3] >= OpenVRInterface.trackerToCamera.Length) return;
+            Matrix4 position = OpenVRInterface.trackerToCamera[OpenVRInterface.indexOfDevice[3]];
+            cam3offsX.Text = (position.M41 * unit).ToString("0.###", _provider);
+            cam3offsY.Text = (position.M42 * unit).ToString("0.###", _provider);
+            cam3offsZ.Text = (position.M43 * unit).ToString("0.###", _provider);
+            Vector3 angles = OpenVRInterface.FromRotMatToEulerZYXInt(position);
+            cam3offsPitch.Text = (angles.X * 180 / (float)Math.PI).ToString("0.###", _provider);
+            cam3offsYaw.Text = (angles.Y * 180 / (float)Math.PI).ToString("0.###", _provider);
+            cam3offsRollText = (angles.Z * 180 / (float)Math.PI).ToString("0.###", _provider); // should be always zero
+        }
+
+
         private void InitHMDOffset()
         {
             Matrix4 position = OpenVRInterface.hmdRefPos;
@@ -348,16 +391,43 @@ namespace open3mod
                 return;
             }
             boxOK = true;
-            Matrix4 transMatrix = Matrix4.CreateTranslation(readFloat(cam0offsX.Text)/unit, readFloat(cam0offsY.Text) / unit, readFloat(cam0offsZ.Text) / unit);
-            Matrix4 orientMatrix = Matrix4.CreateRotationX(readFloat(cam0offsPitch.Text)*(float)Math.PI/180);//degrees??
+            Matrix4 transMatrix = Matrix4.CreateTranslation(readFloat(cam0offsX.Text) / unit, readFloat(cam0offsY.Text) / unit, readFloat(cam0offsZ.Text) / unit);
+            Matrix4 orientMatrix = Matrix4.CreateRotationX(readFloat(cam0offsPitch.Text) * (float)Math.PI / 180);//degrees??
             cam0offs = orientMatrix * transMatrix;
             if (boxOK)
             {
-              //  labelYR.Text = readFloat(cam0offsX.Text).ToString(_provider) + " " + readFloat(cam0offsY.Text).ToString(_provider) + " " + readFloat(cam0offsZ.Text).ToString(_provider) + " " + readFloat(cam0offsPitch.Text).ToString(_provider);
+                //labelYR.Text = readFloat(cam0offsX.Text).ToString(_provider) + " " + readFloat(cam0offsY.Text).ToString(_provider) + " " + readFloat(cam0offsZ.Text).ToString(_provider) + " " + readFloat(cam0offsPitch.Text).ToString(_provider);
             }
             else
             {
                 MessageBox.Show("Offset Numbers Not Valid", "Error", MessageBoxButtons.OK);
+            }
+
+        }
+        Matrix4 cam3pos;
+        private void cam3box_TextChanged(object sender, EventArgs e)
+        {
+            boxOK = true;
+            float test = readFloat((sender as TextBox).Text);
+            if (!boxOK)
+            {
+                MessageBox.Show("Invalid char entered", "Error", MessageBoxButtons.OK);
+                return;
+            }
+            boxOK = true;
+            Matrix4 transMatrix = Matrix4.CreateTranslation(readFloat(cam3offsX.Text)/unit, readFloat(cam3offsY.Text) / unit, readFloat(cam3offsZ.Text) / unit);
+            Matrix4 orientMatrix = Matrix4.Identity;
+            orientMatrix = Matrix4.CreateRotationZ(readFloat(cam3offsRollText) * (float)Math.PI / 180) * orientMatrix;//degrees??
+            orientMatrix = Matrix4.CreateRotationY(readFloat(cam3offsYaw.Text)  * (float)Math.PI / 180) * orientMatrix;//degrees??
+            orientMatrix = Matrix4.CreateRotationX(readFloat(cam3offsPitch.Text)* (float)Math.PI / 180) * orientMatrix;//degrees??
+            cam3pos = orientMatrix * transMatrix;
+            if (boxOK)
+            {
+              //labelYR.Text = readFloat(cam0offsX.Text).ToString(_provider) + " " + readFloat(cam0offsY.Text).ToString(_provider) + " " + readFloat(cam0offsZ.Text).ToString(_provider) + " " + readFloat(cam0offsPitch.Text).ToString(_provider);
+            }
+            else
+            {
+                MessageBox.Show("Position Numbers Not Valid", "Error", MessageBoxButtons.OK);
             }
 
         }
@@ -388,7 +458,34 @@ namespace open3mod
                 e.Handled = true;
                 return;
             }
+            numBox_CheckInput(sender, e);
+        }
 
+        private void cam0box_LeaveFocus(object sender, EventArgs e)
+        {
+            InitCam0Offset();
+        }
+
+        private void cam3box_LeaveFocus(object sender, EventArgs e)
+        {
+            InitCam3Position();
+        }
+
+        private void numBox3_KeyPress(object sender, System.Windows.Forms.KeyPressEventArgs e)
+        {
+            if ((e.KeyChar == 13) && (boxOK = true))
+            {
+                (sender as TextBox).SelectAll();
+                OpenVRInterface.SetCam3Position(cam3pos);
+                InitCam3Position();
+                e.Handled = true;
+                return;
+            }
+            numBox_CheckInput(sender, e);
+        }
+
+        private void numBox_CheckInput(object sender, System.Windows.Forms.KeyPressEventArgs e)
+        {
             if (e.KeyChar == ',') e.KeyChar = '.';
             if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar) && (e.KeyChar != '.') && (e.KeyChar != '-'))
             {
@@ -446,12 +543,34 @@ namespace open3mod
 
         private void rescanVRDevices_Click(object sender, EventArgs e)
         {
-            OpenVRInterface.SetupDevices();
+            _mainWindow.RescanDevices(sender,e);
         }
 
-        private void grabCamToVirt_Click(object sender, EventArgs e)
+        private void grabCam0ToVirt_Click(object sender, EventArgs e)
         {
-            OpenVRInterface.GrabCamToVirt();
+            OpenVRInterface.GrabCamToVirt(0);
+            InitCam3Position();
+        }
+        private void grabCam1ToVirt_Click(object sender, EventArgs e)
+        {
+            OpenVRInterface.GrabCamToVirt(1);
+            InitCam3Position();
+        }
+
+        private void InitNDIoverride()
+        {
+            comboNDI1override.SelectedIndex = CoreSettings.CoreSettings.Default.NDI1overrideSource;
+            comboNDI2override.SelectedIndex = CoreSettings.CoreSettings.Default.NDI2overrideSource;
+        }
+
+        private void comboNDI1override_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            CoreSettings.CoreSettings.Default.NDI1overrideSource = (byte)comboNDI1override.SelectedIndex;
+        }
+
+        private void comboNDI2override_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            CoreSettings.CoreSettings.Default.NDI2overrideSource = (byte)comboNDI2override.SelectedIndex;
         }
     }
 }

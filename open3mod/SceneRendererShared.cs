@@ -108,11 +108,11 @@ namespace open3mod
         }
 
         /* display lists:
-        0: Else (always visible);
+        0: Else (invisible in video);
         1: Background;
         2: Foreground;
         3: GreenScreen;
-        4: Else (always visible) Animated;
+        4: Else (invisible in video) Animated;
         5: BackgroundAnimated;
         6: ForegroundAnimated;
         7: GreenScreenAnimated;
@@ -181,6 +181,10 @@ namespace open3mod
             if (animated)
             {
                 Owner.SceneAnimator.GetLocalTransform(node, out m);
+                //if ((node.Name == "CubeMain") && (currDispList == 1)) //check animation values
+                //{
+                 //   Console.Write(" " + m.M11.ToString() + " " + m.M24.ToString()+" AC " + Owner.SceneAnimator.AnimationCursor.ToString());
+                //}
             }
             else
             {

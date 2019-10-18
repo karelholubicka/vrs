@@ -39,6 +39,16 @@ namespace open3mod
             Enabled = false;
         }
 
+        public bool TextBoxFocused
+        {
+            get
+            {
+                bool focused = false;
+                if ((Animations != null) && Animations.TextBoxFocused) focused = true;
+                if ((Hierarchy != null) && Hierarchy.TextBoxFocused) focused = true;
+                return focused;
+            }
+        }
 
         public void OpenMaterialsTabAndScrollTo(MaterialThumbnailControl thumb)
         {

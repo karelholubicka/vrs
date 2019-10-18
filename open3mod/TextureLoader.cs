@@ -101,7 +101,6 @@ namespace open3mod
                         using(var devilImage = imp.LoadImageFromStream(stream))
                         {
                             devilImage.Bind();
-
                             var info = DevIL.Unmanaged.IL.GetImageInfo();
                             var bitmap = new Bitmap(info.Width, info.Height, PixelFormat.Format32bppArgb);
                             var rect = new Rectangle(0, 0, info.Width, info.Height);
@@ -112,7 +111,7 @@ namespace open3mod
                             bitmap.UnlockBits(data);
                             _image = bitmap;
                             _result = LoadResult.Good;
-                            _image.RotateFlip(RotateFlipType.RotateNoneFlipY);
+                            if (devilImage.Origin == OriginLocation.LowerLeft) _image.RotateFlip(RotateFlipType.RotateNoneFlipY);
                         }
                     }
                     catch (Exception)

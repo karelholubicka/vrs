@@ -50,6 +50,11 @@ namespace open3mod
             return inspectionView1;
         }
 
+        public bool TextBoxFocused
+        {
+            get { return inspectionView1.TextBoxFocused; }
+        }
+
         public void InjectGlControl(GLControl gl)
         {
             var s = splitContainer.Controls[0];
