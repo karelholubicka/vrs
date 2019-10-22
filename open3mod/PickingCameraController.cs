@@ -52,7 +52,7 @@ namespace open3mod
 
         private void UpdateViewMatrix()
         {
-            if (((OpenVRInterface.EVRerror == EVRInitError.None)&& (contIndex < OpenVRInterface.trackedPositions.Length))||((contIndex >= OpenVR.k_unMaxTrackedDeviceCount)&&(contIndex < OpenVRInterface.totalDevices))) //is virtual
+            if (((OpenVRInterface.EVRerror == EVRInitError.None) && (contIndex < OpenVRInterface.trackedPositions.Length))||((contIndex >= OpenVR.k_unMaxTrackedDeviceCount)&&(contIndex < OpenVRInterface.totalDevices))) //is virtual
             {
                 _trackerPosition = OpenVRInterface.trackedPositions[contIndex];
                 _viewPosition = OpenVRInterface.trackerToCamera[contIndex] * _trackerPosition;

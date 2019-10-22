@@ -70,8 +70,9 @@ namespace open3mod
         //        private IDeckLinkMutableVideoFrame m_videoFrameBGRA;
         private uint m_totalFramesScheduled;
         //
-//        private OutputSignal m_outputSignal;
+        //        private OutputSignal m_outputSignal;
         private IntPtr m_audioBuffer;
+        private IntPtr m_audioBufferB;
         private uint m_audioBufferWriteOffset;
         private uint m_audioBufferReadOffset;
         private uint m_audioBufferSampleLength;
@@ -218,6 +219,7 @@ namespace open3mod
             m_audioBufferSampleLength = (uint)(m_prerollFrames * audioSamplesPerFrame());
             int m_audioBufferDataLength = (int)(m_audioBufferSampleLength * audioDataPerSample());
             m_audioBuffer = Marshal.AllocCoTaskMem(m_audioBufferDataLength);
+            m_audioBufferB = Marshal.AllocCoTaskMem(m_audioBufferDataLength);
             m_audioBufferAllocated = true;
             kAudioWaterlevel = audioSamplesPerFrame() * 2;
 
@@ -255,6 +257,8 @@ namespace open3mod
             CoreSettings.CoreSettings.Default.OutputVideoMode = videoMode;
             CoreSettings.CoreSettings.Default.FrameDuration = MainWindow.frameDuration;
             CoreSettings.CoreSettings.Default.TimeScale = MainWindow.timeScale;
+
+            addBufferedAudioFrame();//try to delay audio 1 frame more ... or at least buffer some samples
         }
 
         public IntPtr videoFrameBuffer()
@@ -280,7 +284,7 @@ namespace open3mod
             return m_audioDataPerFrame;
         }
 
-        public void addAudioFrame(IntPtr audioData)
+        public void addAudioFrame(IntPtr audioData) //unused now
         {
             if (!m_audioBufferAllocated) return;
             if (m_running == false) return;
@@ -318,7 +322,12 @@ namespace open3mod
         {
             if (!m_audioBufferAllocated) return;
             if (m_running == false) return;
-            m_selectedDevice.deckLinkOutput.ScheduleAudioSamples(m_audioBuffer, audioSamplesPerFrame(), 0, 0, out uint samplesWritten);
+            lock (m_selectedDevice)
+            m_selectedDevice.deckLinkOutput.ScheduleAudioSamples(m_audioBufferB, audioSamplesPerFrame(), 0, 0, out uint samplesWritten);
+            // one frame delay
+            {
+                MainWindow.CopyMemory(m_audioBufferB, m_audioBuffer, audioDataPerFrame());
+            }
         }
 
         void WriteNextAudioSamples() // called at 50Hz during playback
@@ -327,24 +336,34 @@ namespace open3mod
             if (!m_audioBufferAllocated) return;
             // Make sure that playback is still active
             if (m_running == false) return;
-
+            //for each video frame we schedule an audio frame elsewhere; WriteNextAudioSamples() only breakes sync if used
+            return;
             // Try to maintain the number of audio samples buffered in the API at a specified waterlevel
             uint bufferedSamples;
             m_selectedDevice.deckLinkOutput.GetBufferedAudioSampleFrameCount(out bufferedSamples);
             if (bufferedSamples < kAudioWaterlevel)//this happenes only when addAudioFrame/addBufferedAudioFrame() is behind
             {
+            uint samplesWritten =0;
+                    string error = "";
                 try
                 {
-                m_selectedDevice.deckLinkOutput.ScheduleVideoFrame(m_videoFrame[currentVideoFrame], (m_totalFramesScheduled * m_frameDuration), m_frameDuration, m_frameTimescale);
-                //have to add video too, othewise we fall out of sync
-                m_totalFramesScheduled += 1;
-                m_selectedDevice.deckLinkOutput.ScheduleAudioSamples(m_audioBuffer, audioSamplesPerFrame(), 0, 0, out uint samplesWritten);
-                if (m_mainWindow.Renderer != null) m_mainWindow.Renderer.syncTrack(true, "Repeating Audio + Upbuffered 1 frame at Frm:" + m_totalFramesScheduled.ToString(), 12);
+                    error = "Lock Unsuccesful";
+                    lock (m_videoFrame)
+                    {
+                        error = "Schedule VideoFrame";
+                        m_selectedDevice.deckLinkOutput.ScheduleVideoFrame(m_videoFrame[currentVideoFrame], (m_totalFramesScheduled * m_frameDuration), m_frameDuration, m_frameTimescale);
+                        //have to add video too, othewise we fall out of sync  .. but adding this frame creates tearing
+                        m_totalFramesScheduled += 1;
+                        error = "Schedule AudioSamples";
+                       m_selectedDevice.deckLinkOutput.ScheduleAudioSamples(m_audioBuffer, audioSamplesPerFrame(), 0, 0, out samplesWritten);
+                        error = "Scheduling OK";
+                    }
                 }
                 catch
                 {
                     //just skip the frame
                 }
+                if (m_mainWindow.Renderer != null) m_mainWindow.Renderer.syncTrack(true, error + " due to Samples "+ bufferedSamples.ToString()+ " < " + kAudioWaterlevel.ToString()+" wt "+ samplesWritten.ToString()+" - Repeating Audio + Upbuffered 1 frame at Frm:" + m_totalFramesScheduled.ToString(), 12);
             }
         }
 

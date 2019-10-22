@@ -624,11 +624,15 @@ namespace open3mod
                 Console.WriteLine(usecs.ToString().PadLeft(4)+" "+ inFrame+label + ID.PadRight(20-order));
         }
 
-        //        string targetLock;
-        //        string parameterLock;
+        /// <summary>
+        /// Used for tracking delays caused by locks
+        /// DV-DrawVideo ,RS-RenderScreen ,OV-OutputVideo, DS-DrawScene
+        /// the corresponding info screen will be drawn.
+        /// </summary>
         string lockTrackStr = "";
         public void lockTrack(bool isTargetClock, string ID)
         {
+            return;
             if (isTargetClock)
             {
                 lockTrackStr += ID + " "+_targetLockClock.ElapsedMilliseconds.ToString("00") + " ";
@@ -741,7 +745,7 @@ namespace open3mod
                 _targetLockClock.Start();
                 lock (renderTargetLock)
                 {
-                    lockTrack(true, "DW");
+                    lockTrack(true, "DV");
                     renderControl.SetRenderTarget(RenderControl.RenderTarget.VideoCompat);
                     if (MainWindow.useIO) UploadVideoTextures(activeTab.ActiveScene);
                     uploadTime = (int)MainWindow.outputGenerator.GetTimeInFrame();
@@ -752,7 +756,7 @@ namespace open3mod
 
                         lock (renderParameterLock)
                         {
-                            lockTrack(false, "DW");
+                            lockTrack(false, "DV");
                             RenderVideoComposite(activeTab);
                         }
                     }
@@ -860,9 +864,9 @@ namespace open3mod
                     }
 
                     //  MainWindow.outputGenerator.addAudioFrame(audioData);
-                    int channelpair = camera - 1;
-                    if (channelpair < 0) channelpair = 3;
+                    int channelpair = camera + 1;
                     MainWindow.outputGenerator.copyAudioFrameChannelPair(audioData, 0, (uint)(channelpair *2));
+                    if (camera == CoreSettings.CoreSettings.Default.AudioSource) MainWindow.outputGenerator.copyAudioFrameChannelPair(audioData, 0, 0);
                     if (ActiveCamera == camera) actualFrameDelay = frameDelay;
                 }
                 else
@@ -2095,8 +2099,8 @@ namespace open3mod
                 string cs = MainWindow.useIO ? " / Camera #" + ActiveCamera.ToString() + " " + camName + " Delayed " + actualFrameDelay.ToString() + "ms" + addDelay : "";
                 string tm = " \nUpl:" + lastUpload.ToString("00") + "ms / Vid:" + lastVideoDrawed.ToString("00") + "ms / Out:" + lastRenderVideo.ToString("00") + "ms / Scr:" + lastRenderScreen.ToString("00") + "ms";
 
-                //            graphics.DrawString("FPS: " + _displayFps.ToString("000.0") + rb + cs +tm + " / Advance: " + advanceMs + " ms ", MainWindow.UiState.DefaultFont16, new SolidBrush(Color.Red), 5, 5);
-                string outStr = "FPS: " + _displayFps.ToString("000.0") + rb + cs + tm + " \n" + lockTrackStr + " / Advance: " + advanceMs + " ms ";
+                string outStr = "FPS: " + _displayFps.ToString("000.0") + rb + cs + tm +                        " / Advance: " + advanceMs + " ms ";
+              //  string outStr = "FPS: " + _displayFps.ToString("000.0") + rb + cs + tm + " \n" + lockTrackStr + " / Advance: " + advanceMs + " ms ";
                SolidBrush redBrush = new SolidBrush(Color.Red);
                 graphics.DrawString(outStr, MainWindow.UiState.DefaultFont16, redBrush, 5, 5);
 

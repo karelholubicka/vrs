@@ -168,7 +168,7 @@
       <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="AutoSourceNDI" Type="System.String" Scope="User">
-      <Value Profile="(Default)">EDIT (VLC)</Value>
+      <Value Profile="(Default)">VRSTUDIO (VLC)</Value>
     </Setting>
     <Setting Name="HMDRefPos" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
@@ -222,7 +222,13 @@
       <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="DigitalZoomObject" Type="System.String" Scope="User">
-      <Value Profile="(Default)">X-DigitalZoom</Value>
+      <Value Profile="(Default)">X2-DigitalZoom</Value>
+    </Setting>
+    <Setting Name="CamRefPos" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="AudioSource" Type="System.Byte" Scope="User">
+      <Value Profile="(Default)">0</Value>
     </Setting>
   </Settings>
 </SettingsFile>

@@ -1,3 +1,5 @@
+Svìtla jsou z BaseScene, ale svítí i na pøedmìty MainScene
+
 PageUp,Left: Scenes switch L
 Next, Right: Scenes switch R
 

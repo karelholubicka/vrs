@@ -19,6 +19,7 @@ namespace open3mod
         public static Matrix4 viewOffset = Matrix4.Identity;
         public static Matrix4 viewOffsetShift = Matrix4.Identity;
         public static Matrix4 hmdRefPos = Matrix4.Identity;
+        public static Matrix4 camRefPos = Matrix4.Identity;
         public static float trackerAboveLens = 0.15f; //height of controller above camera lens center
         public static float trackerBeforeLens = 0.05f; //distance between controller and lens optical cross
         public static float trackerAsideOfLens = 0.013f; //distance between controllers and lens centers
@@ -178,7 +179,7 @@ namespace open3mod
                 activePositions[i] = false;
                 lensToGround[i] = Matrix4.Identity;
                 trackerToCamera[i] = Matrix4.Identity;
-                if ((EVRerror == EVRInitError.None)&& (i < OpenVR.k_unMaxTrackedDeviceCount)) //setup real devices
+                if ((EVRerror == EVRInitError.None) && (i < OpenVR.k_unMaxTrackedDeviceCount)) //setup real devices
                     {
                     OpenVR.System.GetDeviceToAbsoluteTrackingPose(eOrg, fPredictedSecondsToPhotonsFromNow, pTrackedDevicePoseArray);
                     if (pTrackedDevicePoseArray[i].bPoseIsValid)
@@ -246,6 +247,7 @@ namespace open3mod
             deviceSNs[index] = "VTCAM0";
             deviceName[index] = "Virt";
             indexOfDevice[3] = index;
+            activePositions[index] = true;
             InitDeviceMatrix(index);
 
             Matrix4 savedSettingsTest;
@@ -255,7 +257,11 @@ namespace open3mod
             if (valid) viewOffsetShift = savedSettingsTest;
             valid = StringToMatrix4(CoreSettings.CoreSettings.Default.HMDRefPos, out savedSettingsTest, out dummyString);
             if (valid) hmdRefPos = savedSettingsTest;
+            valid = StringToMatrix4(CoreSettings.CoreSettings.Default.CamRefPos, out savedSettingsTest, out dummyString);
+            if (valid) camRefPos = savedSettingsTest;
             //ResetReferenceMatrix();//only when reset is needed
+
+            trackedPositions[indexOfDevice[3]] = viewOffset;// should be solved properly for all virtual devices
 
         }
 
@@ -288,9 +294,50 @@ namespace open3mod
             CoreSettings.CoreSettings.Default.Save();
         }
 
+        public static void PutDeviceToReferencePosition(uint contIndex, bool useRefPos)// todo
+        {
+            if (contIndex >= trackedPositions.Length) return;
+            Matrix4 refPos = useRefPos ? camRefPos : Matrix4.Identity;
+          //  viewOffsetShift = lensToGround[contIndex] * trackerToCamera[contIndex];
+          //  viewOffset = viewOffsetShift * trackedPositions[contIndex];
+            viewOffsetShift = refPos * lensToGround[contIndex] * trackerToCamera[contIndex];
+            viewOffset = viewOffsetShift * trackedPositions[contIndex];
+            if (!CoreSettings.CoreSettings.Default.UseAllAnglesForOffset)
+            {
+                Matrix4 rotation = viewOffset.ClearTranslation();
+                Vector3 testVector = new Vector3(0f, 0f, 1f);
+                Vector3.TransformNormal(ref testVector, ref rotation, out Vector3 orientation);
+                float groundRotation = (float)Math.Atan2(orientation.X, orientation.Z);
+                viewOffset = Matrix4.CreateRotationY(groundRotation) * viewOffset.ClearRotation();
+            }
+
+            trackedPositions[indexOfDevice[3]] = viewOffset;// should be solved properly for all virtual devices
+
+            string saveStr = "ViewOffset" + MainWindow.recentDataSeparator[0] + Matrix4ToString(viewOffset);
+            CoreSettings.CoreSettings.Default.ViewOffset = saveStr;
+            saveStr = "ViewOffsetShift" + MainWindow.recentDataSeparator[0] + Matrix4ToString(viewOffsetShift); //need to save because may be different for different controllers
+            CoreSettings.CoreSettings.Default.ViewOffsetShift = saveStr;
+            CoreSettings.CoreSettings.Default.Save();
+        }
+
         public static Matrix4 GetViewFromPosition(Matrix4 position)
         {
-            return Matrix4.Invert(position);
+            try
+            {
+                return Matrix4.Invert(position);
+            }
+            catch
+            {
+                return Matrix4.Identity; //for case that something erases source matrix
+            }
+        }
+
+        public static void SetCamRefPos(Matrix4 camRefPosIn)
+        {
+            camRefPos = camRefPosIn;
+            string saveStr = "CamRefPos" + MainWindow.recentDataSeparator[0] + Matrix4ToString(camRefPos);
+            CoreSettings.CoreSettings.Default.CamRefPos = saveStr;
+            CoreSettings.CoreSettings.Default.Save();
         }
 
         public static void SaveHMDReference()
@@ -310,6 +357,9 @@ namespace open3mod
             if (contIndex >= trackedPositions.Length) return;
             //   hmdRefPos = Matrix4.CreateTranslation(-0.5,-0.5,-0.5)// uhne doleva, dolů, dozadu
             viewOffset = hmdRefPos * viewOffsetShift * trackedPositions[contIndex];
+
+            trackedPositions[indexOfDevice[3]] = viewOffset;// should be solved properly for all virtual devices
+
             string saveStr = "ViewOffset" + MainWindow.recentDataSeparator[0] + Matrix4ToString(viewOffset);
             CoreSettings.CoreSettings.Default.ViewOffset = saveStr;
             CoreSettings.CoreSettings.Default.Save();
@@ -322,9 +372,15 @@ namespace open3mod
             SaveTrackerToCamera(indexOfDevice[0]);
         }
 
-        public static void SetCam3Position(Matrix4 cam3Position)
+        public static void SetCam3AbsPosition(Matrix4 cam3Position)
         {
-            trackedPositions[indexOfDevice[3]] = Matrix4.Identity;
+            trackedPositions[indexOfDevice[3]] = viewOffset;
+            trackerToCamera[indexOfDevice[3]] = cam3Position * viewOffset.Inverted();
+            SaveTrackerToCamera(indexOfDevice[3]);
+        }
+        public static void SetCam3RelPosition(Matrix4 cam3Position)
+        {
+            trackedPositions[indexOfDevice[3]] = OpenVRInterface.viewOffset;
             trackerToCamera[indexOfDevice[3]] = cam3Position;
             SaveTrackerToCamera(indexOfDevice[3]);
         }
@@ -334,7 +390,7 @@ namespace open3mod
             if (indexOfDevice[index] >= trackedPositions.Length) return;
             // if (indexOfDevice[3] >= trackedPositions.Length) return; //this should be always OK, camera exists
             Matrix4 position = trackerToCamera[indexOfDevice[index]] * trackedPositions[indexOfDevice[index]];
-            SetCam3Position(position);
+            SetCam3AbsPosition(position);
         }
 
         public static string controllerStatusReport(int id)
@@ -547,25 +603,10 @@ namespace open3mod
 
             if ((buttons & (ulong)EVRButtonId.k_EButton_Grip) == (ulong)EVRButtonId.k_EButton_Grip)
             {
-                // reset offset to camera, keeps offset cameraToground 
+                // reset offset to camera position, keeps offset cameraToground 
                 if ((buttons & (ulong)EVRButtonId.k_EButton_DPad_Up) == (ulong)EVRButtonId.k_EButton_DPad_Up)
                 {
-                    viewOffsetShift = lensToGround[contIndex] * trackerToCamera[contIndex];
-                    viewOffset = viewOffsetShift * trackedPositions[contIndex];
-                    if (!CoreSettings.CoreSettings.Default.UseAllAnglesForOffset)
-                    {
-                        Matrix4 rotation = viewOffset.ClearTranslation();
-                        Vector3 testVector = new Vector3(0f, 0f, 1f);
-                        Vector3.TransformNormal(ref testVector, ref rotation, out Vector3 orientation);
-                        float groundRotation = (float)Math.Atan2(orientation.X, orientation.Z);
-                        viewOffset = Matrix4.CreateRotationY(groundRotation) * viewOffset.ClearRotation();
-                    }
-                    // viewOffset = Matrix4.Invert(GetViewFromPosition(viewOffsetPosition));
-                    string saveStr = "ViewOffset" + MainWindow.recentDataSeparator[0] + Matrix4ToString(viewOffset);
-                    CoreSettings.CoreSettings.Default.ViewOffset = saveStr;
-                    saveStr = "ViewOffsetShift" + MainWindow.recentDataSeparator[0] + Matrix4ToString(viewOffsetShift); //need to save because may be different for different controllers
-                    CoreSettings.CoreSettings.Default.ViewOffsetShift = saveStr;
-                    CoreSettings.CoreSettings.Default.Save();
+                    PutDeviceToReferencePosition(contIndex, false);
                 }
             }
         }

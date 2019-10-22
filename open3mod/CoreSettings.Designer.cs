@@ -679,7 +679,7 @@ namespace CoreSettings {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("EDIT (VLC)")]
+        [global::System.Configuration.DefaultSettingValueAttribute("VRSTUDIO (VLC)")]
         public string AutoSourceNDI {
             get {
                 return ((string)(this["AutoSourceNDI"]));
@@ -894,13 +894,37 @@ namespace CoreSettings {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("X-DigitalZoom")]
+        [global::System.Configuration.DefaultSettingValueAttribute("X2-DigitalZoom")]
         public string DigitalZoomObject {
             get {
                 return ((string)(this["DigitalZoomObject"]));
             }
             set {
                 this["DigitalZoomObject"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string CamRefPos {
+            get {
+                return ((string)(this["CamRefPos"]));
+            }
+            set {
+                this["CamRefPos"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public byte AudioSource {
+            get {
+                return ((byte)(this["AudioSource"]));
+            }
+            set {
+                this["AudioSource"] = value;
             }
         }
     }

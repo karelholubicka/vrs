@@ -1030,6 +1030,7 @@ namespace open3mod
                 toolStripLabelOpenVRError.Text = TrackingErrorLabelPrefix + OpenVRInterface.EVRerror.ToString() + " | Device: Status/Activity | " + OpenVRInterface.StatusReport();
                 toolStripLabelOpenVRError.Invalidate();
             }
+            if ((_settings != null) &&(_settings.Visible)) _settings.GetPositions();
 
             Renderer.DrawScreen(_ui.ActiveTab);
             Renderer.timeTrack("50-EndDraw");

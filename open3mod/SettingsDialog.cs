@@ -38,7 +38,6 @@ namespace open3mod
         private GraphicsSettings _gSettings;
         private MainWindow _mainWindow;
         IFormatProvider _provider = CultureInfo.CreateSpecificCulture("en-US");
-        private string cam3offsRollText = "0";
 
         public SettingsDialog()
         {
@@ -50,21 +49,26 @@ namespace open3mod
             this.cam0offsY.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
             this.cam0offsZ.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
             this.cam0offsPitch.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
-            this.cam3offsX.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
-            this.cam3offsY.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
-            this.cam3offsZ.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
-            this.cam3offsPitch.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
-            this.cam3offsYaw.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
+            this.cam3posX.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
+            this.cam3posY.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
+            this.cam3posZ.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
+            this.cam3posPitch.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
+            this.cam3posYaw.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
+            this.cam3posRoll.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
+            this.camOffsetX.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
+            this.camOffsetY.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
+            this.camOffsetZ.MouseWheel += new System.Windows.Forms.MouseEventHandler(box_MouseWheel);
 
             InitTexResolution();
             InitTexFilter();
             InitMultiSampling();
             InitLightingQuality();
             InitRenderingBackend();
+            InitCamOffset();
             InitCam0Offset();
             InitCam3Position();
             InitHMDOffset();
-            InitNDIoverride();
+            InitNDIAndAudioCombos();
 
             if (CoreSettings.CoreSettings.Default.AdditionalTextureFolders != null)
             {
@@ -105,7 +109,7 @@ namespace open3mod
             test = test + e.Delta / 120;
             (sender as TextBox).Text = test.ToString(_provider);
             OpenVRInterface.SetCam0Offset(cam0offs);
-            OpenVRInterface.SetCam3Position(cam3pos);
+            OpenVRInterface.SetCam3RelPosition(cam3pos);
         }
 
 
@@ -114,7 +118,7 @@ namespace open3mod
         {
             _gSettings.Save();
             OpenVRInterface.SetCam0Offset(cam0offs);
-            OpenVRInterface.SetCam3Position(cam3pos);
+            OpenVRInterface.SetCam3RelPosition(cam3pos);
             if (_mainWindow == null)
             {
                 Close();
@@ -345,6 +349,14 @@ namespace open3mod
         }
 
         int unit = 100;
+        private void InitCamOffset()
+        {
+            Matrix4 position = OpenVRInterface.camRefPos;
+            camOffsetX.Text = (-position.M41 * unit).ToString("0.###", _provider);
+            camOffsetY.Text = (-position.M42 * unit).ToString("0.###", _provider);
+            camOffsetZ.Text = (-position.M43 * unit).ToString("0.###", _provider);
+        }
+
         private void InitCam0Offset()
         {
             if (OpenVRInterface.indexOfDevice[0] >= OpenVRInterface.trackerToCamera.Length) return;
@@ -353,33 +365,108 @@ namespace open3mod
             cam0offsY.Text = (position.M42 * unit).ToString("0.###", _provider);
             cam0offsZ.Text = (position.M43 * unit).ToString("0.###", _provider);
             Vector3 angles = OpenVRInterface.FromRotMatToEulerZYXInt(position);
-            cam0offsPitch.Text = (angles.X*180/(float)Math.PI).ToString("0.###", _provider);
+            cam0offsPitch.Text = (angles.X * 180 / (float)Math.PI).ToString("0.###", _provider);
+        }
+
+        public void GetPositions()
+        {
+            GetCam0Position();
+            GetCam1Position();
+            GetCam2Position();
+        }
+
+        private void GetCam0Position()
+        {
+            if (OpenVRInterface.indexOfDevice[0] >= OpenVRInterface.trackerToCamera.Length) return;
+            Matrix4 position = OpenVRInterface.trackerToCamera[OpenVRInterface.indexOfDevice[0]] * OpenVRInterface.trackedPositions[OpenVRInterface.indexOfDevice[0]];
+            Matrix4 view = OpenVRInterface.viewOffset * position.Inverted();
+            position = view.Inverted();
+            cam0posX.Text = (position.M41 * unit).ToString("0.0", _provider);
+            cam0posY.Text = (position.M42 * unit).ToString("0.0", _provider);
+            cam0posZ.Text = (position.M43 * unit).ToString("0.0", _provider);
+            Vector3 angles = OpenVRInterface.FromRotMatToEulerZYXInt(position);
+            cam0posPitch.Text = (angles.X * 180 / (float)Math.PI).ToString("0.0", _provider);
+            cam0posYaw.Text = (angles.Y * 180 / (float)Math.PI).ToString("0.0", _provider);
+            cam0posRoll.Text = (angles.Z * 180 / (float)Math.PI).ToString("0.0", _provider); 
+        }
+
+        private void GetCam1Position()
+        {
+            if (OpenVRInterface.indexOfDevice[1] >= OpenVRInterface.trackerToCamera.Length) return;
+            Matrix4 position = OpenVRInterface.trackerToCamera[OpenVRInterface.indexOfDevice[1]] * OpenVRInterface.trackedPositions[OpenVRInterface.indexOfDevice[1]];
+            Matrix4 view = OpenVRInterface.viewOffset * position.Inverted();
+            position = view.Inverted();
+            cam1posX.Text = (position.M41 * unit).ToString("0.0", _provider);
+            cam1posY.Text = (position.M42 * unit).ToString("0.0", _provider);
+            cam1posZ.Text = (position.M43 * unit).ToString("0.0", _provider);
+            Vector3 angles = OpenVRInterface.FromRotMatToEulerZYXInt(position);
+            cam1posPitch.Text = (angles.X * 180 / (float)Math.PI).ToString("0.0", _provider);
+            cam1posYaw.Text = (angles.Y * 180 / (float)Math.PI).ToString("0.0", _provider);
+            cam1posRoll.Text = (angles.Z * 180 / (float)Math.PI).ToString("0.0", _provider);
+        }
+
+        private void GetCam2Position()
+        {
+            if (OpenVRInterface.indexOfDevice[2] >= OpenVRInterface.trackerToCamera.Length) return;
+            Matrix4 position = OpenVRInterface.trackerToCamera[OpenVRInterface.indexOfDevice[2]] * OpenVRInterface.trackedPositions[OpenVRInterface.indexOfDevice[2]];
+            Matrix4 view = OpenVRInterface.viewOffset * position.Inverted();
+            position = view.Inverted();
+            cam2posX.Text = (position.M41 * unit).ToString("0.0", _provider);
+            cam2posY.Text = (position.M42 * unit).ToString("0.0", _provider);
+            cam2posZ.Text = (position.M43 * unit).ToString("0.0", _provider);
+            Vector3 angles = OpenVRInterface.FromRotMatToEulerZYXInt(position);
+            cam2posPitch.Text = (angles.X * 180 / (float)Math.PI).ToString("0.0", _provider);
+            cam2posYaw.Text = (angles.Y * 180 / (float)Math.PI).ToString("0.0", _provider);
+            cam2posRoll.Text = (angles.Z * 180 / (float)Math.PI).ToString("0.0", _provider);
         }
 
         private void InitCam3Position()
         {
             if (OpenVRInterface.indexOfDevice[3] >= OpenVRInterface.trackerToCamera.Length) return;
-            Matrix4 position = OpenVRInterface.trackerToCamera[OpenVRInterface.indexOfDevice[3]];
-            cam3offsX.Text = (position.M41 * unit).ToString("0.###", _provider);
-            cam3offsY.Text = (position.M42 * unit).ToString("0.###", _provider);
-            cam3offsZ.Text = (position.M43 * unit).ToString("0.###", _provider);
+            Matrix4 position = OpenVRInterface.trackerToCamera[OpenVRInterface.indexOfDevice[3]] * OpenVRInterface.trackedPositions[OpenVRInterface.indexOfDevice[3]] ;
+            Matrix4 view = OpenVRInterface.viewOffset * position.Inverted();
+            position = view.Inverted();
+            cam3posX.Text = (position.M41 * unit).ToString("0.###", _provider);
+            cam3posY.Text = (position.M42 * unit).ToString("0.###", _provider);
+            cam3posZ.Text = (position.M43 * unit).ToString("0.###", _provider);
             Vector3 angles = OpenVRInterface.FromRotMatToEulerZYXInt(position);
-            cam3offsPitch.Text = (angles.X * 180 / (float)Math.PI).ToString("0.###", _provider);
-            cam3offsYaw.Text = (angles.Y * 180 / (float)Math.PI).ToString("0.###", _provider);
-            cam3offsRollText = (angles.Z * 180 / (float)Math.PI).ToString("0.###", _provider); // should be always zero
+            cam3posPitch.Text = (angles.X * 180 / (float)Math.PI).ToString("0.###", _provider);
+            cam3posYaw.Text = (angles.Y * 180 / (float)Math.PI).ToString("0.###", _provider);
+            cam3posRoll.Text = (angles.Z * 180 / (float)Math.PI).ToString("0.###", _provider); 
         }
-
 
         private void InitHMDOffset()
         {
             Matrix4 position = OpenVRInterface.hmdRefPos;
-            hmdRefX.Text = (position.M41 * unit).ToString("0.###", _provider);
-            hmdRefY.Text = (position.M42 * unit).ToString("0.###", _provider);
-            hmdRefZ.Text = (position.M43 * unit).ToString("0.###", _provider);
-            Vector3 angles = OpenVRInterface.FromRotMatToEulerZYXInt(position);
+            hmdRefX.Text = (position.M41 * unit).ToString("0.0", _provider);
+            hmdRefY.Text = (position.M42 * unit).ToString("0.0", _provider);
+            hmdRefZ.Text = (position.M43 * unit).ToString("0.0", _provider);
         }
 
         bool boxOK;
+        Matrix4 camOffset;
+        private void camOffset_TextChanged(object sender, EventArgs e)
+        {
+            boxOK = true;
+            float test = readFloat((sender as TextBox).Text);
+            if (!boxOK)
+            {
+                MessageBox.Show("Invalid char entered", "Error", MessageBoxButtons.OK);
+                return;
+            }
+            boxOK = true;
+            camOffset = Matrix4.CreateTranslation(-readFloat(camOffsetX.Text) / unit, -readFloat(camOffsetY.Text) / unit, -readFloat(camOffsetZ.Text) / unit);
+            // need inversed values
+            if (boxOK)
+            {
+                //labelYR.Text = readFloat(cam0offsX.Text).ToString(_provider) + " " + readFloat(cam0offsY.Text).ToString(_provider) + " " + readFloat(cam0offsZ.Text).ToString(_provider) + " " + readFloat(cam0offsPitch.Text).ToString(_provider);
+            }
+            else
+            {
+                MessageBox.Show("Offset Numbers Not Valid", "Error", MessageBoxButtons.OK);
+            }
+        }
+
         Matrix4 cam0offs;
         private void cam0box_TextChanged(object sender, EventArgs e)
         {
@@ -404,6 +491,7 @@ namespace open3mod
             }
 
         }
+
         Matrix4 cam3pos;
         private void cam3box_TextChanged(object sender, EventArgs e)
         {
@@ -415,11 +503,11 @@ namespace open3mod
                 return;
             }
             boxOK = true;
-            Matrix4 transMatrix = Matrix4.CreateTranslation(readFloat(cam3offsX.Text)/unit, readFloat(cam3offsY.Text) / unit, readFloat(cam3offsZ.Text) / unit);
+            Matrix4 transMatrix = Matrix4.CreateTranslation(readFloat(cam3posX.Text)/unit, readFloat(cam3posY.Text) / unit, readFloat(cam3posZ.Text) / unit);
             Matrix4 orientMatrix = Matrix4.Identity;
-            orientMatrix = Matrix4.CreateRotationZ(readFloat(cam3offsRollText) * (float)Math.PI / 180) * orientMatrix;//degrees??
-            orientMatrix = Matrix4.CreateRotationY(readFloat(cam3offsYaw.Text)  * (float)Math.PI / 180) * orientMatrix;//degrees??
-            orientMatrix = Matrix4.CreateRotationX(readFloat(cam3offsPitch.Text)* (float)Math.PI / 180) * orientMatrix;//degrees??
+            orientMatrix = Matrix4.CreateRotationZ(readFloat(cam3posRoll.Text) * (float)Math.PI / 180) * orientMatrix;//degrees??
+            orientMatrix = Matrix4.CreateRotationY(readFloat(cam3posYaw.Text)  * (float)Math.PI / 180) * orientMatrix;//degrees??
+            orientMatrix = Matrix4.CreateRotationX(readFloat(cam3posPitch.Text)* (float)Math.PI / 180) * orientMatrix;//degrees??
             cam3pos = orientMatrix * transMatrix;
             if (boxOK)
             {
@@ -461,6 +549,32 @@ namespace open3mod
             numBox_CheckInput(sender, e);
         }
 
+        private void numOffsBox_KeyPress(object sender, System.Windows.Forms.KeyPressEventArgs e)
+        {
+            if ((e.KeyChar == 13) && (boxOK = true))
+            {
+                (sender as TextBox).SelectAll();
+                OpenVRInterface.SetCamRefPos(camOffset);
+                InitCamOffset();
+                e.Handled = true;
+                return;
+            }
+            numBox_CheckInput(sender, e);
+        }
+
+        private void numBox3_KeyPress(object sender, System.Windows.Forms.KeyPressEventArgs e)
+        {
+            if ((e.KeyChar == 13) && (boxOK = true))
+            {
+                (sender as TextBox).SelectAll();
+                OpenVRInterface.SetCam3RelPosition(cam3pos);
+                InitCam3Position();
+                e.Handled = true;
+                return;
+            }
+            numBox_CheckInput(sender, e);
+        }
+
         private void cam0box_LeaveFocus(object sender, EventArgs e)
         {
             InitCam0Offset();
@@ -471,17 +585,9 @@ namespace open3mod
             InitCam3Position();
         }
 
-        private void numBox3_KeyPress(object sender, System.Windows.Forms.KeyPressEventArgs e)
+        private void camOffsbox_LeaveFocus(object sender, EventArgs e)
         {
-            if ((e.KeyChar == 13) && (boxOK = true))
-            {
-                (sender as TextBox).SelectAll();
-                OpenVRInterface.SetCam3Position(cam3pos);
-                InitCam3Position();
-                e.Handled = true;
-                return;
-            }
-            numBox_CheckInput(sender, e);
+            InitCamOffset();
         }
 
         private void numBox_CheckInput(object sender, System.Windows.Forms.KeyPressEventArgs e)
@@ -557,10 +663,17 @@ namespace open3mod
             InitCam3Position();
         }
 
-        private void InitNDIoverride()
+        private void grabCam2ToVirt_Click(object sender, EventArgs e)
+        {
+            OpenVRInterface.GrabCamToVirt(2);
+            InitCam3Position();
+        }
+
+        private void InitNDIAndAudioCombos()
         {
             comboNDI1override.SelectedIndex = CoreSettings.CoreSettings.Default.NDI1overrideSource;
             comboNDI2override.SelectedIndex = CoreSettings.CoreSettings.Default.NDI2overrideSource;
+            audioSource.SelectedIndex = CoreSettings.CoreSettings.Default.AudioSource;
         }
 
         private void comboNDI1override_SelectedIndexChanged(object sender, EventArgs e)
@@ -571,6 +684,36 @@ namespace open3mod
         private void comboNDI2override_SelectedIndexChanged(object sender, EventArgs e)
         {
             CoreSettings.CoreSettings.Default.NDI2overrideSource = (byte)comboNDI2override.SelectedIndex;
+        }
+
+        private void audioSource_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            CoreSettings.CoreSettings.Default.AudioSource = (byte)audioSource.SelectedIndex;
+        }
+
+        private void resetOffsetCam1_Click(object sender, EventArgs e)
+        {
+            OpenVRInterface.PutDeviceToReferencePosition(OpenVRInterface.indexOfDevice[1], false);
+        }
+
+        private void resetOffsetCam2_Click(object sender, EventArgs e)
+        {
+            OpenVRInterface.PutDeviceToReferencePosition(OpenVRInterface.indexOfDevice[2], false);
+        }
+
+        private void setOffsetCam1_Click(object sender, EventArgs e)
+        {
+            OpenVRInterface.PutDeviceToReferencePosition(OpenVRInterface.indexOfDevice[1], true);
+        }
+
+        private void setOffsetCam2_Click(object sender, EventArgs e)
+        {
+            OpenVRInterface.PutDeviceToReferencePosition(OpenVRInterface.indexOfDevice[2], true);
+        }
+
+        private void resetReferenceMatrix_Click(object sender, EventArgs e)
+        {
+            OpenVRInterface.ResetReferenceMatrix();
         }
     }
 }
